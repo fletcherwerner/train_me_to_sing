@@ -44,7 +44,8 @@ export const today = () => new Date().toISOString().slice(0, 10);
 
 export function git(args, opts = {}) {
   const r = spawnSync('git', args, { cwd: ROOT, encoding: 'utf8', ...opts });
-  return { ok: r.status === 0, out: (r.stdout || '').trim(), err: (r.stderr || '').trim() };
+  // trimEnd only: a leading space is meaningful in `git status --porcelain` output.
+  return { ok: r.status === 0, out: (r.stdout || '').replace(/\s+$/, ''), err: (r.stderr || '').trim() };
 }
 
 export function turnNumbers(epic) {

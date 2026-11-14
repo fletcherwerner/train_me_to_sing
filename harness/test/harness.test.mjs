@@ -193,6 +193,15 @@ test('approval gate requires two APPROVED verdicts and an indexed turn', () => {
   assert.equal(lib.approvalGate(E).ok, false);
 });
 
+test('git helper keeps the leading space of porcelain status lines', () => {
+  const g = (...a) => spawnSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@t', ...a], { cwd: tmp });
+  write('tracked.txt', 'one\n');
+  g('add', 'tracked.txt');
+  g('commit', '-q', '-m', 'add tracked');
+  write('tracked.txt', 'two\n');
+  assert.equal(lib.git(['status', '--porcelain', '--', 'tracked.txt']).out, ' M tracked.txt');
+});
+
 test('index rows are replaced, not duplicated', () => {
   lib.setIndexRow(E, 1, { coder: 'READY FOR REVIEW', plan: 'APPROVED', planBlocking: 0, ui: 'CHANGES REQUIRED', uiBlocking: 1 });
   lib.setIndexRow(E, 1, { coder: 'READY FOR REVIEW', plan: 'APPROVED', planBlocking: 0, ui: 'APPROVED', uiBlocking: 0 });
@@ -263,6 +272,10 @@ test('guard: only merges into main are gated, and the merge message is ignored',
   assert.equal(rules.checkBash('git merge main', onEpic), null);
   assert.equal(rules.checkBash('git merge -q main -m "Merge main into epic/E08"', onEpic), null);
   assert.equal(rules.checkBash('git merge -q feature -m "mentions epic/E08"', onMain), null);
+  // a chain that first switches to the epic branch is merging into that branch, not into main
+  assert.equal(rules.checkBash('git switch -q epic/E08 && git merge -q main -m "Merge main into epic/E08"', onMain), null);
+  assert.match(rules.checkBash('git switch -q main && git merge --no-ff epic/E08', onEpic), /may not be merged/);
+  assert.match(rules.checkBash('npm test && git merge epic/E08', onMain), /may not be merged/);
 });
 
 // ---- run profiles ----

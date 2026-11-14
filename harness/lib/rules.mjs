@@ -73,10 +73,16 @@ export function checkBash(command, env = process.env) {
   const cmd = commandSkeleton(command);
   if (/\bgit\s+push\b/.test(cmd)) return 'Blocked: nothing in this project is pushed. Pushing is for the owner.';
 
-  if (/\bgit\s+merge\b/.test(cmd) && currentBranch(env) === 'main') {
-    // Only a merge into main is gated. Look in the original command (the branch may be quoted) but not in the message.
-    const withoutMessage = command.replace(/\s(?:-m|--message)(?:=|\s+)(?:"[^"]*"|'[^']*'|\S+)/g, '');
-    const m = /epic\/(E\d{2})/.exec(withoutMessage);
+  // Only a merge into main is gated. Each command in a chain (&&, ;, |, newline) is looked at on its own, using the
+  // original text (the branch may be quoted) without the -m message. A switch earlier in the chain changes the target.
+  let branch = currentBranch(env);
+  for (const segment of command.split(/&&|\|\||;|\||\n/)) {
+    if (/\bgit\s+(switch|checkout)\b/.test(commandSkeleton(segment))) {
+      branch = /\bgit\s+(?:switch|checkout)\s+(?:-\S+\s+)*(\S+)/.exec(segment)?.[1]?.replace(/["']/g, '') || '';
+      continue;
+    }
+    if (!/\bgit\s+merge\b/.test(commandSkeleton(segment)) || branch !== 'main') continue;
+    const m = /epic\/(E\d{2})/.exec(segment.replace(/\s(?:-m|--message)(?:=|\s+)(?:"[^"]*"|'[^']*'|\S+)/g, ''));
     if (m) {
       const gate = approvalGate(m[1]);
       if (!gate.ok) return `Blocked: ${m[1]} may not be merged until both reviews approve.\n- ${gate.errors.join('\n- ')}`;
