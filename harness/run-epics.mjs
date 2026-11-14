@@ -45,6 +45,7 @@ const fail = (m) => {
 };
 
 class Stop extends Error {} // the loop must stop and ask the owner
+class Fatal extends Error {} // cannot run at all; nothing for the owner to decide inside the loop
 
 // ---------- child process handling ----------
 
@@ -97,6 +98,10 @@ function runAgent(role, epic, turn, extra, attempt) {
       clearTimeout(timer);
       children.delete(child);
       fs.writeFileSync(logFile, out + (err ? `\n--- stderr ---\n${err}` : ''));
+      if (/workspace has not been trusted/i.test(err + out)) {
+        resolve({ code: -2, error: 'untrusted' });
+        return;
+      }
       const mins = ((Date.now() - started) / 60000).toFixed(1);
       log(`${epic} T${turn} ${role}: finished with exit code ${code} after ${mins} min (log: ${rel(logFile)})`);
       resolve({ code, error: code === 0 ? null : `exit code ${code}. ${err.trim().slice(-500)}` });
@@ -110,6 +115,12 @@ async function runValidated(role, epic, turn, validate, extra = '') {
   for (let attempt = 1; attempt <= 2; attempt++) {
     const note = attempt === 1 ? extra : `${extra}\n\nYour previous attempt failed these checks. Correct them and nothing else:\n${errors.map((e) => `- ${e}`).join('\n')}`;
     const run = await runAgent(role, epic, turn, note.trim(), attempt);
+    if (run.code === -2) {
+      throw new Fatal(
+        'Claude Code is ignoring this project\'s settings (permissions and hooks) because the folder is not trusted, so agent runs would be denied their commands.\n' +
+          `Run \`claude\` interactively in ${ROOT} once and accept the trust dialog, or set projects["${ROOT}"].hasTrustDialogAccepted to true in ~/.claude.json. Then run this command again.`,
+      );
+    }
     if (run.error && run.code === -1) throw new Stop(run.error);
     errors = validate();
     if (run.error) errors.unshift(`the agent run failed: ${run.error}`);
@@ -123,7 +134,7 @@ async function runValidated(role, epic, turn, validate, extra = '') {
 
 function commit(message, paths = ['-A']) {
   git(['add', ...paths]);
-  if (!git(['status', '--porcelain']).out) return;
+  if (git(['diff', '--cached', '--quiet']).ok) return; // nothing staged
   const r = git(['commit', '-q', '-m', `${message}\n\n${TRAILER}`]);
   if (!r.ok) throw new Stop(`git commit failed: ${r.err}`);
 }
@@ -234,6 +245,27 @@ async function runEpic(epic) {
     commit(`${epic}: start`);
   }
 
+  try {
+    return await loopEpic(epic);
+  } catch (e) {
+    // Any stop inside the loop leaves a note for the owner, even if no specific reason file was written.
+    // An epic that is already Approved only lacks its summary, which the next run retries on its own.
+    const approved = readStatus().find((r) => r.id === epic)?.status === 'Approved';
+    if (e instanceof Stop && !approved && !fs.existsSync(path.join(commsDir(epic), 'NEEDS-INPUT.md'))) {
+      const [reason, ...rest] = e.message.split('\n');
+      writeNeedsInput(epic, {
+        afterTurn: lastRecordedTurn(epic),
+        reason: reason.replace(/:$/, ''),
+        decision: `${rest.join('\n')}\n\nThe raw output of each agent run is in .driver-logs/${epic}/ (not committed). Fix the cause or say what to change in comms/${epic}/OWNER-NOTES.md, then run the epic again.`.trim(),
+      });
+      setStatusRow(epic, { status: 'Needs owner' });
+      commit(`${epic}: stopped for owner input`);
+    }
+    throw e;
+  }
+}
+
+async function loopEpic(epic) {
   for (;;) {
     const done = lastRecordedTurn(epic);
     const turn = done + 1;
@@ -301,7 +333,7 @@ async function runEpic(epic) {
     if (pv === 'APPROVED' && uv === 'APPROVED') {
       const gate = approvalGate(epic);
       if (!gate.ok) throw new Stop(`Both reviews approve but the approval gate failed:\n- ${gate.errors.join('\n- ')}`);
-      return approve(epic, turn);
+      return await approve(epic, turn);
     }
   }
 }
@@ -379,6 +411,10 @@ async function main() {
 
 main().catch((e) => {
   for (const c of children) c.kill('SIGTERM');
+  if (e instanceof Fatal) {
+    console.error(`\nCANNOT RUN: ${e.message}`);
+    process.exit(1);
+  }
   if (e instanceof Stop) {
     console.error(`\nSTOPPED: ${e.message}`);
     process.exit(2);
