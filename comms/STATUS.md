@@ -4,7 +4,7 @@ Maintained by the orchestrator. Status is one of: `Not started`, `In progress`, 
 
 | Epic | Title | Status | Turns | Last verdicts (plan / UI) | Updated |
 |------|-------|--------|-------|---------------------------|---------|
-| E01 | Foundation: scaffold, music core, piano | Not started | 0 | — | — |
+| E01 | Foundation: scaffold, music core, piano | Approved | 2 | APPROVED / APPROVED | 2026-11-14 |
 | E02 | Mic pitch detection and live tuner | Not started | 0 | — | — |
 | E03 | Vocal range assessment | Not started | 0 | — | — |
 | E04 | Exercise model, range fitting, "I do" playback | Not started | 0 | — | — |

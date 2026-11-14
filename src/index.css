@@ -1,0 +1,9 @@
+:root { color-scheme: light dark; font-family: system-ui, sans-serif; }
+body { margin: 0; }
+.dev-page { max-width: 720px; margin: 0 auto; padding: 16px; }
+.dev-page button { font-size: 1.1rem; padding: 8px 20px; }
+.dev-page input { width: 5em; }
+@media (max-width: 600px) {
+  .dev-page button, .dev-page input { min-height: 44px; box-sizing: border-box; }
+}
+.dev-home { display: inline-flex; align-items: center; min-height: 44px; padding: 0 8px; }
