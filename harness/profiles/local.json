@@ -12,5 +12,6 @@
   "authTokenFile": "/Volumes/ExternalSSD/models/.litellm-key",
   "trailer": "",
   "startHint": "Start the model and the proxy first: start-qwen.sh and start-proxy.sh.",
-  "restartHint": "The proxy is running but the model server behind it is not working. Stop start-qwen.sh (Ctrl+C in its terminal, or kill the mlx_lm.server process), start it again, and check its terminal for the error that killed it."
+  "restartHint": "The proxy is running but the model server behind it is not working. Stop start-qwen.sh (Ctrl+C in its terminal, or kill the mlx_lm.server process), start it again, and check its terminal for the error that killed it.",
+  "serialReviews": true
 }
