@@ -16,7 +16,7 @@ describe('PianoKeyboard', () => {
     const { container } = render(<PianoKeyboard lowMidi={49} highMidi={70} />);
     expect(screen.getByTestId('key-48')).toBeInTheDocument();
     expect(screen.getByTestId('key-71')).toBeInTheDocument();
-    expect(container.querySelectorAll('.piano-key--white').length).toBe(15);
+    expect(container.querySelectorAll('.piano-key--white').length).toBe(14);
   });
 
   it('marks the target key', () => {
@@ -38,7 +38,7 @@ describe('PianoKeyboard', () => {
     const { rerender } = render(<PianoKeyboard lowMidi={48} highMidi={72} sungMidi={43.2} />);
     expect(screen.getByTestId('edge-arrow')).toHaveTextContent('◀ G2');
     rerender(<PianoKeyboard lowMidi={48} highMidi={72} sungMidi={75} />);
-    expect(screen.getByTestId('edge-arrow')).toHaveTextContent('D#6 ▶');
+    expect(screen.getByTestId('edge-arrow')).toHaveTextContent('D#5 ▶');
     rerender(<PianoKeyboard lowMidi={48} highMidi={72} sungMidi={60} />);
     expect(screen.queryByTestId('edge-arrow')).toBeNull();
   });
