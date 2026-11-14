@@ -1,0 +1,61 @@
+.cents-meter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-family: system-ui, sans-serif;
+  font-size: 1.2rem;
+  font-weight: 600;
+  padding: 8px 0;
+}
+
+.cents-meter__bar {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+  height: 12px;
+  background: #e5e7eb;
+  border-radius: 6px;
+  overflow: visible;
+}
+
+@media (prefers-color-scheme: dark) {
+  .cents-meter__bar {
+    background: #374151;
+  }
+}
+
+.cents-meter__zone {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: rgba(34, 165, 91, 0.2);
+  border-radius: 6px;
+}
+
+.cents-meter__needle {
+  position: absolute;
+  top: -4px;
+  width: 3px;
+  height: 20px;
+  background: #f08a1c;
+  border-radius: 2px;
+  transform: translateX(-1.5px);
+  transition: left 0.08s ease-out;
+}
+
+.cents-meter__needle--in-zone {
+  background: #22a55b;
+}
+
+.cents-meter__text {
+  font-variant-numeric: tabular-nums;
+}
+
+.cents-meter__text--in-zone {
+  color: #22a55b;
+}
+
+.cents-meter__text--off-zone {
+  color: #f08a1c;
+}

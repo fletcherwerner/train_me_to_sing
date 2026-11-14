@@ -345,3 +345,10 @@ test('the real E01 files and summary pass the validator', () => {
   assert.equal(run('E01', '2', 'all', '--strict').status, 0);
   assert.equal(run('E01', 'summary').status, 0);
 });
+
+test('image reads are blocked only when the model cannot view images', () => {
+  const on = { TMTS_NO_IMAGES: '1' };
+  assert.match(rules.checkRead('comms/E02/turn-01/screenshots/a.png', on), /cannot view images/);
+  assert.equal(rules.checkRead('comms/E02/turn-01/ui-review.md', on), null);
+  assert.equal(rules.checkRead('comms/E02/turn-01/screenshots/a.png', {}), null);
+});

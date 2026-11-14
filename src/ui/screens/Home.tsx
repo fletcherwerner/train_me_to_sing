@@ -9,6 +9,9 @@ export function Home() {
         <li>
           <Link to="/dev/piano">Piano keyboard</Link>
         </li>
+        <li>
+          <Link to="/dev/tuner">Tuner (pitch detection)</Link>
+        </li>
       </ul>
     </main>
   );

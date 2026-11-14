@@ -48,6 +48,17 @@ export function checkWrite(filePath, env = process.env) {
   return null;
 }
 
+const IMAGE_FILE = /\.(png|jpe?g|gif|webp|bmp|pdf)$/i;
+
+/**
+ * Returns an error message if this read would put an image in the conversation and the model cannot take one
+ * (profile env TMTS_NO_IMAGES=1; the local server is text-only and fails every later request once an image is in).
+ */
+export function checkRead(filePath, env = process.env) {
+  if (env.TMTS_NO_IMAGES !== '1' || !IMAGE_FILE.test(filePath)) return null;
+  return `Blocked: this model cannot view images (${toRel(filePath)}). Do not open screenshots. Check the screen by text instead: in a Playwright script print page.locator(...).innerText(), the accessibility tree (page.accessibility.snapshot()), computed styles such as font-size and bounding boxes. List what you could not judge visually under "Not verified".`;
+}
+
 const AGENT_GIT_BLOCKED = /\bgit\s+(push|merge|rebase|reset|switch|checkout|stash|clean|branch\s+-)/;
 const REVIEWER_GIT_BLOCKED = /\bgit\s+(add|commit)\b/;
 
