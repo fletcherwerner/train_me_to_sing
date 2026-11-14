@@ -17,7 +17,7 @@ export function loadProfile(name) {
     }
     env.ANTHROPIC_AUTH_TOKEN = fs.readFileSync(j.authTokenFile, 'utf8').trim();
   }
-  return { name, env, trailer: j.trailer, baseUrl: env.ANTHROPIC_BASE_URL || null, startHint: j.startHint || '', restartHint: j.restartHint || '' };
+  return { name, env, trailer: j.trailer, baseUrl: env.ANTHROPIC_BASE_URL || null, startHint: j.startHint || '', restartHint: j.restartHint || '', serialReviews: Boolean(j.serialReviews) };
 }
 
 /** Throws unless the profile's endpoint answers at all (any HTTP status counts as up). */

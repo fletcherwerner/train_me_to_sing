@@ -388,6 +388,7 @@ async function main() {
     try {
       PROFILE = loadProfile(profileName);
       if (PROFILE.trailer !== undefined) TRAILER = PROFILE.trailer;
+      if (PROFILE.serialReviews) process.env.TMTS_SERIAL_REVIEWS = '1'; // a single local model server handles one request at a time
       await checkReachable(PROFILE);
       if (!DRY) await checkModel(PROFILE);
     } catch (e) {
