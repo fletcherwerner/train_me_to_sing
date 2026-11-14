@@ -314,6 +314,13 @@ test('profile: a proxy that answers while the model behind it is dead is reporte
   }
 });
 
+test('profile: the preflight prompt is about the requested size', async () => {
+  const { preflightPrompt } = await import('../lib/profile.mjs');
+  assert.equal(preflightPrompt(0), 'Say OK');
+  const bytes = preflightPrompt(16000).length;
+  assert.ok(bytes > 60_000 && bytes < 80_000, `expected about 64 KB for 16,000 tokens, got ${bytes}`);
+});
+
 test('profile: missing profile or missing token file gives a clear error', async () => {
   const { loadProfile } = await import('../lib/profile.mjs');
   assert.throws(() => loadProfile('nope'), /No profile "nope"/);

@@ -17,7 +17,7 @@ export function loadProfile(name) {
     }
     env.ANTHROPIC_AUTH_TOKEN = fs.readFileSync(j.authTokenFile, 'utf8').trim();
   }
-  return { name, env, trailer: j.trailer, baseUrl: env.ANTHROPIC_BASE_URL || null, startHint: j.startHint || '', restartHint: j.restartHint || '', serialReviews: Boolean(j.serialReviews) };
+  return { name, env, trailer: j.trailer, baseUrl: env.ANTHROPIC_BASE_URL || null, startHint: j.startHint || '', restartHint: j.restartHint || '', serialReviews: Boolean(j.serialReviews), preflightTokens: Number(j.preflightTokens || 0) };
 }
 
 /** Throws unless the profile's endpoint answers at all (any HTTP status counts as up). */
@@ -28,6 +28,16 @@ export async function checkReachable(profile, timeoutMs = 4000) {
   } catch (e) {
     throw new Error(`Cannot reach ${profile.baseUrl} for profile "${profile.name}" (${e.cause?.code || e.message}). ${profile.startHint}`.trim());
   }
+}
+
+/**
+ * A prompt of roughly `tokens` tokens. An agent's very first request is about 15,000 tokens (measured) and
+ * grows from there, so a tiny prompt proves nothing about whether a small machine can serve the agents.
+ */
+export function preflightPrompt(tokens = 0) {
+  if (!tokens) return 'Say OK';
+  const line = 'Note the following filler sentence, which carries no meaning for the task. ';
+  return `${line.repeat(Math.ceil((tokens * 4) / line.length))}\n\nIgnore all of the above and reply with the single word OK.`;
 }
 
 /**
@@ -47,7 +57,7 @@ export async function checkModel(profile, timeoutMs = 180_000) {
         authorization: `Bearer ${profile.env.ANTHROPIC_AUTH_TOKEN || ''}`,
         'x-api-key': profile.env.ANTHROPIC_AUTH_TOKEN || '',
       },
-      body: JSON.stringify({ model, max_tokens: 8, messages: [{ role: 'user', content: 'Say OK' }] }),
+      body: JSON.stringify({ model, max_tokens: 8, messages: [{ role: 'user', content: preflightPrompt(profile.preflightTokens) }] }),
       signal: AbortSignal.timeout(timeoutMs),
     });
   } catch (e) {
