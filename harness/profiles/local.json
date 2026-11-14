@@ -7,7 +7,8 @@
     "ANTHROPIC_DEFAULT_SONNET_MODEL": "qwen3.6",
     "ANTHROPIC_DEFAULT_HAIKU_MODEL": "qwen3.6",
     "CLAUDE_CODE_SUBAGENT_MODEL": "qwen3.6",
-    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "TMTS_NO_IMAGES": "1"
   },
   "authTokenFile": "/Volumes/ExternalSSD/models/.litellm-key",
   "trailer": "",

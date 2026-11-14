@@ -2,7 +2,7 @@
 // PreToolUse hook. Reads the tool call as JSON on stdin; exit code 2 blocks it and
 // sends stderr back to the agent. Rules are in harness/lib/rules.mjs.
 
-import { checkWrite, checkBash } from '../lib/rules.mjs';
+import { checkWrite, checkBash, checkRead } from '../lib/rules.mjs';
 
 let input = '';
 process.stdin.setEncoding('utf8');
@@ -20,6 +20,8 @@ process.stdin.on('end', () => {
   if (['Write', 'Edit', 'MultiEdit', 'NotebookEdit'].includes(name)) {
     const target = args.file_path || args.notebook_path;
     if (target) message = checkWrite(target);
+  } else if (name === 'Read' && typeof args.file_path === 'string') {
+    message = checkRead(args.file_path);
   } else if (name === 'Bash' && typeof args.command === 'string') {
     message = checkBash(args.command);
   }
