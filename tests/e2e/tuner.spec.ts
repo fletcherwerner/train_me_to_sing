@@ -25,14 +25,12 @@ test('tuner shows C4 and ~30 cents with sim=const:60.3', async ({ page }) => {
   expect(text).toMatch(/♯/);
 });
 
-test('tuner shows — when no pitch', async ({ page }) => {
+test('tuner shows error when no pitch (no mic in test env)', async ({ page }) => {
   await page.goto('/#/dev/tuner');
   await page.getByRole('button', { name: 'Start' }).click();
 
   // With no sim parameter, the mic source is used.
-  // In the test environment, there's no mic, so no pitch should be detected.
-  // The page should show "No pitch detected" or similar.
-  // Actually, the mic source will fail in the test environment because
-  // there's no microphone. Let's just check the page loads.
-  await expect(page.getByRole('button', { name: 'Stop' })).toBeVisible();
+  // In the test environment, there's no microphone, so getUserMedia fails.
+  // The page should show an error message.
+  await expect(page.locator('.tuner-error')).toBeVisible();
 });

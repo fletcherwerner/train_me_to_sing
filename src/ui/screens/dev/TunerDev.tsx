@@ -9,6 +9,7 @@ import type { PitchFrame } from '../../../audio/pitch/PitchSource';
 
 export function TunerDev() {
   const [started, setStarted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [display, setDisplay] = useState<PitchFrame | null>(null);
   const latestRef = useRef<PitchFrame | null>(null);
   const sourceRef = useRef<ReturnType<typeof createPitchSource> | null>(null);
@@ -31,14 +32,24 @@ export function TunerDev() {
   }, []);
 
   const start = async () => {
-    await unlockAudio();
-    sourceRef.current?.start();
-    setStarted(true);
+    setError(null);
+    try {
+      await unlockAudio();
+      await sourceRef.current?.start();
+      setStarted(true);
+    } catch (err) {
+      if (err instanceof Error && err.message === 'mic-denied') {
+        setError('Microphone access denied. Please allow microphone access in your browser settings and reload.');
+      } else {
+        setError('Failed to start microphone. Please check your settings and try again.');
+      }
+    }
   };
 
   const stop = () => {
     sourceRef.current?.stop();
     setStarted(false);
+    setError(null);
     setDisplay(null);
     latestRef.current = null;
   };
@@ -72,9 +83,11 @@ export function TunerDev() {
           <button onClick={stop}>Stop</button>
         )}
       </p>
-      {frame?.midi == null && started && (
+      {error ? (
+        <p className="tuner-error">{error}</p>
+      ) : frame?.midi == null && started ? (
         <p className="tuner-silence">No pitch detected. Sing or hum into the microphone.</p>
-      )}
+      ) : null}
       <PianoKeyboard
         lowMidi={36}
         highMidi={84}

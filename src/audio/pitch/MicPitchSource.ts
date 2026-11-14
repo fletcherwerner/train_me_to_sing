@@ -2,6 +2,7 @@ import { freqToMidi } from '../../core/music/notes';
 import { getAudioContext } from '../audioEngine';
 import { PitchDetector } from 'pitchy';
 import type { PitchFrame, PitchSource } from './PitchSource';
+import { smoothPitch } from './smoothing';
 
 export const PITCH_CONFIG = {
   MIN_CLARITY: 0.9,
@@ -27,6 +28,8 @@ export function createMicPitchSource(): PitchSource {
   let animFrameId: number | null = null;
   const listeners = new Set<(f: PitchFrame) => void>();
   const buffer = new Float32Array(2048);
+  // Rolling buffer of last 5 raw midi values for median smoothing
+  const rawBuffer: (number | null)[] = [];
 
   function emit(midi: number | null, clarity: number, rms: number) {
     const frame: PitchFrame = {
@@ -40,9 +43,16 @@ export function createMicPitchSource(): PitchSource {
 
   async function start() {
     const ctx = getAudioContext();
-    stream = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
-    });
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+      });
+    } catch (err) {
+      if (err instanceof Error && err.name === 'NotAllowedError') {
+        throw new Error('mic-denied');
+      }
+      throw err;
+    }
     sourceNode = ctx.createMediaStreamSource(stream);
     analyserNode = ctx.createAnalyser();
     analyserNode.fftSize = 2048;
@@ -71,7 +81,14 @@ export function createMicPitchSource(): PitchSource {
         midi = freqToMidi(freq);
       }
 
-      emit(midi, clarity, rms);
+      // 5-frame median smoothing
+      rawBuffer.push(midi);
+      if (rawBuffer.length > PITCH_CONFIG.SMOOTH_WINDOW) {
+        rawBuffer.shift();
+      }
+      const smoothed = smoothPitch(rawBuffer);
+
+      emit(smoothed, clarity, rms);
     }
 
     animFrameId = requestAnimationFrame(tick);

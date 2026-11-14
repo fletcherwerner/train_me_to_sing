@@ -7,11 +7,18 @@ export function createSyntheticPitchSource(behaviour: SynthBehaviour): PitchSour
   const listeners = new Set<(f: PitchFrame) => void>();
   let animFrameId: number | null = null;
   let running = false;
+  let lastTime: number | null = null;
 
   function tick() {
     if (!running) return;
     const t = now();
-    const midi = behaviour(t);
+    // Track elapsed time for the behaviour function
+    if (lastTime === null) {
+      lastTime = t;
+    }
+    const elapsed = t - lastTime;
+    lastTime = t;
+    const midi = behaviour(t + elapsed);
     const frame: PitchFrame = {
       tSec: t,
       midi,
@@ -24,6 +31,7 @@ export function createSyntheticPitchSource(behaviour: SynthBehaviour): PitchSour
 
   async function start(): Promise<void> {
     running = true;
+    lastTime = null;
     animFrameId = requestAnimationFrame(tick);
   }
 
