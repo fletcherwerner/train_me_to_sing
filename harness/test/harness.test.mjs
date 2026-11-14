@@ -248,6 +248,14 @@ test('guard: push is always blocked; branch management is blocked for agents; me
   assert.equal(rules.checkBash('git merge feature-x', {}), null);
 });
 
+test('guard: words inside quotes, messages and heredocs are not commands', () => {
+  assert.equal(rules.checkBash('echo "do not git push yet"', {}), null);
+  assert.equal(rules.checkBash("git commit -m 'mention git push and git merge epic/E01 here'", env('epic-coder')), null);
+  assert.equal(rules.checkBash("git commit -m \"$(cat <<'EOF'\nfix\n\ngit push later\nEOF\n)\"", env('epic-coder')), null);
+  assert.match(rules.checkBash('cd x && git push', {}), /pushed/);
+  assert.match(rules.checkBash('git merge "epic/E08"', {}), /may not be merged/);
+});
+
 // ---- the real repository ----
 
 test('the real E01 files and summary pass the validator', () => {

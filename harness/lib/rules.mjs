@@ -51,13 +51,25 @@ export function checkWrite(filePath, env = process.env) {
 const AGENT_GIT_BLOCKED = /\bgit\s+(push|merge|rebase|reset|switch|checkout|stash|clean|branch\s+-)/;
 const REVIEWER_GIT_BLOCKED = /\bgit\s+(add|commit)\b/;
 
+/**
+ * The command with heredoc bodies and quoted text removed, so that words inside a commit message or an
+ * echo (such as the name of a git subcommand) are not mistaken for commands. Approximate by design: it
+ * errs towards allowing, and the driver's check of the working tree catches what slips through.
+ */
+export function commandSkeleton(command) {
+  return command
+    .replace(/<<-?\s*(['"]?)(\w+)\1[^\n]*\n[\s\S]*?\n\s*\2\b/g, '')
+    .replace(/'[^']*'/g, "''")
+    .replace(/"(?:[^"\\]|\\.)*"/g, '""');
+}
+
 /** Returns an error message if the shell command is not allowed, else null. */
 export function checkBash(command, env = process.env) {
-  if (/\bgit\s+push\b/.test(command)) return 'Blocked: nothing in this project is pushed. Pushing is for the owner.';
+  const cmd = commandSkeleton(command);
+  if (/\bgit\s+push\b/.test(cmd)) return 'Blocked: nothing in this project is pushed. Pushing is for the owner.';
 
-  const merge = /\bgit\s+merge\b/.test(command);
-  if (merge) {
-    const m = /epic\/(E\d{2})/.exec(command);
+  if (/\bgit\s+merge\b/.test(cmd)) {
+    const m = /epic\/(E\d{2})/.exec(command); // look in the original: the branch may be quoted
     if (m) {
       const gate = approvalGate(m[1]);
       if (!gate.ok) return `Blocked: ${m[1]} may not be merged until both reviews approve.\n- ${gate.errors.join('\n- ')}`;
@@ -66,8 +78,8 @@ export function checkBash(command, env = process.env) {
 
   const role = env.TMTS_ROLE;
   if (role) {
-    if (AGENT_GIT_BLOCKED.test(command)) return 'Blocked: agents do not switch, merge, reset or otherwise manage branches. The driver does that.';
-    if ((role === 'plan-reviewer' || role === 'ui-reviewer' || role === 'epic-summarizer') && REVIEWER_GIT_BLOCKED.test(command)) {
+    if (AGENT_GIT_BLOCKED.test(cmd)) return 'Blocked: agents do not switch, merge, reset or otherwise manage branches. The driver does that.';
+    if ((role === 'plan-reviewer' || role === 'ui-reviewer' || role === 'epic-summarizer') && REVIEWER_GIT_BLOCKED.test(cmd)) {
       return 'Blocked: this role writes its file and does not commit. The driver commits.';
     }
   }

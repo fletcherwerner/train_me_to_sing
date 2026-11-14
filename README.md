@@ -17,6 +17,13 @@ The app is built epic by epic by three agents. This is the only README in the re
 
 ## 1. Running the project
 
+### Before the first run
+
+1. **Trust this folder for headless runs.** The driver starts each agent with `claude -p`. In that mode Claude Code ignores this project's `.claude/settings.json` (the command allowlist and the guard hook) until the folder is trusted, so every agent would be denied `npm` and `git`. Run `claude` interactively in this folder once and accept the trust dialog, or set `projects["<this folder>"].hasTrustDialogAccepted` to `true` in `~/.claude.json`. If you forget, the driver detects it and stops with these instructions before any work is done.
+2. `npm install` (once the app exists).
+3. `npm run test:harness` should pass. It tests the validator and guard rules.
+4. `node harness/run-epics.mjs next --dry-run` shows which epic would run.
+
 ### Build an epic
 
 A script runs the loop, so the same command works from any terminal or from Claude Code. From this folder:
