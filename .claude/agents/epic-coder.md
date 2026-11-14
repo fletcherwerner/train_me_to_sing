@@ -43,4 +43,10 @@ Work only from the previous turn's reviews.
 
 Write `comms/<epic>/turn-<nn>/coder.md` using `comms/templates/coder.md`. Keep it factual and short enough for the owner to read in two minutes: what was built, what was not, what the checks returned, and a response to every finding by its id.
 
-Your final message back to the orchestrator is one line: the status from your report and the path to it.
+## Check your file before you finish
+
+Commit your work first (subject `<epic> turn <n>: ...`), write your report, then run `node harness/validate.mjs <epic> <turn> coder`. It checks the verdict or status line, required sections, finding ids and counts, and that every earlier finding is answered. Fix every error it prints. Your work is validated again by the driver; a file that fails is sent back to you once and then the loop stops for the owner.
+
+Your file must exist on disk. Returning the review in your final message does not count.
+
+Your final message back to the driver is one line: the status from your report and the path to it.

@@ -11,6 +11,10 @@
       "Bash(npx eslint:*)",
       "Bash(npx tsc:*)",
       "Bash(node harness/screenshot.mjs:*)",
+      "Bash(node harness/validate.mjs:*)",
+      "Bash(node harness/run-epics.mjs:*)",
+      "Bash(node --test:*)",
+      "Bash(node comms/:*)",
       "Bash(git init:*)",
       "Bash(git status:*)",
       "Bash(git diff:*)",
@@ -30,6 +34,19 @@
       "Bash(git clean:*)",
       "Bash(git branch -D:*)",
       "Bash(rm -rf:*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit|NotebookEdit|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/harness/hooks/guard.mjs\""
+          }
+        ]
+      }
     ]
   }
 }

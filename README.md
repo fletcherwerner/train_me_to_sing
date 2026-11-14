@@ -19,15 +19,29 @@ The app is built epic by epic by three agents. This is the only README in the re
 
 ### Build an epic
 
-Type one of these in Claude Code, from this folder:
+A script runs the loop, so the same command works from any terminal or from Claude Code. From this folder:
 
 | Command | What it does |
 |---------|--------------|
-| `/run-epics next` | Builds the next unapproved epic, then stops. |
-| `/run-epics E03` | Builds that epic, then stops. Its dependencies must be approved first. |
-| `/run-epics all` | Builds epics in order until you interrupt or it needs you. |
+| `node harness/run-epics.mjs next` | Builds the next unapproved epic, then stops. |
+| `node harness/run-epics.mjs E03` | Builds that epic, then stops. Its dependencies must be approved first. |
+| `node harness/run-epics.mjs all` | Builds epics in order until you interrupt or it needs you. |
+| `... --dry-run` | Shows what would run and changes nothing. |
 
-To stop, interrupt. Running the command again resumes where it left off.
+Inside Claude Code, `/run-epics next`, `/run-epics E03` and `/run-epics all` start the same script and report its result.
+
+To stop, press Ctrl+C (or interrupt in Claude Code). Running the command again resumes where it left off. Exit code 0 means it finished what you asked, 2 means it stopped and needs you, 1 means it could not start.
+
+Optional settings, as environment variables before the command:
+
+| Variable | Effect |
+|----------|--------|
+| `TMTS_MODEL` | Model for every agent, passed to `claude --model` |
+| `TMTS_MAX_TURNS` | Turn limit before it asks you (default 10) |
+| `TMTS_AGENT_TIMEOUT_MIN` | Minutes before one agent run is killed (default 60) |
+| `TMTS_MAX_BUDGET_USD` | Spend limit for each agent run |
+| `TMTS_SERIAL_REVIEWS=1` | Run the two reviewers one after the other instead of together |
+| `TMTS_PERMISSION_MODE` | Permission mode for agent runs (default `acceptEdits`; commands not in `.claude/settings.json` are denied) |
 
 ### What happens when it runs
 
@@ -35,7 +49,7 @@ Each epic goes through turns:
 
 1. `epic-coder` builds the epic (turn 1) or responds to the last reviews (later turns).
 2. `plan-reviewer` checks the code against the plan. `ui-reviewer` checks the running UI against your UI requirements.
-3. If both approve in the same turn, the epic is done and merged to `main`, and the orchestrator writes `comms/Exx/SUMMARY.md`: what was accomplished and how to test it. Otherwise another turn starts.
+3. If both approve in the same turn, the epic is done and merged to `main`, and the driver has an agent write `comms/Exx/SUMMARY.md`: what was accomplished and how to test it. Otherwise another turn starts.
 
 ### When it stops and asks you
 
@@ -43,7 +57,7 @@ Each epic goes through turns:
 - An agent reports a blocker, such as a conflict in the plan or a decision only you can make.
 - The coder and a reviewer have disagreed on the same finding for two turns in a row.
 
-It writes the question to `comms/Exx/NEEDS-INPUT.md` and asks you in the conversation. Answer there, or in `comms/Exx/OWNER-NOTES.md`, then run `/run-epics Exx` again.
+It writes the question to `comms/Exx/NEEDS-INPUT.md` and asks you in the conversation. Answer there, or in `comms/Exx/OWNER-NOTES.md`, then run the epic again.
 
 ### Try the app yourself
 
@@ -184,7 +198,8 @@ Everything the three agents say to each other is a markdown file under `comms/`.
 | `epic-coder` | Builds the epic; revises it after feedback | `turn-NN/coder.md` |
 | `plan-reviewer` | Checks the code against the plan, the architecture and the epic | `turn-NN/plan-review.md` |
 | `ui-reviewer` | Checks the running UI against `planning/ui-requirements.md` | `turn-NN/ui-review.md`, `turn-NN/screenshots/` |
-| Orchestrator (`/run-epics`) | Runs the turns, keeps the indexes, stops when required | `STATUS.md`, `Exx/INDEX.md`, `Exx/NEEDS-INPUT.md`, `Exx/FOR-OWNER.md`, `Exx/SUMMARY.md` |
+| Driver (`harness/run-epics.mjs`) | Runs the turns, keeps the indexes, stops when required | `STATUS.md`, `Exx/INDEX.md`, `Exx/NEEDS-INPUT.md`, `Exx/FOR-OWNER.md` |
+| `epic-summarizer` | Writes the owner summary after approval | `Exx/SUMMARY.md` |
 | Owner | Gives direction | `Exx/OWNER-NOTES.md`, `planning/ui-requirements.md` |
 
 ### What a turn is
@@ -196,7 +211,7 @@ The epic is approved when both reviews in the same turn say `APPROVED`. After 10
 
 ### Verdict line
 
-Each review has exactly one line in this form near the top. The orchestrator reads it.
+Each review has exactly one line in this form near the top. The driver reads it.
 
 ```
 **Verdict:** APPROVED
@@ -224,6 +239,32 @@ The coding agent answers every finding by id as `Fixed`, `Deferred` (non-blockin
 - Quote the requirement being applied rather than paraphrasing it.
 - Say what was not checked. A reviewer cannot hear audio or use a real microphone; list the review-script steps left for the owner.
 
+### How the rules are enforced
+
+The loop does not rely on the models following instructions. The driver (`harness/run-epics.mjs`) is code, and it checks every file an agent writes with `harness/validate.mjs` before moving on. You can run the same checks yourself: `node harness/validate.mjs E03 2 all`, `node harness/validate.mjs E03 summary`, `node harness/validate.mjs E03 gate`.
+
+| Rule | Enforced by |
+|------|-------------|
+| Which epic and turn runs next; the 10-turn limit; stopping for the owner | The driver counts turns from the files on disk |
+| Each agent writes its file (a review given only in chat does not count) | Validator: file must exist. A failing file is sent back once, then the loop stops |
+| Exactly one valid verdict or status line; required sections | Validator |
+| Stated blocking and non-blocking counts match the findings; `APPROVED` has no open blocking finding; `CHANGES REQUIRED` has at least one | Validator |
+| Finding ids use the right reviewer, epic and turn; every earlier open finding is addressed by the reviewer and answered by the coder; blocking findings cannot be deferred | Validator |
+| The coder's four checks are reported; none failed if the status is `READY FOR REVIEW`; its commit `Exx turn n: ...` exists; epic notes exist | Validator (strict mode, run by the driver) |
+| UI review has real screenshots, and every screenshot it names exists | Validator |
+| An epic is approved only when the latest turn has two `APPROVED` reviews and a valid coder report | `approvalGate`, run by the driver before it merges, and by a hook on any `git merge epic/...` |
+| The coder edits no planning, harness, `.claude`, README or CLAUDE.md files; reviewers change nothing outside their turn folder | Driver checks the working tree after each agent, and a hook blocks the edit as it happens |
+| `planning/ui-requirements.md` is edited only by you | Hook, in agent sessions |
+| One README only | Hook (any session) and driver check |
+| Nothing is pushed; agents do not switch, merge or reset branches | Hook, permission deny list |
+| No epic is left without a valid `SUMMARY.md` | Driver writes it, validates it, and refuses to start the next epic without it |
+
+What cannot be enforced is the quality of a review: a reviewer can still approve too easily. The validator requires evidence (screenshots, a coverage table, answered findings), not good judgment.
+
+The hooks only restrict edits made with the Write and Edit tools and git commands run in the shell. A shell command such as `sed -i` can change a file without the hook seeing it; the driver's check of the working tree after each agent catches that.
+
+To change a rule, change `harness/lib/comms.mjs` or `harness/lib/rules.mjs` and add a test in `harness/test/`, then run `npm run test:harness`.
+
 ---
 
 ## 6. Harness files
@@ -232,8 +273,14 @@ The coding agent answers every finding by id as `Fixed`, `Deferred` (non-blockin
 |------|----------|
 | `CLAUDE.md` | Standing rules for anyone working in this repository |
 | `.claude/settings.json` | Pre-approved commands (npm, local git, screenshot tool) so a long run does not stall on prompts, and blocked commands (`git push`, `git reset --hard`, `git clean`, `git branch -D`, `rm -rf`). Edit it to widen or narrow what agents may do. |
-| `.claude/agents/` | Instructions for the three agents |
-| `.claude/skills/run-epics/SKILL.md` | The loop that `/run-epics` follows |
+| `.claude/agents/` | Instructions for the four agents: `epic-coder`, `plan-reviewer`, `ui-reviewer`, `epic-summarizer` |
+| `.claude/skills/run-epics/SKILL.md` | The `/run-epics` command; it starts the driver and reports the result |
+| `harness/run-epics.mjs` | The driver: runs the loop, owns every state change |
+| `harness/validate.mjs` | Checks agent files; also usable by you |
+| `harness/lib/comms.mjs` | Parsing, validation, approval gate, status and index files |
+| `harness/lib/rules.mjs`, `harness/hooks/guard.mjs` | Path and command rules applied to agent sessions through a hook in `.claude/settings.json` |
+| `harness/test/` | Tests for the validator and rules (`npm run test:harness`) |
+| `.driver-logs/` | Raw output of every agent run, per epic and turn (not committed). Look here when an agent run fails. |
 | `comms/templates/` | The format of each report |
 | `harness/screenshot.mjs` | Screenshot tool used by the UI reviewer |
 | `docs/epic-notes/` | The coder's notes per epic (created during builds) |

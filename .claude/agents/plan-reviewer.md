@@ -43,4 +43,10 @@ Leave visual design, layout and usability to the UI reviewer. Do report UI behav
 
 Write `comms/<epic>/turn-<nn>/plan-review.md` using `comms/templates/plan-review.md`.
 
-Your final message back to the orchestrator is one line: the verdict and the path to your review.
+## Check your file before you finish
+
+Run `node harness/validate.mjs <epic> <turn> plan`. It checks the verdict or status line, required sections, finding ids and counts, and that every earlier finding is answered. Fix every error it prints. Your work is validated again by the driver; a file that fails is sent back to you once and then the loop stops for the owner.
+
+Your file must exist on disk. Returning the review in your final message does not count.
+
+Your final message back to the driver is one line: the verdict and the path to your review.

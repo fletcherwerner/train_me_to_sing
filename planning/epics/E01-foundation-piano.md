@@ -21,7 +21,7 @@ Out: microphone, lessons, storage.
 
 ### Project setup
 
-1. Create the Vite React TypeScript project in the repo root. Keep the existing `planning/`, `comms/`, `harness/` and `.claude/` folders and the root `README.md` and `CLAUDE.md` untouched (do not let the Vite template overwrite them, and do not add a README anywhere else). The orchestrator has already initialised git.
+1. Create the Vite React TypeScript project in the repo root. Keep the existing `planning/`, `comms/`, `harness/` and `.claude/` folders and the root `README.md` and `CLAUDE.md` untouched (do not let the Vite template overwrite them, and do not add a README anywhere else). The driver has already initialised git.
 2. Install: `react-router-dom`, `zustand`, `zod`, `pitchy`; dev: `vitest`, `@playwright/test`, `@vitejs/plugin-basic-ssl`, `eslint` with the TypeScript and React plugins.
 3. `tsconfig`: `"strict": true`.
 4. `vite.config.ts`: enable `basicSsl()`; `base: './'`.
