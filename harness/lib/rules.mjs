@@ -2,7 +2,7 @@
 // The driver sets TMTS_ROLE / TMTS_EPIC / TMTS_TURN in each agent's environment.
 
 import path from 'node:path';
-import { ROOT, pad, approvalGate } from './comms.mjs';
+import { ROOT, pad, approvalGate, git } from './comms.mjs';
 
 const OWNER_ONLY = ['planning/ui-requirements.md', 'CLAUDE.md', 'README.md', 'harness/', '.claude/'];
 
@@ -63,13 +63,20 @@ export function commandSkeleton(command) {
     .replace(/"(?:[^"\\]|\\.)*"/g, '""');
 }
 
+function currentBranch(env) {
+  if (env.TMTS_TEST_BRANCH) return env.TMTS_TEST_BRANCH; // lets tests avoid a real repository
+  return git(['rev-parse', '--abbrev-ref', 'HEAD']).out;
+}
+
 /** Returns an error message if the shell command is not allowed, else null. */
 export function checkBash(command, env = process.env) {
   const cmd = commandSkeleton(command);
   if (/\bgit\s+push\b/.test(cmd)) return 'Blocked: nothing in this project is pushed. Pushing is for the owner.';
 
-  if (/\bgit\s+merge\b/.test(cmd)) {
-    const m = /epic\/(E\d{2})/.exec(command); // look in the original: the branch may be quoted
+  if (/\bgit\s+merge\b/.test(cmd) && currentBranch(env) === 'main') {
+    // Only a merge into main is gated. Look in the original command (the branch may be quoted) but not in the message.
+    const withoutMessage = command.replace(/\s(?:-m|--message)(?:=|\s+)(?:"[^"]*"|'[^']*'|\S+)/g, '');
+    const m = /epic\/(E\d{2})/.exec(withoutMessage);
     if (m) {
       const gate = approvalGate(m[1]);
       if (!gate.ok) return `Blocked: ${m[1]} may not be merged until both reviews approve.\n- ${gate.errors.join('\n- ')}`;
