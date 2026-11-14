@@ -256,6 +256,37 @@ test('guard: words inside quotes, messages and heredocs are not commands', () =>
   assert.match(rules.checkBash('git merge "epic/E08"', {}), /may not be merged/);
 });
 
+// ---- run profiles ----
+
+test('profile: loads env and reads the token from its file without storing it in the profile', async () => {
+  const { loadProfile, checkReachable } = await import('../lib/profile.mjs');
+  write('secret.key', 'abc123\n');
+  write(
+    'harness/profiles/t.json',
+    JSON.stringify({ env: { ANTHROPIC_BASE_URL: 'http://127.0.0.1:1', ANTHROPIC_MODEL: 'm' }, authTokenFile: path.join(tmp, 'secret.key'), trailer: '', startHint: 'start it' }),
+  );
+  const p = loadProfile('t');
+  assert.equal(p.env.ANTHROPIC_MODEL, 'm');
+  assert.equal(p.env.ANTHROPIC_AUTH_TOKEN, 'abc123');
+  assert.equal(p.trailer, '');
+  await assert.rejects(() => checkReachable(p, 500), /Cannot reach http:\/\/127\.0\.0\.1:1.*start it/);
+});
+
+test('profile: missing profile or missing token file gives a clear error', async () => {
+  const { loadProfile } = await import('../lib/profile.mjs');
+  assert.throws(() => loadProfile('nope'), /No profile "nope"/);
+  write('harness/profiles/u.json', JSON.stringify({ authTokenFile: path.join(tmp, 'missing.key'), startHint: 'hint' }));
+  assert.throws(() => loadProfile('u'), /does not exist\. hint/);
+});
+
+test('the shipped local profile is valid JSON and names a token file, not a token', () => {
+  const root = path.resolve(import.meta.dirname, '..', '..');
+  const j = JSON.parse(fs.readFileSync(path.join(root, 'harness', 'profiles', 'local.json'), 'utf8'));
+  assert.ok(j.authTokenFile);
+  assert.equal(JSON.stringify(j).includes('sk-'), false);
+  assert.equal(j.env.ANTHROPIC_AUTH_TOKEN, undefined);
+});
+
 // ---- the real repository ----
 
 test('the real E01 files and summary pass the validator', () => {

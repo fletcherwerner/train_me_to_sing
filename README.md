@@ -34,10 +34,26 @@ A script runs the loop, so the same command works from any terminal or from Clau
 | `node harness/run-epics.mjs E03` | Builds that epic, then stops. Its dependencies must be approved first. |
 | `node harness/run-epics.mjs all` | Builds epics in order until you interrupt or it needs you. |
 | `... --dry-run` | Shows what would run and changes nothing. |
+| `... --local` | Runs every agent (coder, reviewers, summarizer) on the local Qwen model instead of the default. See below. |
+| `... --profile=<name>` | Same, using `harness/profiles/<name>.json`. |
 
 Inside Claude Code, `/run-epics next`, `/run-epics E03` and `/run-epics all` start the same script and report its result.
 
 To stop, press Ctrl+C (or interrupt in Claude Code). Running the command again resumes where it left off. Exit code 0 means it finished what you asked, 2 means it stopped and needs you, 1 means it could not start.
+
+#### Running on the local model
+
+`--local` does what your `claude-local` alias does, but for every agent the driver starts. A shell alias cannot be used here, because the driver launches `claude` itself and aliases exist only in an interactive shell. The settings are in [`harness/profiles/local.json`](harness/profiles/local.json): the endpoint, the `qwen3.6` model names, and the path of the key file. The key is read from that file at run time and is never copied into the repository or the logs.
+
+```
+node harness/run-epics.mjs E02 --local
+```
+
+Start the model and the proxy first (`start-qwen.sh`, `start-proxy.sh`). The driver checks that the endpoint answers and stops with a reminder if it does not. If the endpoint or model name changes, edit `harness/profiles/local.json`, not the script. Commits made by the driver carry no co-author line in this mode, since the model is not Claude.
+
+The `/run-epics` command in Claude Code starts the driver without `--local`. To use the local model, run the command above in a terminal, or tell the session to run it with `--local`.
+
+#### Other settings
 
 Optional settings, as environment variables before the command:
 
@@ -286,7 +302,8 @@ To change a rule, change `harness/lib/comms.mjs` or `harness/lib/rules.mjs` and 
 | `harness/validate.mjs` | Checks agent files; also usable by you |
 | `harness/lib/comms.mjs` | Parsing, validation, approval gate, status and index files |
 | `harness/lib/rules.mjs`, `harness/hooks/guard.mjs` | Path and command rules applied to agent sessions through a hook in `.claude/settings.json` |
-| `harness/test/` | Tests for the validator and rules (`npm run test:harness`) |
+| `harness/profiles/` | Run profiles such as `local.json`: environment applied to every agent session |
+| `harness/test/` | Tests for the validator, rules and profiles (`npm run test:harness`) |
 | `.driver-logs/` | Raw output of every agent run, per epic and turn (not committed). Look here when an agent run fails. |
 | `comms/templates/` | The format of each report |
 | `harness/screenshot.mjs` | Screenshot tool used by the UI reviewer |

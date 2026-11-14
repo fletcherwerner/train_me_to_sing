@@ -7,6 +7,8 @@
 //   node harness/run-epics.mjs next     run the first epic that is not Approved, then stop
 //   node harness/run-epics.mjs all      run epics in order until something needs the owner
 //   --dry-run                           show what would run, change nothing
+//   --local                             run every agent on the local model (profile harness/profiles/local.json)
+//   --profile=<name>                    run every agent with harness/profiles/<name>.json
 //
 // Environment (all optional):
 //   TMTS_MODEL             model for every agent (passed to `claude --model`)
@@ -27,8 +29,10 @@ import {
   lastRecordedTurn, validateCoder, validateReview, validateSummary, approvalGate, openAfterTurn,
   parseCoder, readStatus, readEpicTable, setStatusRow, setIndexRow, writeNeedsInput, writeForOwner,
 } from './lib/comms.mjs';
+import { loadProfile, checkReachable } from './lib/profile.mjs';
 
-const TRAILER = 'Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>';
+let TRAILER = 'Co-Authored-By: Claude <noreply@anthropic.com>';
+let PROFILE = null; // set in main() from --local / --profile=<name>
 const MAX_TURNS = Number(process.env.TMTS_MAX_TURNS || 10);
 const TIMEOUT_MS = Number(process.env.TMTS_AGENT_TIMEOUT_MIN || 60) * 60_000;
 const CLAUDE = process.env.TMTS_CLAUDE_BIN || 'claude';
@@ -80,7 +84,7 @@ function runAgent(role, epic, turn, extra, attempt) {
   return new Promise((resolve) => {
     const child = spawn(CLAUDE, args, {
       cwd: ROOT,
-      env: { ...process.env, TMTS_DRIVER: '1', TMTS_ROLE: agent, TMTS_EPIC: epic, TMTS_TURN: String(turn) },
+      env: { ...process.env, ...(PROFILE ? PROFILE.env : {}), TMTS_DRIVER: '1', TMTS_ROLE: agent, TMTS_EPIC: epic, TMTS_TURN: String(turn) },
       stdio: ['ignore', 'pipe', 'pipe'],
     });
     children.add(child);
@@ -135,7 +139,7 @@ async function runValidated(role, epic, turn, validate, extra = '') {
 function commit(message, paths = ['-A']) {
   git(['add', ...paths]);
   if (git(['diff', '--cached', '--quiet']).ok) return; // nothing staged
-  const r = git(['commit', '-q', '-m', `${message}\n\n${TRAILER}`]);
+  const r = git(['commit', '-q', '-m', TRAILER ? `${message}\n\n${TRAILER}` : message]);
   if (!r.ok) throw new Stop(`git commit failed: ${r.err}`);
 }
 
@@ -345,7 +349,7 @@ async function approve(epic, turn) {
   const title = readEpicTable().find((r) => r.id === epic)?.title || epic;
   const m = git(['switch', '-q', 'main']);
   if (!m.ok) throw new Stop(`Could not switch to main: ${m.err}`);
-  const merge = git(['merge', '--no-ff', '-q', `epic/${epic}`, '-m', `Merge epic/${epic}: ${title}\n\n${TRAILER}`]);
+  const merge = git(['merge', '--no-ff', '-q', `epic/${epic}`, '-m', TRAILER ? `Merge epic/${epic}: ${title}\n\n${TRAILER}` : `Merge epic/${epic}: ${title}`]);
   if (!merge.ok) {
     git(['merge', '--abort']);
     git(['switch', '-q', `epic/${epic}`]);
@@ -369,6 +373,17 @@ async function ensureSummary(epic) {
 // ---------- main ----------
 
 async function main() {
+  const profileName = flags.has('--local') ? 'local' : [...flags].find((f) => f.startsWith('--profile='))?.slice(10);
+  if (profileName) {
+    try {
+      PROFILE = loadProfile(profileName);
+      if (PROFILE.trailer !== undefined) TRAILER = PROFILE.trailer;
+      await checkReachable(PROFILE);
+    } catch (e) {
+      fail(e.message);
+    }
+    log(`Using profile "${PROFILE.name}" for every agent (${PROFILE.baseUrl || 'default endpoint'})`);
+  }
   if (!git(['rev-parse', '--is-inside-work-tree']).ok) fail('This folder is not a git repository. Run `git init` and commit first.');
   const table = readEpicTable();
   const status = readStatus();
