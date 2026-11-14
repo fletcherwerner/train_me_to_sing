@@ -244,7 +244,7 @@ test('guard: push is always blocked; branch management is blocked for agents; me
   assert.equal(rules.checkBash('git commit -m "E09 turn 1: x"', env('epic-coder')), null);
   assert.match(rules.checkBash('git checkout main', env('epic-coder')), /branches/);
   assert.match(rules.checkBash('git commit -m x', env('ui-reviewer')), /does not commit/);
-  assert.match(rules.checkBash('git merge epic/E08', {}), /may not be merged/);
+  assert.match(rules.checkBash('git merge epic/E08', { TMTS_TEST_BRANCH: 'main' }), /may not be merged/);
   assert.equal(rules.checkBash('git merge feature-x', {}), null);
 });
 
@@ -253,7 +253,16 @@ test('guard: words inside quotes, messages and heredocs are not commands', () =>
   assert.equal(rules.checkBash("git commit -m 'mention git push and git merge epic/E01 here'", env('epic-coder')), null);
   assert.equal(rules.checkBash("git commit -m \"$(cat <<'EOF'\nfix\n\ngit push later\nEOF\n)\"", env('epic-coder')), null);
   assert.match(rules.checkBash('cd x && git push', {}), /pushed/);
-  assert.match(rules.checkBash('git merge "epic/E08"', {}), /may not be merged/);
+  assert.match(rules.checkBash('git merge "epic/E08"', { TMTS_TEST_BRANCH: 'main' }), /may not be merged/);
+});
+
+test('guard: only merges into main are gated, and the merge message is ignored', () => {
+  const onMain = { TMTS_TEST_BRANCH: 'main' };
+  const onEpic = { TMTS_TEST_BRANCH: 'epic/E08' };
+  assert.match(rules.checkBash('git merge --no-ff epic/E08', onMain), /may not be merged/);
+  assert.equal(rules.checkBash('git merge main', onEpic), null);
+  assert.equal(rules.checkBash('git merge -q main -m "Merge main into epic/E08"', onEpic), null);
+  assert.equal(rules.checkBash('git merge -q feature -m "mentions epic/E08"', onMain), null);
 });
 
 // ---- run profiles ----
@@ -270,6 +279,26 @@ test('profile: loads env and reads the token from its file without storing it in
   assert.equal(p.env.ANTHROPIC_AUTH_TOKEN, 'abc123');
   assert.equal(p.trailer, '');
   await assert.rejects(() => checkReachable(p, 500), /Cannot reach http:\/\/127\.0\.0\.1:1.*start it/);
+});
+
+test('profile: a proxy that answers while the model behind it is dead is reported', async () => {
+  const { checkModel } = await import('../lib/profile.mjs');
+  const http = await import('node:http');
+  let ok = false;
+  const server = http.createServer((req, res) => {
+    req.resume();
+    res.writeHead(ok ? 200 : 404, { 'content-type': 'application/json' });
+    res.end(ok ? '{"type":"message"}' : '{"error":"generation thread died"}');
+  });
+  await new Promise((r) => server.listen(0, '127.0.0.1', r));
+  const profile = { name: 't', baseUrl: `http://127.0.0.1:${server.address().port}`, env: { ANTHROPIC_MODEL: 'm' }, startHint: 'start', restartHint: 'restart the model' };
+  try {
+    await assert.rejects(() => checkModel(profile, 5000), /does not work \(HTTP 404\).*generation thread died[\s\S]*restart the model/);
+    ok = true;
+    await checkModel(profile, 5000);
+  } finally {
+    server.close();
+  }
 });
 
 test('profile: missing profile or missing token file gives a clear error', async () => {

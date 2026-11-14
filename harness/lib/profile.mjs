@@ -17,7 +17,7 @@ export function loadProfile(name) {
     }
     env.ANTHROPIC_AUTH_TOKEN = fs.readFileSync(j.authTokenFile, 'utf8').trim();
   }
-  return { name, env, trailer: j.trailer, baseUrl: env.ANTHROPIC_BASE_URL || null, startHint: j.startHint || '' };
+  return { name, env, trailer: j.trailer, baseUrl: env.ANTHROPIC_BASE_URL || null, startHint: j.startHint || '', restartHint: j.restartHint || '' };
 }
 
 /** Throws unless the profile's endpoint answers at all (any HTTP status counts as up). */
@@ -27,5 +27,34 @@ export async function checkReachable(profile, timeoutMs = 4000) {
     await fetch(profile.baseUrl, { signal: AbortSignal.timeout(timeoutMs) });
   } catch (e) {
     throw new Error(`Cannot reach ${profile.baseUrl} for profile "${profile.name}" (${e.cause?.code || e.message}). ${profile.startHint}`.trim());
+  }
+}
+
+/**
+ * Asks the model for a few tokens through the same endpoint the agents will use. A proxy can answer
+ * while the model server behind it is dead, so reachability alone is not enough.
+ */
+export async function checkModel(profile, timeoutMs = 180_000) {
+  if (!profile.baseUrl) return;
+  const model = profile.env.ANTHROPIC_MODEL;
+  let res;
+  try {
+    res = await fetch(`${profile.baseUrl.replace(/\/$/, '')}/v1/messages`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'anthropic-version': '2023-06-01',
+        authorization: `Bearer ${profile.env.ANTHROPIC_AUTH_TOKEN || ''}`,
+        'x-api-key': profile.env.ANTHROPIC_AUTH_TOKEN || '',
+      },
+      body: JSON.stringify({ model, max_tokens: 8, messages: [{ role: 'user', content: 'Say OK' }] }),
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+  } catch (e) {
+    throw new Error(`The model did not answer within ${Math.round(timeoutMs / 1000)}s for profile "${profile.name}" (${e.cause?.code || e.message}). ${profile.startHint}`.trim());
+  }
+  if (!res.ok) {
+    const body = (await res.text()).replace(/\s+/g, ' ').slice(0, 300);
+    throw new Error(`The endpoint answers but model "${model}" does not work (HTTP ${res.status}): ${body}\n${profile.restartHint || profile.startHint}`.trim());
   }
 }

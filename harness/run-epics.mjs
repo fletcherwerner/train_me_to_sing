@@ -29,7 +29,7 @@ import {
   lastRecordedTurn, validateCoder, validateReview, validateSummary, approvalGate, openAfterTurn,
   parseCoder, readStatus, readEpicTable, setStatusRow, setIndexRow, writeNeedsInput, writeForOwner,
 } from './lib/comms.mjs';
-import { loadProfile, checkReachable } from './lib/profile.mjs';
+import { loadProfile, checkReachable, checkModel } from './lib/profile.mjs';
 
 let TRAILER = 'Co-Authored-By: Claude <noreply@anthropic.com>';
 let PROFILE = null; // set in main() from --local / --profile=<name>
@@ -106,6 +106,13 @@ function runAgent(role, epic, turn, extra, attempt) {
         resolve({ code: -2, error: 'untrusted' });
         return;
       }
+      try {
+        const j = JSON.parse(out);
+        if (j.is_error && j.api_error_status) {
+          resolve({ code: -3, error: `HTTP ${j.api_error_status} ${j.api_error_type || ''}: ${String(j.result || '').slice(0, 300)}`.trim() });
+          return;
+        }
+      } catch { /* not JSON: handled as an ordinary failed run */ }
       const mins = ((Date.now() - started) / 60000).toFixed(1);
       log(`${epic} T${turn} ${role}: finished with exit code ${code} after ${mins} min (log: ${rel(logFile)})`);
       resolve({ code, error: code === 0 ? null : `exit code ${code}. ${err.trim().slice(-500)}` });
@@ -124,6 +131,9 @@ async function runValidated(role, epic, turn, validate, extra = '') {
         'Claude Code is ignoring this project\'s settings (permissions and hooks) because the folder is not trusted, so agent runs would be denied their commands.\n' +
           `Run \`claude\` interactively in ${ROOT} once and accept the trust dialog, or set projects["${ROOT}"].hasTrustDialogAccepted to true in ~/.claude.json. Then run this command again.`,
       );
+    }
+    if (run.code === -3) {
+      throw new Fatal(`The model endpoint returned an error, so the ${AGENT[role]} agent could not run (${run.error}).\nThis is not something retrying or a decision from you can fix. Repair the model endpoint, then run this command again; no progress is lost.`);
     }
     if (run.error && run.code === -1) throw new Stop(run.error);
     errors = validate();
@@ -379,6 +389,7 @@ async function main() {
       PROFILE = loadProfile(profileName);
       if (PROFILE.trailer !== undefined) TRAILER = PROFILE.trailer;
       await checkReachable(PROFILE);
+      if (!DRY) await checkModel(PROFILE);
     } catch (e) {
       fail(e.message);
     }
