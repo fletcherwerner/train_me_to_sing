@@ -51,6 +51,15 @@ node harness/run-epics.mjs E02 --local
 
 Start the model and the proxy first (`start-qwen.sh`, `start-proxy.sh`). The driver checks that the endpoint answers and stops with a reminder if it does not. If the endpoint or model name changes, edit `harness/profiles/local.json`, not the script. Commits made by the driver carry no co-author line in this mode, since the model is not Claude.
 
+**Memory on a 32 GB Mac.** Agent prompts are large: the very first request of one agent is about 15,000 tokens (measured), and it grows as the agent reads files. A 35B model at 4-bit takes about 20 GB, so there is little room left for the prompt, and the model server can run out of GPU memory (`Insufficient Memory` in the `start-qwen.sh` terminal, after which every request fails with 404 `generation thread died`). Before starting agents, the driver sends a realistic 16,000-token request (`preflightTokens` in the profile) and stops with the server's message if it fails. If it does, in order of how little they cost:
+
+1. Close memory-heavy apps (browsers, editors, the Claude app) while the loop runs. Memory is shared between the CPU and GPU.
+2. Restart the model server with smaller working memory. `start-qwen.sh` passes extra arguments on, for example:
+   `/Volumes/ExternalSSD/models/start-qwen.sh --prefill-step-size 512 --prompt-concurrency 1 --decode-concurrency 1 --prompt-cache-bytes 1000000000`
+   `--prefill-step-size` lowers the memory spike while a prompt is processed; the cache limit stops old conversations piling up in memory. Run `mlx_lm.server --help` for the others (`--kv-bits` compresses the context memory).
+3. Raise the GPU's share of memory (needs your administrator password, lasts until restart): `sudo sysctl iogpu.wired_limit_mb=26000`. This leaves about 6 GB for everything else; do not set it higher on a 32 GB machine.
+4. Use a smaller model. This costs capability, which matters for agents that must follow a strict file format.
+
 The `/run-epics` command in Claude Code starts the driver without `--local`. To use the local model, run the command above in a terminal, or tell the session to run it with `--local`.
 
 #### Other settings
