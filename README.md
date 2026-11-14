@@ -231,6 +231,7 @@ The coding agent answers every finding by id as `Fixed`, `Deferred` (non-blockin
 | Path | Contains |
 |------|----------|
 | `CLAUDE.md` | Standing rules for anyone working in this repository |
+| `.claude/settings.json` | Pre-approved commands (npm, local git, screenshot tool) so a long run does not stall on prompts, and blocked commands (`git push`, `git reset --hard`, `git clean`, `git branch -D`, `rm -rf`). Edit it to widen or narrow what agents may do. |
 | `.claude/agents/` | Instructions for the three agents |
 | `.claude/skills/run-epics/SKILL.md` | The loop that `/run-epics` follows |
 | `comms/templates/` | The format of each report |
