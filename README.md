@@ -35,7 +35,7 @@ Each epic goes through turns:
 
 1. `epic-coder` builds the epic (turn 1) or responds to the last reviews (later turns).
 2. `plan-reviewer` checks the code against the plan. `ui-reviewer` checks the running UI against your UI requirements.
-3. If both approve in the same turn, the epic is done and merged to `main`. Otherwise another turn starts.
+3. If both approve in the same turn, the epic is done and merged to `main`, and the orchestrator writes `comms/Exx/SUMMARY.md`: what was accomplished and how to test it. Otherwise another turn starts.
 
 ### When it stops and asks you
 
@@ -67,10 +67,11 @@ Each epic file ends with a **Review script**: the steps to check that epic by ha
 | You want to know | Open |
 |------------------|------|
 | Where every epic stands | [`comms/STATUS.md`](comms/STATUS.md) |
+| What an approved epic accomplished and how to test it | `comms/Exx/SUMMARY.md` |
 | How one epic went, turn by turn | `comms/Exx/INDEX.md` |
 | What the loop is waiting on you for | `comms/Exx/NEEDS-INPUT.md` (exists only while stopped) |
 | Questions and suggested UI requirement changes from an approved epic | `comms/Exx/FOR-OWNER.md` |
-| How to check the epic by hand | "Review script" at the end of `planning/epics/Exx-*.md` |
+| The original plan for checking the epic by hand | "Review script" at the end of `planning/epics/Exx-*.md` (the `SUMMARY.md` steps reflect what was actually built) |
 
 ### Inside one turn
 
@@ -96,6 +97,7 @@ comms/
     OWNER-NOTES.md          optional; your instructions for this epic
     NEEDS-INPUT.md          present only while the loop is waiting for you
     FOR-OWNER.md            questions and proposed requirement changes, collected at approval
+    SUMMARY.md              written when the epic is approved: what was accomplished and how to test it
     turn-01/
       coder.md
       plan-review.md
@@ -182,7 +184,7 @@ Everything the three agents say to each other is a markdown file under `comms/`.
 | `epic-coder` | Builds the epic; revises it after feedback | `turn-NN/coder.md` |
 | `plan-reviewer` | Checks the code against the plan, the architecture and the epic | `turn-NN/plan-review.md` |
 | `ui-reviewer` | Checks the running UI against `planning/ui-requirements.md` | `turn-NN/ui-review.md`, `turn-NN/screenshots/` |
-| Orchestrator (`/run-epics`) | Runs the turns, keeps the indexes, stops when required | `STATUS.md`, `Exx/INDEX.md`, `Exx/NEEDS-INPUT.md`, `Exx/FOR-OWNER.md` |
+| Orchestrator (`/run-epics`) | Runs the turns, keeps the indexes, stops when required | `STATUS.md`, `Exx/INDEX.md`, `Exx/NEEDS-INPUT.md`, `Exx/FOR-OWNER.md`, `Exx/SUMMARY.md` |
 | Owner | Gives direction | `Exx/OWNER-NOTES.md`, `planning/ui-requirements.md` |
 
 ### What a turn is

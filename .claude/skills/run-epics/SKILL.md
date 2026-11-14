@@ -42,8 +42,9 @@ Argument: `$ARGUMENTS`
   1. Merge `epic/<epic>` into `main` (no push).
   2. Set the epic to `Approved` in `comms/STATUS.md`.
   3. Collect every "Proposed requirement changes" and "Questions for the owner" entry from this epic's reviews into `comms/<epic>/FOR-OWNER.md` (skip the file if there are none).
-  4. Report to the owner: the epic's "Review script" location, what the reviewers could not verify without a microphone, and any `FOR-OWNER.md` items.
-  5. In `all` mode, continue with the next epic. Otherwise stop.
+  4. Write `comms/<epic>/SUMMARY.md` using `comms/templates/summary.md`, built only from the epic file and this epic's `coder.md`, reviews, `docs/epic-notes/<epic>.md` and `FOR-OWNER.md`. It must say what was accomplished and give runnable steps to test it, with the real routes and options as built, not only the epic's planned review script. Do not claim anything the files do not support. Commit it on `main` with the message `<epic>: summary`.
+  5. Report to the owner in the conversation: two or three lines on what was accomplished, the path to `SUMMARY.md`, and any `FOR-OWNER.md` items. The detail stays in the file.
+  6. In `all` mode, continue with the next epic. Otherwise stop.
 - **Either verdict `BLOCKED - NEEDS OWNER`** → go to **Stopping for the owner**.
 - **Otherwise** (`CHANGES REQUIRED` from either reviewer) → if this was the 10th turn since the epic started or since the owner last answered, go to **Stopping for the owner**; else run the next turn.
 
@@ -56,6 +57,7 @@ Argument: `$ARGUMENTS`
 ## Rules for you
 
 - Never mark an epic approved unless both review files for the same turn say `APPROVED`.
+- Never leave an approved epic without `comms/<epic>/SUMMARY.md`. Do not start the next epic in `all` mode until it is written.
 - Never edit a report or review, and never change a verdict.
 - Never skip a reviewer, even for an epic with little UI.
 - If the owner interrupts, finish nothing further; leave the files as they are. The preflight resumes from the first missing file.
