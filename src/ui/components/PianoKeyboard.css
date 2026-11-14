@@ -1,0 +1,35 @@
+:root {
+  --key-white: #ffffff;
+  --key-black: #1d1d22;
+  --key-outline: #55555f;
+  --key-label: #55555f;
+  --key-target: #3b82f6;
+  --key-sung-match: #22a55b;
+  --key-sung-off: #f08a1c;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --key-white: #e8e8ee;
+    --key-black: #0b0b0f;
+    --key-outline: #9a9aa8;
+    --key-label: #3a3a44;
+    --key-target: #5b9bff;
+    --key-sung-match: #34c776;
+    --key-sung-off: #ffa23a;
+  }
+}
+
+.piano { user-select: none; -webkit-user-select: none; }
+.piano-key { stroke: var(--key-outline); stroke-width: 0.8; cursor: pointer; }
+.piano-key--white { fill: var(--key-white); }
+.piano-key--black { fill: var(--key-black); }
+.piano-key--target { fill: var(--key-target); }
+.piano-key--sung-match { fill: var(--key-sung-match); }
+.piano-key--sung-off { fill: var(--key-sung-off); }
+.piano-label { font-size: 8px; fill: var(--key-label); pointer-events: none; font-family: system-ui, sans-serif; }
+.piano-marker path { fill: none; stroke: currentColor; stroke-width: 1.2; }
+.piano-marker text { font-size: 8px; fill: currentColor; font-family: system-ui, sans-serif; }
+.piano-arrow { font-size: 11px; font-weight: 700; font-family: system-ui, sans-serif; }
+.piano-arrow--match { fill: var(--key-sung-match); }
+.piano-arrow--off { fill: var(--key-sung-off); }
