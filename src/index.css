@@ -6,6 +6,7 @@ body { margin: 0; }
 @media (max-width: 600px) {
   .dev-page button, .dev-page input { min-height: 44px; box-sizing: border-box; }
 }
+.tap-link { display: inline-block; min-height: 44px; min-width: 44px; line-height: 44px; }
 .dev-home { display: inline-flex; align-items: center; min-height: 44px; padding: 0 8px; }
 
 /* Tuner page */

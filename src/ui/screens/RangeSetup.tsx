@@ -167,8 +167,15 @@ export function RangeSetup() {
   const cancel = () => {
     clearTimer();
     sourceRef.current?.stop();
+    playerRef.current?.stopAll();
     navigate('/');
   };
+
+  const cancelLink = (
+    <p className="range-back">
+      <button onClick={cancel}>Home</button>
+    </p>
+  );
 
   const heading = <h1>Vocal Range Assessment</h1>;
   const sungName = sungMidi != null ? midiToName(Math.round(sungMidi)) : '';
@@ -180,7 +187,10 @@ export function RangeSetup() {
         {heading}
         <p>Put on headphones. You will hold your lowest comfortable note, then your highest.</p>
         {error && <p className="range-error">{error}</p>}
-        <button onClick={start}>Start</button>
+        <div className="range-buttons">
+          <button onClick={start}>Start</button>
+        </div>
+        {cancelLink}
       </main>
     );
   }
@@ -220,6 +230,7 @@ export function RangeSetup() {
           <button onClick={save}>Save</button>
           <button onClick={redo}>Redo</button>
         </div>
+        {cancelLink}
       </main>
     );
   }
@@ -263,7 +274,12 @@ export function RangeSetup() {
           {step === 'record' &&
             (countdown != null ? (
               <div className="range-countdown" aria-live="polite">
-                <span className="range-countdown-number">{countdown}</span>
+                {[3, 2, 1].map((n, i) => (
+                  <span key={n}>
+                    {i > 0 && ' – '}
+                    <span className={n === countdown ? 'range-countdown-number' : 'range-countdown-dim'}>{n}</span>
+                  </span>
+                ))}
               </div>
             ) : (
               <div className="range-recording">
@@ -281,9 +297,7 @@ export function RangeSetup() {
           )}
         </>
       )}
-      <p className="range-back">
-        <button onClick={cancel}>Cancel</button>
-      </p>
+      {cancelLink}
     </main>
   );
 }

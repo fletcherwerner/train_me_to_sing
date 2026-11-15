@@ -35,7 +35,7 @@ export function findHeldNote(
 ): FindResult {
   // Step 1: check if enough frames have pitch
   const nonNullCount = frames.filter((f) => f.midi != null).length;
-  if (nonNullCount < frames.length * 0.3) {
+  if (frames.length === 0 || nonNullCount < frames.length * 0.3) {
     return { ok: false, reason: 'no-voice' };
   }
 

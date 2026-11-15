@@ -107,6 +107,10 @@ describe('findHeldNote', () => {
     expect(highest).toEqual({ ok: true, midi: 72 });
   });
 
+  it('returns no-voice for an empty frame list', () => {
+    expect(findHeldNote([], 'lowest')).toEqual({ ok: false, reason: 'no-voice' });
+  });
+
   it('ignores segments shorter than 0.5 seconds', () => {
     // Short segment at 80 (8 frames = 0.4s), then stable at 60 (40 frames = 2s)
     const frames = [

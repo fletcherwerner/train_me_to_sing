@@ -15,12 +15,12 @@ export function Home() {
             {' '}({range.highMidi - range.lowMidi} semitones)
           </p>
           <p>
-            <Link to="/range">Redo range test</Link>
+            <Link to="/range" className="tap-link">Redo range test</Link>
           </p>
         </div>
       ) : (
         <p>
-          No range set. <Link to="/range">Set your range</Link>.
+          No range set. <Link to="/range" className="tap-link">Set your range</Link>.
         </p>
       )}
       <p>Dev pages:</p>
