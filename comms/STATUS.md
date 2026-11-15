@@ -10,7 +10,7 @@ Maintained by the orchestrator. Status is one of: `Not started`, `In progress`, 
 | E04 | Exercise model, range fitting, "I do" playback | Approved | 3 | APPROVED / APPROVED | 2026-11-15 |
 | E05 | Scoring engine and graded "You do" | Approved | 3 | APPROVED / APPROVED | 2026-11-15 |
 | E06 | Full lesson session: I do / We do / You do | Approved | 3 | APPROVED / APPROVED | 2026-11-15 |
-| E07 | Lesson catalog, tracker, Stage 1 lessons | Not started | 0 | — | — |
+| E07 | Lesson catalog, tracker, Stage 1 lessons | Approved | 1 | APPROVED / APPROVED | 2026-11-15 |
 | E08 | Stage 2 scales, tighter tolerances, latency calibration | Not started | 0 | — | — |
 | E09 | Stage 3 songs with lyrics | Not started | 0 | — | — |
 | E10 | PWA install, hosting, export/import | Not started | 0 | — | — |

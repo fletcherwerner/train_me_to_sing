@@ -5,7 +5,7 @@ import { unlockAudio } from '../../audio/audioEngine';
 import { playExercise, playPreviewNote, type PlaybackHandle } from '../../audio/exercisePlayer';
 import { createPitchSource, recordFrames, registerSimExercise, clearSimExercise } from '../../audio/pitch';
 import type { PitchSource } from '../../audio/pitch/PitchSource';
-import { demoLesson } from '../../content/demoLesson';
+import { getLesson } from '../../content/registry';
 import type { Lesson as LessonData } from '../../content/types';
 import { displayRange, fit } from '../../core/exercise/fit';
 import { midiToName } from '../../core/music/notes';
@@ -23,13 +23,8 @@ import { describeReason } from '../describeReason';
 import './Lesson.css';
 
 export interface LessonProps {
-  /** Called when a You do attempt ends. No-op until E07 saves progress. */
+  /** Called when a You do attempt ends. Progress is already saved. */
   onAttemptComplete?: (result: AttemptResult) => void;
-}
-
-// For this epic there is a single hard-coded lesson.
-function findLesson(id: string | undefined): LessonData | null {
-  return id === demoLesson.id ? demoLesson : null;
 }
 
 const INSTRUCTIONS: Record<'iDo' | 'weDo' | 'youDo', string> = {
@@ -46,7 +41,7 @@ const STEP_LABELS: { step: 'iDo' | 'weDo' | 'youDo'; label: string }[] = [
 
 export function Lesson({ onAttemptComplete }: LessonProps) {
   const { lessonId } = useParams();
-  const lesson = findLesson(lessonId);
+  const lesson = lessonId ? getLesson(lessonId) : undefined;
   const range = useAppStore((s) => s.range);
   if (!range) return <Navigate to="/range" replace />;
   if (!lesson) {
@@ -57,6 +52,7 @@ export function Lesson({ onAttemptComplete }: LessonProps) {
             Home
           </Link>
         </p>
+        <h1>Lesson not found</h1>
         <p>We couldn&apos;t find that lesson. Go back home and pick another.</p>
       </main>
     );
@@ -74,6 +70,7 @@ function LessonRun({
   onAttemptComplete?: (result: AttemptResult) => void;
 }) {
   const latencyMs = useAppStore((s) => s.settings.latencyOffsetMs);
+  const recordAttempt = useAppStore((s) => s.recordAttempt);
   const [session, dispatch] = useReducer(reduce, INITIAL_SESSION);
   const [handle, setHandle] = useState<PlaybackHandle | null>(null);
   const [source, setSource] = useState<PitchSource | null>(null);
@@ -173,6 +170,7 @@ function LessonRun({
     if (thisStep === 'youDo' && !result) setNotice('We could not hear the microphone for that run. Press Try again.');
     if (thisStep === 'youDo' && result) {
       dispatch({ type: 'SHOW_RESULTS' });
+      recordAttempt(lesson.id, result);
       onAttemptComplete?.(result);
     }
   };
