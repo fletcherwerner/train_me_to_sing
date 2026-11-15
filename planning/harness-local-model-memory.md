@@ -45,7 +45,7 @@ Findings in the installed `mlx_lm/server.py` (0.32.2) that shape the design:
 |---|---|---|
 | MLX memory limit | 26 GB | just under the 26.8 GB Metal limit; must be above the 20.4 GB weights |
 | MLX buffer-pool limit | 1 GB | freed buffers are returned instead of being kept |
-| `--prompt-cache-size` | 2 | one live conversation plus one spare; matches what E02 used in steady state |
+| `--prompt-cache-size` | 8 | **Corrected 2026-11-15.** First planned as 2, from the two entries seen in E02's log. Wrong: each conversation leaves up to three entries and side requests leave more, and the server evicts the full conversation first, so at 2 nothing was reused (E03 read 40–60k tokens per step). Memory is bounded by the byte limit, not this count |
 | `--prompt-cache-bytes` | 4 GB (`4000000000`) | two copies of the largest agent are about 3 GB |
 | `--prefill-step-size` | 512 | already in use; avoids the prefill memory spike |
 | `--prompt-concurrency`, `--decode-concurrency` | 1 | already in use |
