@@ -12,6 +12,7 @@ export interface SequenceStripProps {
 
 const PX_PER_SEC = 40;
 const MIN_W = 28;
+const MIN_W_RESULT = 60; // wide enough for "F#3" and "✗ miss" on a phone
 
 export function SequenceStrip({ notes, currentIndex, results, onChipPress }: SequenceStripProps) {
   const currentRef = useRef<HTMLLIElement | null>(null);
@@ -44,7 +45,7 @@ export function SequenceStrip({ notes, currentIndex, results, onChipPress }: Seq
             className={cls.join(' ')}
             data-testid={`chip-${n.index}`}
             aria-current={isCurrent ? 'true' : undefined}
-            style={{ width: Math.max(MIN_W, n.durationSec * PX_PER_SEC) }}
+            style={{ width: Math.max(r === undefined ? MIN_W : MIN_W_RESULT, n.durationSec * PX_PER_SEC) }}
           >
             {onChipPress ? (
               <button
