@@ -27,7 +27,7 @@ Small UI fixes on `/dev/attempt`: large Target/Sung note names under the piano, 
 | Finding | Response | What was done, or why disputed or deferred |
 |---------|----------|--------------------------------------------|
 | PLAN-E05-T1-01 | Fixed | Likely cause and the onset-to-`wavered` fallback are documented in `docs/epic-notes/E05.md`. The flake did not recur in this turn's e2e run. |
-| UI-E05-T1-01 | Deferred | I did not view the running or result screens visually; the e2e specs only check the result text. The reviewer should re-run `comms/E05/turn-01/ui-scripts/attempt.mjs`. |
+| UI-E05-T1-01 | Disputed | The finding says "Change needed: None to the code yet"; the gap was the reviewer's session being unable to approve the Playwright script, not a defect. I checked the running and result states only through e2e assertions (result rows, verdict, wrong-octave reasons), not visually. The reviewer should re-run `comms/E05/turn-01/ui-scripts/attempt.mjs`; the owner can also open `/?sim=octaveDown#/dev/attempt`. |
 | UI-E05-T1-02 | Fixed | Large "Target: X · Sung: Y" label added. |
 | UI-E05-T1-03 | Fixed | The result is scrolled into view when a run ends. The Home link already has `min-height: 48px` via `.dev-home` in `src/index.css:8`, so I changed nothing there. |
 
