@@ -17,7 +17,7 @@ export function loadProfile(name) {
     }
     env.ANTHROPIC_AUTH_TOKEN = fs.readFileSync(j.authTokenFile, 'utf8').trim();
   }
-  return { name, env, trailer: j.trailer, baseUrl: env.ANTHROPIC_BASE_URL || null, startHint: j.startHint || '', restartHint: j.restartHint || '', serialReviews: Boolean(j.serialReviews), preflightTokens: Number(j.preflightTokens || 0) };
+  return { name, env, trailer: j.trailer, baseUrl: env.ANTHROPIC_BASE_URL || null, startHint: j.startHint || '', restartHint: j.restartHint || '', flushUrl: j.flushUrl || '', serialReviews: Boolean(j.serialReviews), preflightTokens: Number(j.preflightTokens || 0) };
 }
 
 /** Throws unless the profile's endpoint answers at all (any HTTP status counts as up). */
@@ -27,6 +27,21 @@ export async function checkReachable(profile, timeoutMs = 4000) {
     await fetch(profile.baseUrl, { signal: AbortSignal.timeout(timeoutMs) });
   } catch (e) {
     throw new Error(`Cannot reach ${profile.baseUrl} for profile "${profile.name}" (${e.cause?.code || e.message}). ${profile.startHint}`.trim());
+  }
+}
+
+/**
+ * Asks the model server to empty its saved conversations (POST to the profile's `flushUrl`). Never throws:
+ * returns { ok: true, ...counts } or { ok: false, error, status }. Only call it when no agent is running.
+ */
+export async function flushCache(profile, timeoutMs = 60_000) {
+  if (!profile.flushUrl) return { ok: false, error: 'the profile has no flushUrl' };
+  try {
+    const res = await fetch(profile.flushUrl, { method: 'POST', signal: AbortSignal.timeout(timeoutMs) });
+    if (!res.ok) return { ok: false, status: res.status, error: `HTTP ${res.status}` };
+    return { ok: true, ...(await res.json()) };
+  } catch (e) {
+    return { ok: false, error: e.cause?.code || e.message };
   }
 }
 

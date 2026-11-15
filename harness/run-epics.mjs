@@ -29,7 +29,7 @@ import {
   lastRecordedTurn, validateCoder, validateReview, validateSummary, approvalGate, openAfterTurn,
   parseCoder, readStatus, readEpicTable, setStatusRow, setIndexRow, writeNeedsInput, writeForOwner,
 } from './lib/comms.mjs';
-import { loadProfile, checkReachable, checkModel } from './lib/profile.mjs';
+import { loadProfile, checkReachable, checkModel, flushCache } from './lib/profile.mjs';
 
 let TRAILER = 'Co-Authored-By: Claude <noreply@anthropic.com>';
 let PROFILE = null; // set in main() from --local / --profile=<name>
@@ -62,7 +62,23 @@ for (const sig of ['SIGINT', 'SIGTERM']) {
   });
 }
 
-function runAgent(role, epic, turn, extra, attempt) {
+let flushNoted = false;
+
+/** Runs one agent, then empties the model server's saved conversations once no agent is running (reviews can overlap). */
+async function runAgent(role, epic, turn, extra, attempt) {
+  const run = await runAgentProcess(role, epic, turn, extra, attempt);
+  if (PROFILE?.flushUrl && children.size === 0) {
+    const res = await flushCache(PROFILE);
+    if (res.ok) log(`${epic} T${turn} ${role}: model cache emptied (${res.sequences_before} saved, ${(res.bytes_before / 1e9).toFixed(2)} GB)`);
+    else if (!flushNoted) {
+      flushNoted = true; // say it once; the run continues either way
+      log(`could not empty the model cache (${res.error}); continuing without. ${res.status === 404 ? 'Start the model server with harness/local/start-qwen.sh to get the /flush endpoint.' : ''}`.trim());
+    }
+  }
+  return run;
+}
+
+function runAgentProcess(role, epic, turn, extra, attempt) {
   const agent = AGENT[role];
   const prompt = (role === 'summary' ? `Epic: ${epic}.` : `Epic: ${epic}. Turn: ${turn}.`) + (extra ? `\n\n${extra}` : '');
   const args = [

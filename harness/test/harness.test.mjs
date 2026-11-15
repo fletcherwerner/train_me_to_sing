@@ -352,3 +352,30 @@ test('image reads are blocked only when the model cannot view images', () => {
   assert.equal(rules.checkRead('comms/E02/turn-01/ui-review.md', on), null);
   assert.equal(rules.checkRead('comms/E02/turn-01/screenshots/a.png', {}), null);
 });
+
+test('flushCache reports counts, a missing endpoint, an unreachable server and an unset url', async () => {
+  const { flushCache } = await import('../lib/profile.mjs');
+  const http = await import('node:http');
+  const server = http.createServer((req, res) => {
+    if (req.method === 'POST' && req.url === '/flush') {
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end('{"sequences_before":2,"bytes_before":2910000000,"sequences_after":0,"bytes_after":0}');
+    } else {
+      res.writeHead(404);
+      res.end('Not Found');
+    }
+  });
+  await new Promise((r) => server.listen(0, '127.0.0.1', r));
+  const base = `http://127.0.0.1:${server.address().port}`;
+  try {
+    assert.deepEqual(await flushCache({ flushUrl: `${base}/flush` }), { ok: true, sequences_before: 2, bytes_before: 2910000000, sequences_after: 0, bytes_after: 0 });
+    const missing = await flushCache({ flushUrl: `${base}/nope` });
+    assert.equal(missing.ok, false);
+    assert.equal(missing.status, 404);
+  } finally {
+    server.close();
+  }
+  const down = await flushCache({ flushUrl: 'http://127.0.0.1:1/flush' }, 2000);
+  assert.equal(down.ok, false);
+  assert.match((await flushCache({ flushUrl: '' })).error, /no flushUrl/);
+});
