@@ -379,3 +379,23 @@ test('flushCache reports counts, a missing endpoint, an unreachable server and a
   assert.equal(down.ok, false);
   assert.match((await flushCache({ flushUrl: '' })).error, /no flushUrl/);
 });
+
+test('appUrl prefers APP_URL, then the recorded address, then the default port', async () => {
+  const { appUrl, URL_FILE, DEFAULT_URL } = await import('../lib/app-url.mjs');
+  const fs = await import('node:fs');
+  const had = fs.existsSync(URL_FILE) ? fs.readFileSync(URL_FILE, 'utf8') : null;
+  const saved = process.env.APP_URL;
+  try {
+    delete process.env.APP_URL;
+    fs.rmSync(URL_FILE, { force: true });
+    assert.equal(appUrl(), DEFAULT_URL);
+    fs.mkdirSync(path.dirname(URL_FILE), { recursive: true });
+    fs.writeFileSync(URL_FILE, 'https://localhost:50359\n');
+    assert.equal(appUrl(), 'https://localhost:50359');
+    process.env.APP_URL = 'https://localhost:6000/';
+    assert.equal(appUrl(), 'https://localhost:6000');
+  } finally {
+    if (saved === undefined) delete process.env.APP_URL; else process.env.APP_URL = saved;
+    if (had === null) fs.rmSync(URL_FILE, { force: true }); else fs.writeFileSync(URL_FILE, had);
+  }
+});

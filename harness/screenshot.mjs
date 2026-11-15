@@ -1,13 +1,15 @@
 #!/usr/bin/env node
 // Captures screenshots of app routes at laptop and iPhone sizes for the UI reviewer.
-// Requires the dev server to be running and @playwright/test installed (from E01).
+// Requires the dev server (node harness/dev-server.mjs start) and @playwright/test installed (from E01).
+// The address comes from --base, else $APP_URL, else the server dev-server.mjs started, else https://localhost:5173.
 //
 // node harness/screenshot.mjs --out comms/E03/turn-01/screenshots --routes "/,/range" \
-//   [--range 45,64] [--sim perfect] [--dark] [--base https://localhost:5173] [--wait 800]
+//   [--range 45,64] [--sim perfect] [--dark] [--base <url>] [--wait 800]
 
 import { chromium } from '@playwright/test';
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
+import { appUrl } from './lib/app-url.mjs';
 
 const VIEWPORTS = {
   laptop: { width: 1280, height: 800 },
@@ -15,7 +17,7 @@ const VIEWPORTS = {
 };
 
 function parseArgs(argv) {
-  const args = { base: 'https://localhost:5173', routes: '/', wait: '800' };
+  const args = { base: appUrl(), routes: '/', wait: '800' };
   for (let i = 0; i < argv.length; i++) {
     const key = argv[i];
     if (!key.startsWith('--')) continue;

@@ -353,4 +353,5 @@ To change a rule, change `harness/lib/comms.mjs` or `harness/lib/rules.mjs` and 
 | `.driver-logs/` | Raw output of every agent run, per epic and turn (not committed). Look here when an agent run fails. |
 | `comms/templates/` | The format of each report |
 | `harness/screenshot.mjs` | Screenshot tool used by the UI reviewer |
+| `harness/dev-server.mjs`, `harness/lib/app-url.mjs` | `node harness/dev-server.mjs start\|stop\|url`: the UI reviewer's dev server. It uses port 5173 when free and otherwise a free port, so a server you already have on 5173 is neither disturbed nor reviewed by mistake. Scripts in `comms/` get the address from `appUrl()`. The driver stops it after each review. Its log is `.driver-logs/dev-server.log` |
 | `docs/epic-notes/` | The coder's notes per epic (created during builds) |

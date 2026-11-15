@@ -226,6 +226,7 @@ const devServerPids = () =>
 
 /** Stop dev servers the UI reviewer left running. Anything already listening before it started (the owner's own) is left alone. */
 function stopDevServer(before) {
+  spawnSync(process.execPath, [path.join(ROOT, 'harness', 'dev-server.mjs'), 'stop'], { cwd: ROOT, stdio: 'ignore' }); // the one the reviewer started with dev-server.mjs
   for (const pid of devServerPids()) {
     if (before.has(pid)) continue;
     try { process.kill(Number(pid), 'SIGTERM'); } catch { /* already gone */ }
