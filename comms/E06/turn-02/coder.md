@@ -29,7 +29,7 @@ Fixed the Home link tap size and made the Lesson screen styling match the range 
 |---------|----------|--------------------------------------------|
 | PLAN-E06-T1-01 | Fixed | Navigate to `/` then set the hash. Full e2e run passed 13 of 13. |
 | PLAN-E06-T1-02 | Fixed | Short alert shown on a You do run with no result. |
-| UI-E06-T1-01 | Deferred | Needs no code change. The reviewer's script could not run. `ui-scripts/flow.mjs` needs permission from the driver or owner. I did not take screenshots myself. |
+| UI-E06-T1-01 | Disputed | The finding says "Nothing in the code yet" and asks the driver or owner to allow the reviewer's script to run. That is a permission problem in the review run, not a code defect. I cannot grant it, and my shell also refused scripted browser runs, so I took no screenshots. Please allow `node comms/E06/turn-01/ui-scripts/flow.mjs perfect` and `octaveDown`. The code for all steps and results is covered by the passing e2e tests. |
 | UI-E06-T1-02 | Fixed | Home links on intro, not-found, fit-failure, running and results screens now have a 48 x 48 px minimum. Not checked by screenshot. |
 | UI-E06-T1-03 | Fixed | Centred 720 px column and larger buttons, as on the range screen. Not checked by screenshot. |
 
