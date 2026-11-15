@@ -17,12 +17,21 @@ const MIN_W_RESULT = 60; // wide enough for "F#3" and "✗ miss" on a phone
 export function SequenceStrip({ notes, currentIndex, results, onChipPress }: SequenceStripProps) {
   const currentRef = useRef<HTMLLIElement | null>(null);
 
+  const listRef = useRef<HTMLOListElement | null>(null);
+
+  // Scroll the strip itself (never the page) so the current chip stays visible.
   useEffect(() => {
-    currentRef.current?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+    const list = listRef.current;
+    const chip = currentRef.current;
+    if (!list || !chip) return;
+    const top = chip.offsetTop;
+    const bottom = top + chip.offsetHeight;
+    if (top < list.scrollTop) list.scrollTop = top;
+    else if (bottom > list.scrollTop + list.clientHeight) list.scrollTop = bottom - list.clientHeight;
   }, [currentIndex]);
 
   return (
-    <ol className="sequence-strip" aria-label="Exercise notes">
+    <ol className="sequence-strip" aria-label="Exercise notes" ref={listRef}>
       {notes.map((n) => {
         const cls = ['sequence-chip'];
         const isCurrent = n.index === currentIndex;

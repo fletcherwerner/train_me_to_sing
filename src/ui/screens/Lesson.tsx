@@ -8,6 +8,7 @@ import type { PitchSource } from '../../audio/pitch/PitchSource';
 import { getLesson } from '../../content/registry';
 import type { Lesson as LessonData } from '../../content/types';
 import { displayRange, fit } from '../../core/exercise/fit';
+import { phraseFor, slicePhrase } from '../../core/exercise/phrases';
 import { midiToName } from '../../core/music/notes';
 import { evaluateAttempt } from '../../core/scoring/evaluate';
 import { getTolerance } from '../../core/scoring/tolerance';
@@ -17,6 +18,7 @@ import { INITIAL_SESSION, reduce } from '../../core/session/sessionMachine';
 import { PianoKeyboard } from '../components/PianoKeyboard';
 import { CentsMeter } from '../components/CentsMeter';
 import { SequenceStrip } from '../components/SequenceStrip';
+import { NowSinging } from '../components/NowSinging';
 import { BeatIndicator } from '../components/BeatIndicator';
 import { useLiveAttempt } from '../hooks/useLiveAttempt';
 import { describeReason } from '../describeReason';
@@ -89,7 +91,16 @@ function LessonRun({
   const { step, activity } = session;
   const running = activity === 'running';
   const graded = step === 'weDo' || step === 'youDo';
-  const live = useLiveAttempt(graded ? source : null, handle, exercise, tol);
+  const phrases = lesson.exercise.phrases;
+  // null = whole song. Only I do and We do use a phrase; You do and Results use the whole song.
+  const [phraseIdx, setPhraseIdx] = useState<number | null>(null);
+  const [resultPhrase, setResultPhrase] = useState<number | null>(null);
+  const activePhraseIdx = step === 'iDo' || step === 'weDo' ? phraseIdx : null;
+  const playEx = useMemo(
+    () => (exercise && phrases && activePhraseIdx !== null ? slicePhrase(exercise, phrases[activePhraseIdx]) : exercise),
+    [exercise, activePhraseIdx, phrases],
+  );
+  const live = useLiveAttempt(graded ? source : null, handle, playEx, tol);
 
   useEffect(
     () => () => {
@@ -117,7 +128,8 @@ function LessonRun({
       </main>
     );
   }
-  const ex = fitted.exercise;
+  const fullEx = fitted.exercise;
+  const ex = playEx ?? fullEx;
 
   const begin = async () => {
     setError(null);
@@ -147,6 +159,7 @@ function LessonRun({
     const myRun = ++runRef.current;
     const thisStep = step;
     setNotice(null);
+    setResultPhrase(activePhraseIdx);
     dispatch({ type: 'RUN' });
     await unlockAudio();
     if (myRun !== runRef.current) return;
@@ -188,7 +201,9 @@ function LessonRun({
   const disp = displayRange(range);
   const hasStrip = step === 'weDo' || step === 'youDo';
   const shownResult = step === 'weDo' ? session.weDoResult : step === 'youDo' ? session.youDoResult : null;
-  const strip = shownResult ? shownResult.notes.map((n) => n.hit) : undefined;
+  const resultMatches = shownResult !== null && resultPhrase === activePhraseIdx;
+  const strip = shownResult && resultMatches ? shownResult.notes.map((n) => n.hit) : undefined;
+  const hasLyrics = ex.notes.some((n) => n.lyric);
   const header = (
     <>
       <p>
@@ -248,6 +263,18 @@ function LessonRun({
           results={r.notes.map((n) => n.hit)}
           onChipPress={(i) => playPreviewNote(ex.notes[i].midi)}
         />
+        {phrases && misses.length > 0 ? (
+          <ul data-testid="missed-by-phrase">
+            {phrases
+              .map((p) => ({ label: p.label, count: misses.filter((m) => phraseFor([p], m.index)).length }))
+              .filter((g) => g.count > 0)
+              .map((g) => (
+                <li key={g.label}>
+                  {g.label}: {g.count} missed
+                </li>
+              ))}
+          </ul>
+        ) : null}
         {misses.length > 0 ? (
           <ul data-testid="missed-notes">
             {misses.map((m) => (
@@ -272,8 +299,8 @@ function LessonRun({
   }
 
   const weDoLine =
-    step === 'weDo' && session.weDoResult
-      ? `Practice run: ${session.weDoResult.notes.filter((n) => n.hit).length} of ${session.weDoResult.notes.length} notes.`
+    step === 'weDo' && session.weDoResult && resultMatches
+      ?`Practice run: ${session.weDoResult.notes.filter((n) => n.hit).length} of ${session.weDoResult.notes.length} notes.`
       : null;
   const ranOnce =
     step === 'iDo' ? session.iDoPlays > 0 : step === 'weDo' ? session.weDoResult !== null : session.youDoResult !== null;
@@ -301,6 +328,27 @@ function LessonRun({
         beatInBar={live.position.beatInBar}
         countInRemaining={live.position.countInRemaining}
       />
+      {phrases && (step === 'iDo' || step === 'weDo') ? (
+        <p className="lesson-phrase">
+          <label>
+            Practise:{' '}
+            <select
+              data-testid="phrase-select"
+              value={phraseIdx === null ? '' : String(phraseIdx)}
+              disabled={running}
+              onChange={(e) => setPhraseIdx(e.target.value === '' ? null : Number(e.target.value))}
+            >
+              <option value="">Whole song</option>
+              {phrases.map((p, i) => (
+                <option key={p.label} value={String(i)}>
+                  {p.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </p>
+      ) : null}
+      {hasLyrics ? <NowSinging notes={ex.notes} currentIndex={running ? live.currentNoteIndex : null} /> : null}
       <PianoKeyboard
         lowMidi={disp.lowMidi}
         highMidi={disp.highMidi}

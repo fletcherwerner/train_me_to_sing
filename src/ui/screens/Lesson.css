@@ -64,6 +64,13 @@
   font-size: 2rem;
   margin: 8px 0 0;
 }
+.lesson-phrase {
+  margin: 4px 0;
+}
+.lesson-phrase select {
+  min-height: 44px;
+  font-size: 1.05rem;
+}
 .lesson-score {
   font-size: 1.3rem;
   font-weight: 700;

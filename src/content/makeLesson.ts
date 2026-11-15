@@ -1,4 +1,5 @@
 import { parseNotation } from '../core/exercise/notation';
+import type { Phrase } from '../core/exercise/types';
 import type { Lesson } from './types';
 
 export interface MakeLessonInput {
@@ -11,6 +12,7 @@ export interface MakeLessonInput {
   beatsPerBar?: number;
   notation: string;
   lyrics?: string[];
+  phrases?: Phrase[];
   toleranceId: string;
 }
 
@@ -27,6 +29,7 @@ export function makeLesson(input: MakeLessonInput): Lesson {
       tempoBpm: input.tempoBpm,
       beatsPerBar: input.beatsPerBar ?? 4,
       notes: parseNotation(input.notation, input.lyrics),
+      ...(input.phrases ? { phrases: input.phrases } : {}),
     },
     toleranceId: input.toleranceId,
     passScore: 0.8,
