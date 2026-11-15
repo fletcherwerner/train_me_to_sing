@@ -8,7 +8,7 @@ Maintained by the orchestrator. Status is one of: `Not started`, `In progress`, 
 | E02 | Mic pitch detection and live tuner | Approved | 2 | APPROVED / APPROVED | 2026-11-14 |
 | E03 | Vocal range assessment | Approved | 2 | APPROVED / APPROVED | 2026-11-15 |
 | E04 | Exercise model, range fitting, "I do" playback | Approved | 3 | APPROVED / APPROVED | 2026-11-15 |
-| E05 | Scoring engine and graded "You do" | In progress | 1 | APPROVED / CHANGES REQUIRED | 2026-11-15 |
+| E05 | Scoring engine and graded "You do" | In progress | 2 | APPROVED / BLOCKED - NEEDS OWNER | 2026-11-15 |
 | E06 | Full lesson session: I do / We do / You do | Not started | 0 | — | — |
 | E07 | Lesson catalog, tracker, Stage 1 lessons | Not started | 0 | — | — |
 | E08 | Stage 2 scales, tighter tolerances, latency calibration | Not started | 0 | — | — |
