@@ -1,8 +1,20 @@
 #!/usr/bin/env node
 // PreToolUse hook. Reads the tool call as JSON on stdin; exit code 2 blocks it and
-// sends stderr back to the agent. Rules are in harness/lib/rules.mjs.
+// sends stderr back to the agent. An agent's chained shell command whose every part is allowed is
+// approved by printing an "allow" decision. Rules are in harness/lib/rules.mjs.
 
-import { checkWrite, checkBash, checkRead } from '../lib/rules.mjs';
+import fs from 'node:fs';
+import path from 'node:path';
+import { checkWrite, checkBash, checkRead, allowBash } from '../lib/rules.mjs';
+import { ROOT } from '../lib/comms.mjs';
+
+function readPermissions() {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(ROOT, '.claude/settings.json'), 'utf8')).permissions || {};
+  } catch {
+    return {};
+  }
+}
 
 let input = '';
 process.stdin.setEncoding('utf8');
@@ -28,6 +40,9 @@ process.stdin.on('end', () => {
   if (message) {
     process.stderr.write(message + '\n');
     process.exit(2);
+  }
+  if (name === 'Bash' && typeof args.command === 'string' && allowBash(args.command, readPermissions())) {
+    process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'allow', permissionDecisionReason: 'Every part of the chain is allowed (harness/lib/rules.mjs allowBash).' } }));
   }
   process.exit(0);
 });

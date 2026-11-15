@@ -346,6 +346,38 @@ test('the real E01 files and summary pass the validator', () => {
   assert.equal(run('E01', 'summary').status, 0);
 });
 
+test('a dispute repeated after the owner answered stops the loop; one from before the answer does not', () => {
+  const disputing = (id) => `## Response to findings\n\n| Finding | Response | Note |\n|---|---|---|\n| ${id} | Disputed | why |\n`;
+  write(`comms/E07/turn-02/coder.md`, disputing('UI-E07-T1-01'));
+  write(`comms/E07/turn-03/coder.md`, disputing('UI-E07-T1-01'));
+  write(`comms/E07/turn-04/coder.md`, disputing('UI-E07-T1-01'));
+  assert.deepEqual(lib.repeatedDisputes('E07', 2), []);
+  assert.deepEqual(lib.repeatedDisputes('E07', 3), ['UI-E07-T1-01']);
+  assert.deepEqual(lib.repeatedDisputes('E07', 3, 2), []); // the owner answered after turn 2, as in E06
+  assert.deepEqual(lib.repeatedDisputes('E07', 4, 2), ['UI-E07-T1-01']);
+});
+
+test('guard: a chained agent command is allowed only when every part is', () => {
+  const perms = JSON.parse(fs.readFileSync(new URL('../../.claude/settings.json', import.meta.url), 'utf8')).permissions;
+  const ok = (cmd, role = 'epic-coder') => rules.allowBash(cmd, perms, env(role, 2));
+  // The commands the local model ran in E06 and was refused.
+  assert.equal(ok(`cd ${tmp}; (npm run lint 2>&1 | tail -8; npm test 2>&1 | tail -8; npm run build 2>&1 | tail -4)`), true);
+  assert.equal(ok(`cd ${tmp}; cat planning/epics/E06-*.md; ls comms/E06 2>/dev/null; git status --short | head; git log --oneline -3`), true);
+  assert.equal(ok(`cd ${tmp}; mkdir -p comms/${E}/turn-02/ui-scripts; sed "s#a#b#" comms/${E}/turn-01/ui-scripts/flow.mjs > comms/${E}/turn-02/ui-scripts/flow.mjs; node comms/${E}/turn-02/ui-scripts/flow.mjs perfect 2>&1 | tail -30`, 'ui-reviewer'), true);
+  assert.equal(ok(`cat > src/a.ts <<'EOF'\nexport const a = 1; rm -rf /\nEOF\nnpm test`), true);
+  // Not allowed: an unlisted or denied part, a cd elsewhere, substitution, a write the role may not make, the owner session.
+  assert.equal(ok('npm test && curl http://x'), false);
+  assert.equal(ok('npm test; rm -rf src'), false);
+  assert.equal(ok('cd /tmp && npm test'), false);
+  assert.equal(ok('echo $(curl http://x)'), false);
+  assert.equal(ok('echo hi > planning/ui-requirements.md'), false);
+  assert.equal(ok('echo x > comms/STATUS.md', 'ui-reviewer'), false);
+  assert.equal(ok("sed -i 's/a/b/' src/a.ts"), false);
+  assert.equal(ok('find . -name x -delete'), false);
+  assert.equal(ok('npm test; git checkout main'), false);
+  assert.equal(rules.allowBash('npm test | tail', perms, {}), false);
+});
+
 test('image reads are blocked only when the model cannot view images', () => {
   const on = { TMTS_NO_IMAGES: '1' };
   assert.match(rules.checkRead('comms/E02/turn-01/screenshots/a.png', on), /cannot view images/);

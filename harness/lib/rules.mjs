@@ -79,6 +79,46 @@ function currentBranch(env) {
   return git(['rev-parse', '--abbrev-ref', 'HEAD']).out;
 }
 
+// Read-only commands Claude Code allows on its own; listed here so they may appear in a chain.
+const READ_ONLY = ['cat', 'ls', 'head', 'tail', 'grep', 'wc', 'echo', 'pwd', 'sort', 'uniq', 'diff', 'true', 'test', 'find', 'sed', 'git rev-parse'];
+
+const matchesPrefix = (segment, prefix) => segment === prefix || segment.startsWith(prefix + ' ') || (prefix.endsWith('/') && segment.startsWith(prefix));
+const settingsPrefixes = (rules) => rules.map((r) => /^Bash\((.*?)(?::\*)?\)$/.exec(r)?.[1]).filter(Boolean);
+
+/**
+ * True if an agent's chained command (`cd <repo>; a && b | c`) may run without asking: every part must be a
+ * command the agent could run on its own (the settings allow list or READ_ONLY), none may match the deny list,
+ * and every file it redirects output to must pass checkWrite. The local model chains commands like this, and
+ * headless permission matching refuses the whole line. Anything unclear (substitution, a cd elsewhere, a quoted
+ * redirect target) returns false and is left to the normal permission check.
+ */
+export function allowBash(command, { allow = [], deny = [] } = {}, env = process.env) {
+  if (!env.TMTS_ROLE || checkBash(command, env)) return false;
+  const cmd = commandSkeleton(command);
+  if (/\$\(|`|<\(|>\(/.test(cmd)) return false;
+  const allowed = [...settingsPrefixes(allow), ...READ_ONLY];
+  const denied = settingsPrefixes(deny);
+  for (let segment of cmd.split(/&&|\|\||;|\||\n/)) {
+    segment = segment.trim().replace(/^\(+\s*/, '').replace(/\s*\)+$/, '').trim();
+    if (!segment) continue;
+    if (/^cd(\s|$)/.test(segment)) {
+      const dir = segment.slice(2).trim();
+      if (dir && dir !== '.' && path.resolve(ROOT, dir) !== ROOT) return false;
+      continue;
+    }
+    for (const m of segment.matchAll(/(\d*)(&?>>?)(?!&)\s*(\S*)/g)) {
+      const target = m[3];
+      if (!target || target === "''" || target === '""') return false;
+      if (checkWrite(target, env)) return false;
+    }
+    const bare = segment.replace(/\d*&?>>?\s*\S*/g, '').replace(/\d*>&\d+/g, '').replace(/\s+/g, ' ').trim();
+    if (/^sed\b.*\s-i/.test(bare) || /^find\b.*\s-(exec|execdir|delete|ok)\b/.test(bare)) return false;
+    if (denied.some((p) => matchesPrefix(bare, p))) return false;
+    if (!allowed.some((p) => matchesPrefix(bare, p))) return false;
+  }
+  return true;
+}
+
 /** Returns an error message if the shell command is not allowed, else null. */
 export function checkBash(command, env = process.env) {
   const cmd = commandSkeleton(command);

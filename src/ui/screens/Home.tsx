@@ -23,6 +23,11 @@ export function Home() {
           No range set. <Link to="/range" className="tap-link">Set your range</Link>.
         </p>
       )}
+      <p>
+        <Link to="/lesson/demo" className="tap-link">
+          Demo lesson (I do / We do / You do)
+        </Link>
+      </p>
       <p>Dev pages:</p>
       <ul>
         <li>
