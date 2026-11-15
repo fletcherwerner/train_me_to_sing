@@ -23,3 +23,7 @@ Leave for the final UI pass (not blocking):
 - The per-note list on the results screen, which is centred with its bullets out to one side.
 
 The click-through script was refused because chained shell commands were not allowed. That is fixed in the harness (commit `28eedfc`), so `node comms/E06/turn-NN/ui-scripts/flow.mjs perfect` and `octaveDown` should now run. Start the dev server with `node harness/dev-server.mjs start`.
+
+## 2026-11-15 (after turn 3's coder report)
+
+The stop after turn 3's coder report was a harness bug. It counted the turn-2 dispute from before my answer above. The coder's turn-3 responses are correct: UI-E06-T1-01 and UI-E06-T2-01 are resolved by my check, and the Home-link items are deferred to the final UI pass. Continue with the turn-3 reviews. The reviewers should mark these findings as resolved by the owner, check that the results chips now fit at 393 px, and confirm the click-through script runs.
