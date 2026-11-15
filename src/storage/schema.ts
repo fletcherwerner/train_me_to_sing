@@ -30,6 +30,8 @@ export const storedDataSchema = z.object({
     .nullable(),
   settings: z.object({
     latencyOffsetMs: z.number(),
+    /** ISO time of the last calibration; absent until the student has calibrated. */
+    calibratedAt: z.string().optional(),
   }),
   progress: storedProgressSchema,
   importedLessons: z.array(z.any()),

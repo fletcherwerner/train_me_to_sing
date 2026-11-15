@@ -6,6 +6,8 @@ interface AppStore extends StoredData {
   setRange: (range: StoredData['range']) => void;
   recordAttempt: (lessonId: string, result: AttemptResult) => void;
   resetProgress: () => void;
+  /** `calibrated` is true when the value came from the calibration screen. */
+  setLatencyOffset: (ms: number, calibrated: boolean) => void;
 }
 
 function snapshot(s: AppStore): StoredData {
@@ -38,5 +40,15 @@ export const useAppStore = create<AppStore>((set, get) => {
       });
     },
     resetProgress: () => commit({ progress: {} }),
+    setLatencyOffset: (ms, calibrated) => {
+      const settings = get().settings;
+      commit({
+        settings: {
+          ...settings,
+          latencyOffsetMs: ms,
+          ...(calibrated ? { calibratedAt: new Date().toISOString() } : {}),
+        },
+      });
+    },
   };
 });

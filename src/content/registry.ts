@@ -1,4 +1,5 @@
 import { stage1Lessons } from './builtin/stage1';
+import { stage2Lessons } from './builtin/stage2';
 import type { Lesson, LessonSource } from './types';
 
 const sources: LessonSource[] = [];
@@ -17,4 +18,4 @@ export function getLesson(id: string): Lesson | undefined {
   return getAllLessons().find((l) => l.id === id);
 }
 
-registerSource({ list: () => stage1Lessons });
+registerSource({ list: () => [...stage1Lessons, ...stage2Lessons] });
