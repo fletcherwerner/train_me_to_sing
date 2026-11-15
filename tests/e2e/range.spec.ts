@@ -26,6 +26,7 @@ test('first launch redirects to range setup; wizard completes and persists', asy
   await expect(page.getByText('A2 – E4')).toBeVisible();
   await page.reload();
   await expect(page.getByText('A2 – E4')).toBeVisible();
+  await page.getByRole('link', { name: 'Settings' }).click();
   await expect(page.getByRole('link', { name: 'Redo range test' })).toBeVisible();
 });
 

@@ -33,7 +33,7 @@ async function throughSession(page: Page) {
 
 test('sim=perfect: full lesson passes', async ({ page }) => {
   await seed(page);
-  await page.goto('/#/lesson/demo?sim=perfect');
+  await page.goto('/#/lesson/s1-05?sim=perfect');
   await throughSession(page);
   await expect(page.getByTestId('results-verdict')).toHaveText('Passed', { timeout: 30000 });
   await expect(page.getByTestId('results-score')).toContainText('5 of 5');
@@ -41,7 +41,7 @@ test('sim=perfect: full lesson passes', async ({ page }) => {
 
 test('sim=octaveDown: Not yet with the octave tip', async ({ page }) => {
   await seed(page);
-  await page.goto('/#/lesson/demo?sim=octaveDown');
+  await page.goto('/#/lesson/s1-05?sim=octaveDown');
   await throughSession(page);
   await expect(page.getByTestId('results-verdict')).toHaveText('Not yet', { timeout: 30000 });
   await expect(page.getByTestId('results-tip')).toContainText('different octave');
@@ -52,7 +52,7 @@ test('sim=octaveDown: Not yet with the octave tip', async ({ page }) => {
 test('no range redirects to range setup', async ({ page }) => {
   await page.goto('/');
   await page.evaluate(() => {
-    location.hash = '#/lesson/demo';
+    location.hash = '#/lesson/s1-05';
   });
   await expect(page).toHaveURL(/#\/range/);
 });

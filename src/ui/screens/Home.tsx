@@ -1,45 +1,116 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAppStore } from '../../storage/store';
 import { midiToName } from '../../core/music/notes';
+import { getAllLessons } from '../../content/registry';
+import { fit } from '../../core/exercise/fit';
+import type { Lesson } from '../../content/types';
+import './Home.css';
+
+const STAGE_NAMES: Record<number, string> = {
+  1: 'Stage 1 — Note matching',
+  2: 'Stage 2 — Scales',
+  3: 'Stage 3 — Songs',
+};
 
 export function Home() {
   const range = useAppStore((s) => s.range);
+  const progress = useAppStore((s) => s.progress);
+  const { search } = useLocation();
+  if (!range) return null;
+
+  const lessons = getAllLessons().map((lesson) => ({ lesson, fitResult: fit(lesson.exercise, range) }));
+  const next = lessons.find((l) => l.fitResult.ok && !progress[l.lesson.id]?.passed);
+  const stages = [...new Set(lessons.map((l) => l.lesson.stage))];
+
+  const status = (lesson: Lesson) => {
+    const p = progress[lesson.id];
+    if (!p || p.attempts === 0) return { kind: 'new', text: 'Not started', icon: '○' };
+    const pct = `${Math.round(p.bestScore * 100)}%`;
+    return p.passed
+      ? { kind: 'passed', text: `Passed · ${pct}`, icon: '✓' }
+      : { kind: 'attempted', text: `Best ${pct}`, icon: '◐' };
+  };
 
   return (
-    <main className="dev-page">
-      <h1>Train Me To Sing</h1>
-      {range != null ? (
+    <main className="dev-page home">
+      <header className="home__header">
         <div>
-          <p>
+          <h1>Train Me To Sing</h1>
+          <p data-testid="home-range">
             Your range: <strong>{midiToName(range.lowMidi)} – {midiToName(range.highMidi)}</strong>
-            {' '}({range.highMidi - range.lowMidi} semitones)
-          </p>
-          <p>
-            <Link to="/range" className="tap-link">Redo range test</Link>
           </p>
         </div>
-      ) : (
-        <p>
-          No range set. <Link to="/range" className="tap-link">Set your range</Link>.
-        </p>
-      )}
-      <p>
-        <Link to="/lesson/demo" className="tap-link">
-          Demo lesson (I do / We do / You do)
+        <Link to={{ pathname: '/settings', search }} className="tap-link home__settings" aria-label="Settings">
+          <span aria-hidden="true">⚙</span> Settings
         </Link>
-      </p>
-      <p>Dev pages:</p>
-      <ul>
-        <li>
-          <Link to="/dev/piano">Piano keyboard</Link>
-        </li>
-        <li>
-          <Link to="/dev/tuner">Tuner (pitch detection)</Link>
-        </li>
-        <li>
-          <Link to="/dev/exercise">Exercise playback (I do)</Link>
-        </li>
-      </ul>
+      </header>
+
+      {next ? (
+        <section className="home__continue" data-testid="continue-card">
+          <h2>Continue</h2>
+          <p>
+            <strong>{next.lesson.title}</strong>
+          </p>
+          <p>{next.lesson.goal}</p>
+          <Link to={{ pathname: `/lesson/${next.lesson.id}`, search }} className="home__continue-link">
+            Start lesson
+          </Link>
+        </section>
+      ) : null}
+
+      {stages.map((stage) => {
+        const inStage = lessons.filter((l) => l.lesson.stage === stage);
+        const passedCount = inStage.filter((l) => progress[l.lesson.id]?.passed).length;
+        return (
+          <section key={stage} className="home__stage" aria-label={STAGE_NAMES[stage]}>
+            <h2>{STAGE_NAMES[stage]}</h2>
+            <p className="home__count" data-testid={`stage-${stage}-count`}>
+              {passedCount} of {inStage.length} passed
+            </p>
+            <ul className="home__list">
+              {inStage.map(({ lesson, fitResult }) => {
+                const noteCount = lesson.exercise.notes.length;
+                const st = status(lesson);
+                const body = (
+                  <>
+                    <span className="home__row-main">
+                      <span className="home__row-title">{lesson.title}</span>
+                      <span className="home__row-notes">{noteCount} notes</span>
+                    </span>
+                    {fitResult.ok ? (
+                      <span className={`home__status home__status--${st.kind}`} data-testid={`status-${lesson.id}`}>
+                        <span aria-hidden="true">{st.icon} </span>
+                        {st.text}
+                      </span>
+                    ) : (
+                      <span className="home__status home__status--locked" data-testid={`status-${lesson.id}`}>
+                        Needs {fitResult.neededSemitones} semitones; your range is {fitResult.haveSemitones}
+                      </span>
+                    )}
+                  </>
+                );
+                return (
+                  <li key={lesson.id}>
+                    {fitResult.ok ? (
+                      <Link
+                        className="home__row"
+                        data-testid={`lesson-${lesson.id}`}
+                        to={{ pathname: `/lesson/${lesson.id}`, search }}
+                      >
+                        {body}
+                      </Link>
+                    ) : (
+                      <div className="home__row home__row--disabled" data-testid={`lesson-${lesson.id}`} aria-disabled="true">
+                        {body}
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        );
+      })}
     </main>
   );
 }
