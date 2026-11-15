@@ -1,6 +1,7 @@
 import { Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import { Home } from '../ui/screens/Home';
 import { RangeSetup } from '../ui/screens/RangeSetup';
+import { Lesson } from '../ui/screens/Lesson';
 import { PianoDev } from '../ui/screens/dev/PianoDev';
 import { TunerDev } from '../ui/screens/dev/TunerDev';
 import { ExerciseDev } from '../ui/screens/dev/ExerciseDev';
@@ -21,6 +22,7 @@ export function AppRoutes() {
         path="/"
         element={hasRange ? <Home /> : <Navigate to={{ pathname: '/range', search }} replace />}
       />
+      <Route path="/lesson/:lessonId" element={<Lesson />} />
       <Route path="/dev/piano" element={<PianoDev />} />
       <Route path="/dev/tuner" element={<TunerDev />} />
       <Route path="/dev/exercise" element={<ExerciseDev />} />

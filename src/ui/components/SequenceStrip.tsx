@@ -7,12 +7,13 @@ export interface SequenceStripProps {
   notes: ResolvedNote[];
   currentIndex: number | null;
   results?: (boolean | undefined)[];
+  onChipPress?: (index: number) => void;
 }
 
 const PX_PER_SEC = 40;
 const MIN_W = 28;
 
-export function SequenceStrip({ notes, currentIndex, results }: SequenceStripProps) {
+export function SequenceStrip({ notes, currentIndex, results, onChipPress }: SequenceStripProps) {
   const currentRef = useRef<HTMLLIElement | null>(null);
 
   useEffect(() => {
@@ -28,6 +29,14 @@ export function SequenceStrip({ notes, currentIndex, results }: SequenceStripPro
         const r = results?.[n.index];
         if (r === true) cls.push('sequence-chip--hit');
         if (r === false) cls.push('sequence-chip--miss');
+        const inner = (
+          <>
+            <span className="sequence-chip__name">{midiToName(n.midi)}</span>
+            {n.lyric ? <span className="sequence-chip__lyric">{n.lyric}</span> : null}
+            {r === true ? <span className="sequence-chip__mark">✓ hit</span> : null}
+            {r === false ? <span className="sequence-chip__mark">✗ miss</span> : null}
+          </>
+        );
         return (
           <li
             key={n.index}
@@ -37,8 +46,18 @@ export function SequenceStrip({ notes, currentIndex, results }: SequenceStripPro
             aria-current={isCurrent ? 'true' : undefined}
             style={{ width: Math.max(MIN_W, n.durationSec * PX_PER_SEC) }}
           >
-            <span className="sequence-chip__name">{midiToName(n.midi)}</span>
-            {n.lyric ? <span className="sequence-chip__lyric">{n.lyric}</span> : null}
+            {onChipPress ? (
+              <button
+                type="button"
+                className="sequence-chip__button"
+                aria-label={`Play ${midiToName(n.midi)}`}
+                onClick={() => onChipPress(n.index)}
+              >
+                {inner}
+              </button>
+            ) : (
+              inner
+            )}
           </li>
         );
       })}

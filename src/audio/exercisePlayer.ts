@@ -20,6 +20,12 @@ export interface PlaybackHandle {
 }
 
 let tonePlayer: TonePlayer | null = null;
+
+/** Plays one note now (used when the student taps a chip). */
+export function playPreviewNote(midi: number, durationSec = 0.8): void {
+  tonePlayer ??= createTonePlayer();
+  tonePlayer.playNote(midi, now() + 0.02, durationSec);
+}
 let current: PlaybackHandle | null = null;
 
 export function playExercise(ex: ResolvedExercise, opts: PlaybackOptions): PlaybackHandle {

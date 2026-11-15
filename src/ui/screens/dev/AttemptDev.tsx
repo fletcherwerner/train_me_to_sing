@@ -11,7 +11,8 @@ import type { ExerciseTemplate } from '../../../core/exercise/types';
 import { midiToName } from '../../../core/music/notes';
 import { evaluateAttempt } from '../../../core/scoring/evaluate';
 import { TOLERANCES, getTolerance } from '../../../core/scoring/tolerance';
-import type { AttemptResult, NoteResult } from '../../../core/scoring/types';
+import type { AttemptResult } from '../../../core/scoring/types';
+import { describeReason } from '../../describeReason';
 import { PianoKeyboard } from '../../components/PianoKeyboard';
 import { CentsMeter } from '../../components/CentsMeter';
 import { SequenceStrip } from '../../components/SequenceStrip';
@@ -31,27 +32,6 @@ const DEV_TEMPLATES: ExerciseTemplate[] = [
   },
   { id: 'dev-repeat', title: 'Repeated note (0 0 0)', tempoBpm: 60, beatsPerBar: 4, notes: parseNotation('0 0 0') },
 ];
-
-export function describeReason(r: NoteResult): string {
-  switch (r.reason) {
-    case 'silent':
-      return 'No sound detected';
-    case 'wrong-octave':
-      return 'Right note, wrong octave';
-    case 'wrong-note': {
-      const c = Math.round(Math.abs(r.medianCents ?? 0));
-      return (r.medianCents ?? 0) > 0 ? `Sharp by ${c} cents` : `Flat by ${c} cents`;
-    }
-    case 'wavered':
-      return 'Drifted off the note';
-    case 'early':
-      return 'Came in early';
-    case 'late':
-      return 'Came in late';
-    default:
-      return '';
-  }
-}
 
 export function AttemptDev() {
   const range = useAppStore((s) => s.range);
