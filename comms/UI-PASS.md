@@ -66,3 +66,43 @@ Approved after turn 3, 2026-11-15. Review: `comms/E06/turn-03/ui-review.md`.
 - `comms/E06/turn-03/screenshots/octaveDown-phone-7-wedo-running.png`
 - `comms/E06/turn-03/screenshots/octaveDown-phone-8-wedo-done.png`
 - `comms/E06/turn-03/screenshots/octaveDown-phone-9-youdo-idle.png`
+
+## E07 — Lesson catalog, tracker, Stage 1 lessons
+
+Approved after turn 1, 2026-11-15. Review: `comms/E07/turn-01/ui-review.md`.
+
+### Not verified by the UI reviewer
+
+- Review-script steps 2–8 with real singing: completing lessons, failing a passed lesson, reloading, and working through all eight lessons. I checked the passed, attempted and reset states only with seeded storage. The coder's Playwright tests cover the simulated runs.
+- Whether any lesson feels too hard, too easy or mis-scored.
+- The iPhone run on a real device.
+- Dark mode.
+
+### Screens reviewed
+
+| Screen / state | Laptop | iPhone | Screenshot files |
+|----------------|--------|--------|------------------|
+| Home, range A2–E4, nothing started | OK | OK | `screenshots/home-laptop.png`, `screenshots/home-phone.png` |
+| Home, range D3–B3 (9 semitones), all fit | OK | OK | `screenshots/narrow/home-laptop.png`, `screenshots/narrow/home-phone.png` |
+| Home, 3-semitone range (disabled rows) | OK | Issue (UI-E07-T1-01) | `screenshots/home-smallrange-laptop.png`, `screenshots/home-smallrange-phone.png` |
+| Home with a passed and an attempted lesson | OK | OK | `screenshots/home-progress-laptop.png`, `screenshots/home-progress-phone.png` |
+| Settings | OK | Issue (UI-E07-T1-02) | `screenshots/settings-laptop.png`, `screenshots/settings-phone.png` |
+| Settings, reset confirmation | OK | OK | `screenshots/settings-confirm-laptop.png`, `screenshots/settings-confirm-phone.png` |
+| Lesson not found | OK | OK | `screenshots/lesson-nope-laptop.png`, `screenshots/lesson-nope-phone.png` |
+
+Page scroll width equals the viewport width at both sizes (1280 and 393), so there is no horizontal scrolling.
+
+### Screenshots
+
+- `comms/E07/turn-01/screenshots/home-laptop.png`
+- `comms/E07/turn-01/screenshots/home-phone.png`
+- `comms/E07/turn-01/screenshots/home-progress-laptop.png`
+- `comms/E07/turn-01/screenshots/home-progress-phone.png`
+- `comms/E07/turn-01/screenshots/home-smallrange-laptop.png`
+- `comms/E07/turn-01/screenshots/home-smallrange-phone.png`
+- `comms/E07/turn-01/screenshots/lesson-nope-laptop.png`
+- `comms/E07/turn-01/screenshots/lesson-nope-phone.png`
+- `comms/E07/turn-01/screenshots/settings-confirm-laptop.png`
+- `comms/E07/turn-01/screenshots/settings-confirm-phone.png`
+- `comms/E07/turn-01/screenshots/settings-laptop.png`
+- `comms/E07/turn-01/screenshots/settings-phone.png`
