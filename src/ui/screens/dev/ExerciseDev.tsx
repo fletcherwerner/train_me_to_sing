@@ -52,7 +52,7 @@ export function ExerciseDev() {
   const template = DEV_TEMPLATES.find((t) => t.id === templateId) ?? DEV_TEMPLATES[0];
   const fitted = useMemo(() => (range ? fit(template, range) : null), [template, range]);
   const exercise = fitted && fitted.ok ? fitted.exercise : null;
-  const pos = usePlaybackPosition(handle, exercise);
+  const pos = usePlaybackPosition(handle, exercise, false);
 
   if (!range) {
     return (

@@ -3,11 +3,10 @@ body { margin: 0; }
 .dev-page { max-width: 720px; margin: 0 auto; padding: 16px; }
 .dev-page button { font-size: 1.1rem; padding: 8px 20px; }
 .dev-page input { width: 5em; }
-@media (max-width: 600px) {
-  .dev-page button, .dev-page input { min-height: 44px; box-sizing: border-box; }
-}
-.tap-link { display: inline-block; min-height: 44px; min-width: 44px; line-height: 44px; }
-.dev-home { display: inline-flex; align-items: center; min-height: 44px; padding: 0 8px; }
+.dev-page button, .dev-page input, .dev-page select { min-height: 48px; min-width: 48px; box-sizing: border-box; }
+.dev-page select { font-size: 1.1rem; }
+.tap-link, .dev-home { display: inline-flex; align-items: center; min-height: 48px; min-width: 48px; padding: 0 8px; }
+.dev-page .piano { max-height: 180px; }
 
 /* Tuner page */
 .tuner-note {

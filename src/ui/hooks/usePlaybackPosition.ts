@@ -24,11 +24,20 @@ export function positionAt(
   startSec: number,
   endSec: number,
   ex: ResolvedExercise,
+  hasStartNote = true,
 ): PlaybackPosition {
   const beat = 60 / ex.tempoBpm;
   const countInStart = startSec - LEAD_IN_CLICKS * beat;
   if (t >= endSec) return IDLE;
   if (t < countInStart) {
+    if (!hasStartNote) {
+      return {
+        phase: 'countIn',
+        currentNoteIndex: null,
+        beatInBar: 0,
+        countInRemaining: LEAD_IN_CLICKS,
+      };
+    }
     return { phase: 'startNote', currentNoteIndex: null, beatInBar: 0, countInRemaining: 0 };
   }
   if (t < startSec) {
@@ -53,6 +62,7 @@ export function positionAt(
 export function usePlaybackPosition(
   handle: PlaybackHandle | null,
   ex: ResolvedExercise | null,
+  hasStartNote = true,
 ): PlaybackPosition {
   const [pos, setPos] = useState<PlaybackPosition>(IDLE);
 
@@ -65,7 +75,7 @@ export function usePlaybackPosition(
     let stopped = false;
     const tick = () => {
       if (stopped) return;
-      const next = positionAt(now(), handle.startSec, handle.endSec, ex);
+      const next = positionAt(now(), handle.startSec, handle.endSec, ex, hasStartNote);
       setPos((p) =>
         p.phase === next.phase &&
         p.currentNoteIndex === next.currentNoteIndex &&
@@ -85,7 +95,7 @@ export function usePlaybackPosition(
       stopped = true;
       cancelAnimationFrame(raf);
     };
-  }, [handle, ex]);
+  }, [handle, ex, hasStartNote]);
 
   return pos;
 }
