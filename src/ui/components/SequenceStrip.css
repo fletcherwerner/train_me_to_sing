@@ -1,0 +1,43 @@
+.sequence-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  list-style: none;
+  margin: 12px 0;
+  padding: 0;
+}
+.sequence-chip {
+  box-sizing: border-box;
+  min-height: 48px;
+  padding: 4px 2px;
+  border: 2px solid #9ca3af;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+}
+.sequence-chip__name {
+  font-weight: 700;
+}
+.sequence-chip__lyric {
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+.sequence-chip--current {
+  border-color: #2563eb;
+  background: #2563eb;
+  color: #fff;
+}
+.sequence-chip--hit {
+  background: #16a34a;
+  border-color: #16a34a;
+  color: #fff;
+}
+.sequence-chip--miss {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: #fff;
+}
