@@ -139,3 +139,56 @@ Approved after turn 2, 2026-11-15. Review: `comms/E08/turn-02/ui-review.md`.
 - `comms/E08/turn-02/screenshots/cal-stopped-phone.png`
 - `comms/E08/turn-02/screenshots/settings-laptop.png`
 - `comms/E08/turn-02/screenshots/settings-phone.png`
+
+## E09 — Stage 3 songs with lyrics
+
+Approved after turn 2, 2026-11-15. Review: `comms/E09/turn-02/ui-review.md`.
+
+### Not verified by the UI reviewer
+
+- Listening to the melodies and the audible 4-click lead-in.
+- Lyrics advancing in time with sound.
+- The real iPhone fit, only approximated at 393×852 in Chromium.
+- Real microphone singing. Only the simulated singer was used.
+
+### Screens reviewed
+
+| Screen / state | Laptop | iPhone | Screenshot files |
+|----------------|--------|--------|------------------|
+| Twinkle I do playing | OK | OK | `screenshots/laptop-s3-04-ido-playing.png`, `screenshots/phone-s3-04-ido-playing.png` |
+| We do, Line 2 | OK | OK | `screenshots/laptop-s3-04-wedo-line2.png`, `screenshots/phone-s3-04-wedo-line2.png` |
+| You do running | OK (page 16 px taller than window) | OK (page 18 px taller than window) | `screenshots/laptop-s3-04-youdo-running.png`, `screenshots/phone-s3-04-youdo-running.png` |
+| Results with misses (sim flat40) | OK | OK | `screenshots/laptop-results-flat40.png`, `screenshots/phone-results-flat40.png` |
+
+Scripts: `ui-scripts/flow.mjs`, `ui-scripts/miss.mjs`.
+
+### Screenshots
+
+- `comms/E09/turn-02/screenshots/laptop-home.png`
+- `comms/E09/turn-02/screenshots/laptop-results-flat40.png`
+- `comms/E09/turn-02/screenshots/laptop-s3-01-intro.png`
+- `comms/E09/turn-02/screenshots/laptop-s3-04-ido-done.png`
+- `comms/E09/turn-02/screenshots/laptop-s3-04-ido-playing.png`
+- `comms/E09/turn-02/screenshots/laptop-s3-04-ido-ready.png`
+- `comms/E09/turn-02/screenshots/laptop-s3-04-intro.png`
+- `comms/E09/turn-02/screenshots/laptop-s3-04-wedo-done.png`
+- `comms/E09/turn-02/screenshots/laptop-s3-04-wedo-line2.png`
+- `comms/E09/turn-02/screenshots/laptop-s3-04-wedo-running.png`
+- `comms/E09/turn-02/screenshots/laptop-s3-04-youdo-late.png`
+- `comms/E09/turn-02/screenshots/laptop-s3-04-youdo-ready.png`
+- `comms/E09/turn-02/screenshots/laptop-s3-04-youdo-running.png`
+- `comms/E09/turn-02/screenshots/laptop-s3-05-intro.png`
+- `comms/E09/turn-02/screenshots/phone-home.png`
+- `comms/E09/turn-02/screenshots/phone-results-flat40.png`
+- `comms/E09/turn-02/screenshots/phone-s3-01-intro.png`
+- `comms/E09/turn-02/screenshots/phone-s3-04-ido-done.png`
+- `comms/E09/turn-02/screenshots/phone-s3-04-ido-playing.png`
+- `comms/E09/turn-02/screenshots/phone-s3-04-ido-ready.png`
+- `comms/E09/turn-02/screenshots/phone-s3-04-intro.png`
+- `comms/E09/turn-02/screenshots/phone-s3-04-wedo-done.png`
+- `comms/E09/turn-02/screenshots/phone-s3-04-wedo-line2.png`
+- `comms/E09/turn-02/screenshots/phone-s3-04-wedo-running.png`
+- `comms/E09/turn-02/screenshots/phone-s3-04-youdo-late.png`
+- `comms/E09/turn-02/screenshots/phone-s3-04-youdo-ready.png`
+- `comms/E09/turn-02/screenshots/phone-s3-04-youdo-running.png`
+- `comms/E09/turn-02/screenshots/phone-s3-05-intro.png`

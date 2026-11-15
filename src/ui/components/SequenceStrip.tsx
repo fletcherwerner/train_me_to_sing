@@ -8,23 +8,35 @@ export interface SequenceStripProps {
   currentIndex: number | null;
   results?: (boolean | undefined)[];
   onChipPress?: (index: number) => void;
+  /** Show every chip (results view); the live run caps the strip at three rows. */
+  expanded?: boolean;
 }
 
 const PX_PER_SEC = 40;
 const MIN_W = 28;
 const MIN_W_RESULT = 60; // wide enough for "F#3" and "✗ miss" on a phone
 
-export function SequenceStrip({ notes, currentIndex, results, onChipPress }: SequenceStripProps) {
+export function SequenceStrip({ notes, currentIndex, results, onChipPress, expanded }: SequenceStripProps) {
   const currentRef = useRef<HTMLLIElement | null>(null);
 
+  const listRef = useRef<HTMLOListElement | null>(null);
+
+  // Scroll the strip itself (never the page) so the current chip stays visible.
   useEffect(() => {
-    currentRef.current?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+    const list = listRef.current;
+    const chip = currentRef.current;
+    if (!list || !chip) return;
+    const top = chip.offsetTop;
+    const bottom = top + chip.offsetHeight;
+    if (top < list.scrollTop) list.scrollTop = top;
+    else if (bottom > list.scrollTop + list.clientHeight) list.scrollTop = bottom - list.clientHeight;
   }, [currentIndex]);
 
   return (
-    <ol className="sequence-strip" aria-label="Exercise notes">
+    <ol className={expanded ? 'sequence-strip sequence-strip--expanded' : 'sequence-strip'} aria-label="Exercise notes" ref={listRef}>
       {notes.map((n) => {
         const cls = ['sequence-chip'];
+        if (results?.[n.index] !== undefined) cls.push('sequence-chip--result');
         const isCurrent = n.index === currentIndex;
         if (isCurrent) cls.push('sequence-chip--current');
         const r = results?.[n.index];

@@ -5,10 +5,14 @@
   list-style: none;
   margin: 12px 0;
   padding: 0;
+  position: relative;
+  /* three rows of 56px chips and two 4px gaps; older rows scroll away */
+  max-height: 176px;
+  overflow-y: auto;
 }
 .sequence-chip {
   box-sizing: border-box;
-  min-height: 48px;
+  height: 56px;
   padding: 4px 2px;
   border: 2px solid #9ca3af;
   border-radius: 6px;
@@ -18,6 +22,15 @@
   flex-direction: column;
   justify-content: center;
   overflow: hidden;
+}
+.sequence-chip--result {
+  height: auto;
+  min-height: 56px;
+  overflow: visible;
+}
+.sequence-strip--expanded {
+  max-height: none;
+  overflow: visible;
 }
 .sequence-chip__name {
   font-weight: 700;

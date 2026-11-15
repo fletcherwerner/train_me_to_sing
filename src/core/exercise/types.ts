@@ -5,12 +5,19 @@ export interface TemplateNote {
   lyric?: string;
 }
 
+export interface Phrase {
+  startNote: number; // note index, inclusive
+  endNote: number; // note index, inclusive
+  label: string;
+}
+
 export interface ExerciseTemplate {
   id: string;
   title: string;
   tempoBpm: number;
   beatsPerBar: number; // for the beat indicator (the lead-in is always 4 clicks)
   notes: TemplateNote[]; // sorted by startBeat, never overlapping (monophonic)
+  phrases?: Phrase[]; // optional practice phrases (note indices, inclusive)
 }
 
 export interface StudentRange {
