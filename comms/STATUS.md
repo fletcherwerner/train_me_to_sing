@@ -13,6 +13,6 @@ Maintained by the orchestrator. Status is one of: `Not started`, `In progress`, 
 | E07 | Lesson catalog, tracker, Stage 1 lessons | Approved | 1 | APPROVED / APPROVED | 2026-11-15 |
 | E08 | Stage 2 scales, tighter tolerances, latency calibration | Approved | 2 | APPROVED / APPROVED | 2026-11-15 |
 | E09 | Stage 3 songs with lyrics | Approved | 2 | APPROVED / APPROVED | 2026-11-15 |
-| E10 | PWA install, hosting, export/import | Not started | 0 | — | — |
+| E10 | PWA install, hosting, export/import | In progress | 0 | — | 2026-11-15 |
 | E11 | MIDI import | Not started | 0 | — | — |
 | E12 | Capacitor iOS wrapper | Not started | 0 | — | — |
