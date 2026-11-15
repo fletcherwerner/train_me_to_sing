@@ -23,6 +23,15 @@
   justify-content: center;
   overflow: hidden;
 }
+.sequence-chip--result {
+  height: auto;
+  min-height: 56px;
+  overflow: visible;
+}
+.sequence-strip--expanded {
+  max-height: none;
+  overflow: visible;
+}
 .sequence-chip__name {
   font-weight: 700;
 }

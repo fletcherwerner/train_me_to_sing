@@ -71,6 +71,23 @@
   min-height: 44px;
   font-size: 1.05rem;
 }
+.lesson-phrase--spacer { min-height: 44px; }
+.lesson-misses {
+  list-style: none;
+  text-align: left;
+  margin: 8px 0;
+  padding: 0;
+  columns: 2 220px;
+  font-size: 0.95rem;
+}
+.lesson-misses--lines { columns: 1; font-weight: 700; }
+.lesson-tip { margin: 8px 0; font-size: 1.1rem; }
+@media (max-height: 900px) and (min-width: 700px) {
+  .lesson-page { padding-top: 8px; padding-bottom: 8px; }
+  .dev-page.lesson-page .piano { max-height: 100px; }
+  .lesson-page .sequence-strip { margin: 6px 0; }
+  .lesson-notes { margin: 4px 0; font-size: 1.3rem; }
+}
 .lesson-score {
   font-size: 1.3rem;
   font-weight: 700;

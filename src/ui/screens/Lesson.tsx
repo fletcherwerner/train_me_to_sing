@@ -257,14 +257,18 @@ function LessonRun({
           {hits} of {r.notes.length} notes ({Math.round(r.score * 100)}%)
         </p>
         <p>Pass mark: {Math.round(lesson.passScore * 100)}%</p>
+        <p className="lesson-tip" data-testid="results-tip">
+          <strong>Tip:</strong> {pickTip(r)}
+        </p>
         <SequenceStrip
+          expanded
           notes={ex.notes}
           currentIndex={null}
           results={r.notes.map((n) => n.hit)}
           onChipPress={(i) => playPreviewNote(ex.notes[i].midi)}
         />
         {phrases && misses.length > 0 ? (
-          <ul data-testid="missed-by-phrase">
+          <ul className="lesson-misses lesson-misses--lines" data-testid="missed-by-phrase">
             {phrases
               .map((p) => ({ label: p.label, count: misses.filter((m) => phraseFor([p], m.index)).length }))
               .filter((g) => g.count > 0)
@@ -276,7 +280,7 @@ function LessonRun({
           </ul>
         ) : null}
         {misses.length > 0 ? (
-          <ul data-testid="missed-notes">
+          <ul className="lesson-misses" data-testid="missed-notes">
             {misses.map((m) => (
               <li key={m.index}>
                 Note {m.index + 1} ({midiToName(m.targetMidi)}): {describeReason(m)}
@@ -284,9 +288,6 @@ function LessonRun({
             ))}
           </ul>
         ) : null}
-        <p className="lesson-tip" data-testid="results-tip">
-          <strong>Tip:</strong> {pickTip(r)}
-        </p>
         <p className="lesson-controls">
           <button onClick={() => dispatch({ type: 'BACK_TO', step: 'youDo' })}>Try again</button>
           <button onClick={() => dispatch({ type: 'BACK_TO', step: 'iDo' })}>Hear it again</button>
@@ -347,6 +348,8 @@ function LessonRun({
             </select>
           </label>
         </p>
+      ) : phrases ? (
+        <p className="lesson-phrase lesson-phrase--spacer" aria-hidden="true" />
       ) : null}
       {hasLyrics ? <NowSinging notes={ex.notes} currentIndex={running ? live.currentNoteIndex : null} /> : null}
       <PianoKeyboard
