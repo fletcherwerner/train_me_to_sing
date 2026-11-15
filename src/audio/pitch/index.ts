@@ -1,6 +1,10 @@
 import { createMicPitchSource } from './MicPitchSource';
 import { constantPitch, createSyntheticPitchSource } from './SyntheticPitchSource';
 import type { PitchSource } from './PitchSource';
+import { isSimBehaviour, simBehaviour } from './simSinger';
+
+export { registerSimExercise, clearSimExercise } from './simSinger';
+export { recordFrames } from './frameRecorder';
 
 // Module-level state for range simulation mode.
 let rangeAccepted = false;
@@ -32,8 +36,8 @@ export function createPitchSource(): PitchSource {
     }
   }
 
-  if (sim === 'silent') {
-    return createSyntheticPitchSource(() => null);
+  if (isSimBehaviour(sim)) {
+    return createSyntheticPitchSource(simBehaviour(sim));
   }
 
   if (sim?.startsWith('range:')) {

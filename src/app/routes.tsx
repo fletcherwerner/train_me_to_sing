@@ -4,6 +4,7 @@ import { RangeSetup } from '../ui/screens/RangeSetup';
 import { PianoDev } from '../ui/screens/dev/PianoDev';
 import { TunerDev } from '../ui/screens/dev/TunerDev';
 import { ExerciseDev } from '../ui/screens/dev/ExerciseDev';
+import { AttemptDev } from '../ui/screens/dev/AttemptDev';
 import { useAppStore } from '../storage/store';
 
 export function AppRoutes() {
@@ -23,6 +24,7 @@ export function AppRoutes() {
       <Route path="/dev/piano" element={<PianoDev />} />
       <Route path="/dev/tuner" element={<TunerDev />} />
       <Route path="/dev/exercise" element={<ExerciseDev />} />
+      <Route path="/dev/attempt" element={<AttemptDev />} />
     </Routes>
   );
 }
