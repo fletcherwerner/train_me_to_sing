@@ -106,3 +106,36 @@ Page scroll width equals the viewport width at both sizes (1280 and 393), so the
 - `comms/E07/turn-01/screenshots/settings-confirm-phone.png`
 - `comms/E07/turn-01/screenshots/settings-laptop.png`
 - `comms/E07/turn-01/screenshots/settings-phone.png`
+
+## E08 — Stage 2 scales, tighter tolerances, latency calibration
+
+Approved after turn 2, 2026-11-15. Review: `comms/E08/turn-02/ui-review.md`.
+
+### Not verified by the UI reviewer
+
+- Real-microphone calibration, audible clicks, and review-script steps 2–7.
+- Dark mode.
+- A real iPhone.
+
+### Screens reviewed
+
+| Screen / state | Laptop | iPhone | Screenshot files |
+|----------------|--------|--------|------------------|
+| Calibrate, count-in | OK | OK | `screenshots/cal-count-phone.png`, `screenshots/cal-count-laptop.png` |
+| Calibrate, measured clicks | OK | OK | `screenshots/cal-click-phone.png`, `screenshots/cal-click-laptop.png` |
+| Calibrate, result (Save / Retry) | OK | OK | `screenshots/cal-result-phone.png`, `screenshots/cal-result-laptop.png` |
+| Calibrate, after Stop | OK | OK | `screenshots/cal-stopped-phone.png`, `screenshots/cal-stopped-laptop.png` |
+| Settings, timing slider | OK | OK | `screenshots/settings-phone.png`, `screenshots/settings-laptop.png` |
+
+### Screenshots
+
+- `comms/E08/turn-02/screenshots/cal-click-laptop.png`
+- `comms/E08/turn-02/screenshots/cal-click-phone.png`
+- `comms/E08/turn-02/screenshots/cal-count-laptop.png`
+- `comms/E08/turn-02/screenshots/cal-count-phone.png`
+- `comms/E08/turn-02/screenshots/cal-result-laptop.png`
+- `comms/E08/turn-02/screenshots/cal-result-phone.png`
+- `comms/E08/turn-02/screenshots/cal-stopped-laptop.png`
+- `comms/E08/turn-02/screenshots/cal-stopped-phone.png`
+- `comms/E08/turn-02/screenshots/settings-laptop.png`
+- `comms/E08/turn-02/screenshots/settings-phone.png`
