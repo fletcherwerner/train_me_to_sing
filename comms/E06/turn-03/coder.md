@@ -26,10 +26,10 @@ Fixed the one item the owner asked for: results-screen note chips clipped their 
 
 | Finding | Response | What was done, or why disputed or deferred |
 |---------|----------|--------------------------------------------|
-| UI-E06-T2-01 | Deferred | The owner's notes say it is resolved by their own check. |
+| UI-E06-T2-01 | Disputed | OWNER-NOTES: "Treat UI-E06-T1-01 and UI-E06-T2-01 as resolved by the owner's check." |
 | UI-E06-T2-02 | Deferred | The owner's notes leave Home link styling for the final UI pass. |
-| UI-E06-T1-01 | Deferred | Resolved by the owner's check, per OWNER-NOTES. |
-| UI-E06-T1-02 | Deferred | Same as UI-E06-T2-02. |
+| UI-E06-T1-01 | Disputed | Same OWNER-NOTES line: resolved by the owner's check. |
+| UI-E06-T1-02 | Disputed | OWNER-NOTES lists the Home link styling (UI-E06-T2-02) under "Leave for the final UI pass (not blocking)". |
 | UI-E06-T1-03 | Deferred | Same as UI-E06-T2-02. |
 
 ## Not done
