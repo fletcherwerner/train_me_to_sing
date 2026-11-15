@@ -1,0 +1,12 @@
+import { chromium } from '@playwright/test';
+import { appUrl } from '../../../../harness/lib/app-url.mjs';
+const b = await chromium.launch({args:['--use-fake-ui-for-media-stream','--use-fake-device-for-media-stream']});
+const c = await b.newContext({viewport:{width:393,height:852},ignoreHTTPSErrors:true,deviceScaleFactor:2});
+const p = await c.newPage();
+await p.goto(appUrl()+'/?sim=perfect#/settings/calibrate');
+await p.getByRole('button',{name:'Start'}).click();
+await p.waitForTimeout(2500);
+await p.screenshot({path:'comms/E08/turn-01/screenshots/cal-running-phone.png'});
+await p.waitForTimeout(14000);
+await p.screenshot({path:'comms/E08/turn-01/screenshots/cal-result-phone.png'});
+await b.close();

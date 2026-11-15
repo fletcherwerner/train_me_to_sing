@@ -7,7 +7,14 @@ describe('built-in lessons', () => {
   const lessons = getAllLessons();
 
   it('has the eight Stage 1 lessons in order', () => {
-    expect(lessons.map((l) => l.id)).toEqual(['s1-01', 's1-02', 's1-03', 's1-04', 's1-05', 's1-06', 's1-07', 's1-08']);
+    expect(lessons.filter((l) => l.stage === 1).map((l) => l.id)).toEqual(['s1-01', 's1-02', 's1-03', 's1-04', 's1-05', 's1-06', 's1-07', 's1-08']);
+  });
+
+  it('has the eight Stage 2 lessons in order, t2 then t3', () => {
+    const s2 = lessons.filter((l) => l.stage === 2);
+    expect(s2.map((l) => l.id)).toEqual(['s2-01', 's2-02', 's2-03', 's2-04', 's2-05', 's2-06', 's2-07', 's2-08']);
+    expect(s2.map((l) => l.toleranceId)).toEqual(['t2', 't2', 't2', 't2', 't3', 't3', 't3', 't3']);
+    expect(s2.map((l) => l.exercise.tempoBpm)).toEqual([60, 60, 60, 60, 72, 72, 72, 72]);
   });
 
   it('has unique ids', () => {

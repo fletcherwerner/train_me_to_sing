@@ -7,6 +7,8 @@ import './Home.css';
 export function Settings() {
   const range = useAppStore((s) => s.range);
   const resetProgress = useAppStore((s) => s.resetProgress);
+  const latencyMs = useAppStore((s) => s.settings.latencyOffsetMs);
+  const setLatencyOffset = useAppStore((s) => s.setLatencyOffset);
   const { search } = useLocation();
   const [confirming, setConfirming] = useState(false);
   const [done, setDone] = useState(false);
@@ -34,6 +36,39 @@ export function Settings() {
       <p>
         <Link to={{ pathname: '/range', search }} className="tap-link">
           Redo range test
+        </Link>
+      </p>
+
+      <h2>Timing delay</h2>
+      <p>
+        <label>
+          Delay: <output data-testid="latency-value">{latencyMs} ms</output>
+          <br />
+          <input
+            className="latency-slider"
+            type="range"
+            min={0}
+            max={500}
+            step={10}
+            value={latencyMs}
+            onChange={(e) => setLatencyOffset(Number(e.target.value), false)}
+            aria-label="Latency offset in milliseconds"
+            data-testid="latency-slider"
+          />
+        </label>
+      </p>
+      <p>
+        <button type="button" onClick={() => setLatencyOffset(Math.max(0, latencyMs - 10), false)}>
+          −10
+        </button>{' '}
+        <button type="button" onClick={() => setLatencyOffset(Math.min(500, latencyMs + 10), false)}>
+          +10
+        </button>{' '}
+        <span>Range 0–500 ms</span>
+      </p>
+      <p>
+        <Link to={{ pathname: '/settings/calibrate', search }} className="tap-link">
+          Calibrate timing
         </Link>
       </p>
 

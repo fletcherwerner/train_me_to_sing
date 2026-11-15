@@ -12,6 +12,10 @@ const STAGE_NAMES: Record<number, string> = {
   3: 'Stage 3 — Songs',
 };
 
+const STRICTER_NOTE: Record<number, string> = {
+  2: 'Stricter than Stage 1: tighter pitch, longer holds and tighter timing.',
+};
+
 export function Home() {
   const range = useAppStore((s) => s.range);
   const progress = useAppStore((s) => s.progress);
@@ -67,6 +71,12 @@ export function Home() {
             <p className="home__count" data-testid={`stage-${stage}-count`}>
               {passedCount} of {inStage.length} passed
             </p>
+            {STRICTER_NOTE[stage] ? (
+              <p className="home__count" data-testid={`stage-${stage}-note`}>
+                {STRICTER_NOTE[stage]}{' '}
+                <Link to={{ pathname: '/settings/calibrate', search }}>Calibrate timing</Link> first.
+              </p>
+            ) : null}
             <ul className="home__list">
               {inStage.map(({ lesson, fitResult }) => {
                 const noteCount = lesson.exercise.notes.length;

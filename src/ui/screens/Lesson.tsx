@@ -20,6 +20,7 @@ import { SequenceStrip } from '../components/SequenceStrip';
 import { BeatIndicator } from '../components/BeatIndicator';
 import { useLiveAttempt } from '../hooks/useLiveAttempt';
 import { describeReason } from '../describeReason';
+import { describeTolerance } from '../describeTolerance';
 import './Lesson.css';
 
 export interface LessonProps {
@@ -70,6 +71,7 @@ function LessonRun({
   onAttemptComplete?: (result: AttemptResult) => void;
 }) {
   const latencyMs = useAppStore((s) => s.settings.latencyOffsetMs);
+  const calibrated = useAppStore((s) => s.settings.calibratedAt !== undefined);
   const recordAttempt = useAppStore((s) => s.recordAttempt);
   const [session, dispatch] = useReducer(reduce, INITIAL_SESSION);
   const [handle, setHandle] = useState<PlaybackHandle | null>(null);
@@ -203,7 +205,14 @@ function LessonRun({
       <main className="dev-page lesson-page">
         {header}
         <p data-testid="lesson-goal">{lesson.goal}</p>
+        <p data-testid="lesson-tolerance">{describeTolerance(tol)}</p>
         <p>Put on headphones so the piano does not get picked up by the microphone.</p>
+        {lesson.stage === 2 && !calibrated && lesson.order === 1 ? (
+          <p data-testid="calibrate-hint">
+            Tip: timing is graded fairly only if the app knows your device&apos;s delay.{' '}
+            <Link to="/settings/calibrate">Calibrate timing</Link> first.
+          </p>
+        ) : null}
         <p>
           <button onClick={begin} disabled={starting}>
             Start
