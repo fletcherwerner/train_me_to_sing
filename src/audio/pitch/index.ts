@@ -32,6 +32,10 @@ export function createPitchSource(): PitchSource {
     }
   }
 
+  if (sim === 'silent') {
+    return createSyntheticPitchSource(() => null);
+  }
+
   if (sim?.startsWith('range:')) {
     const parts = sim.slice(6).split(',');
     const low = parseFloat(parts[0]);

@@ -1,467 +1,289 @@
 import { useNavigate } from 'react-router-dom';
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { unlockAudio, now } from '../../audio/audioEngine';
 import { createTonePlayer, type TonePlayer } from '../../audio/tonePlayer';
-import { createPitchSource, acceptRangeLow } from '../../audio/pitch';
+import { createPitchSource, acceptRangeLow, resetRangeSim } from '../../audio/pitch';
 import { PianoKeyboard } from '../components/PianoKeyboard';
 import { midiToName } from '../../core/music/notes';
-import type { PitchFrame } from '../../audio/pitch/PitchSource';
+import type { PitchFrame, PitchSource } from '../../audio/pitch/PitchSource';
 import { findHeldNote } from '../../core/exercise/rangeAnalysis';
 import { useAppStore } from '../../storage/store';
 import './RangeSetup.css';
 
-type Step = 'intro' | 'low-find' | 'low-record' | 'low-result' | 'high-find' | 'high-record' | 'high-result' | 'confirm';
+type Step = 'intro' | 'find' | 'record' | 'result' | 'fail' | 'confirm';
+type Pick = 'lowest' | 'highest';
+
+const COUNT_SEC = 3;
+const WINDOW_SEC = 3;
+const FIND_LOW = 36; // C2
+const FIND_HIGH = 84; // C6
+const MIN_SPAN = 5;
+const WARN_SPAN = 7;
 
 export function RangeSetup() {
   const navigate = useNavigate();
+  const setRange = useAppStore((s) => s.setRange);
   const [step, setStep] = useState<Step>('intro');
+  const [pick, setPick] = useState<Pick>('lowest');
   const [error, setError] = useState<string | null>(null);
-  const [display, setDisplay] = useState<PitchFrame | null>(null);
-  const latestRef = useRef<PitchFrame | null>(null);
-  const sourceRef = useRef<ReturnType<typeof createPitchSource> | null>(null);
-  const playerRef = useRef<TonePlayer | null>(null);
-  const framesRef = useRef<PitchFrame[]>([]);
-
-  // Range results
+  const [sungMidi, setSungMidi] = useState<number | null>(null);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const [progress, setProgress] = useState(0);
   const [lowNote, setLowNote] = useState<number | null>(null);
   const [highNote, setHighNote] = useState<number | null>(null);
+  const [low, setLow] = useState(0);
+  const [high, setHigh] = useState(0);
 
-  // Countdown state
-  const [countdown, setCountdown] = useState<number | null>(null); // 3, 2, 1, or null (recording)
-  const [recordProgress, setRecordProgress] = useState(0); // 0..1
+  const sourceRef = useRef<PitchSource | null>(null);
+  const playerRef = useRef<TonePlayer | null>(null);
+  const framesRef = useRef<PitchFrame[]>([]);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Nudged range for confirm screen
-  const [nudgedLow, setNudgedLow] = useState(0);
-  const [nudgedHigh, setNudgedHigh] = useState(0);
-
-  const setRange = useAppStore((s) => s.setRange);
-
-  // Start audio and pitch source
-  const startAudio = useCallback(async () => {
-    try {
-      await unlockAudio();
-      const src = createPitchSource();
-      sourceRef.current = src;
-      const unsub = src.subscribe((f) => {
-        latestRef.current = f;
-        setDisplay(f);
-      });
-      await src.start();
-      return unsub;
-    } catch (err) {
-      if (err instanceof Error && err.message === 'mic-denied') {
-        setError('Microphone access denied. Please allow microphone access in your browser settings and reload.');
-      } else {
-        setError('Failed to start microphone. Please check your settings and try again.');
-      }
-      throw err;
+  const clearTimer = () => {
+    if (timerRef.current != null) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
     }
-  }, []);
+  };
 
-  // Cleanup on unmount
   useEffect(() => {
+    resetRangeSim();
     return () => {
+      clearTimer();
       sourceRef.current?.stop();
       playerRef.current?.stopAll();
     };
   }, []);
 
-  // Play a note back using the tone player
-  const playNote = useCallback((midi: number) => {
-    if (!playerRef.current) {
-      playerRef.current = createTonePlayer();
+  const player = () => (playerRef.current ??= createTonePlayer());
+  const playNote = useCallback((midi: number) => player().playNote(midi, now(), 0.7), []);
+
+  const start = async () => {
+    try {
+      await unlockAudio();
+      const src = createPitchSource();
+      sourceRef.current = src;
+      src.subscribe((f) => {
+        framesRef.current.push(f);
+        if (framesRef.current.length > 600) framesRef.current.splice(0, framesRef.current.length - 600);
+        setSungMidi(f.midi);
+      });
+      await src.start();
+      setStep('find');
+    } catch (err) {
+      setError(
+        err instanceof Error && err.message === 'mic-denied'
+          ? 'Microphone access was denied. Allow it in your browser settings and reload.'
+          : 'Could not start the microphone. Check your settings and try again.',
+      );
     }
-    playerRef.current.playNote(midi, now(), 0.5);
-  }, []);
+  };
 
-  const processRecording = useCallback((pick: 'lowest' | 'highest') => {
-    const frames = framesRef.current;
-    const result = findHeldNote(frames, pick);
-
-    if (pick === 'lowest') {
-      if (result.ok) {
-        setLowNote(result.midi);
-        setStep('low-result');
-      } else {
-        setError(result.reason === 'no-voice'
-          ? "We couldn't hear a steady note — try again, a little louder."
-          : "The note wavered too much — try holding it steadier.");
-        setStep('low-find');
-      }
-    } else {
-      if (result.ok) {
-        setHighNote(result.midi);
-        setStep('high-result');
-      } else {
-        setError(result.reason === 'no-voice'
-          ? "We couldn't hear a steady note — try again, a little louder."
-          : "The note wavered too much — try holding it steadier.");
-        setStep('high-find');
-      }
-    }
-  }, []);
-
-  // Start the recording window with countdown
-  const startRecording = useCallback((pick: 'lowest' | 'highest') => {
-    framesRef.current = [];
-    setCountdown(3);
-    setRecordProgress(0);
-
-    // Subscribe to pitch source and collect frames during recording window
-    const unsub = sourceRef.current?.subscribe((f) => {
-      framesRef.current.push(f);
-    });
-
-    // Countdown: 3 seconds total (1s each for 3, 2, 1)
-    let count = 3;
-    const countdownInterval = setInterval(() => {
-      count--;
-      if (count > 0) {
-        setCountdown(count);
-        // Play a click sound
-        if (!playerRef.current) {
-          playerRef.current = createTonePlayer();
-        }
-        playerRef.current.playNote(69, now(), 0.05); // A4 click
-      } else {
-        clearInterval(countdownInterval);
-        unsub?.();
+  const record = () => {
+    clearTimer();
+    setStep('record');
+    setCountdown(COUNT_SEC);
+    setProgress(0);
+    const t0 = now() + 0.05;
+    // Clicks are scheduled on the audio clock.
+    for (let i = 0; i < COUNT_SEC; i++) player().playNote(81, t0 + i, 0.06);
+    const winStart = t0 + COUNT_SEC;
+    const winEnd = winStart + WINDOW_SEC;
+    timerRef.current = setInterval(() => {
+      const t = now();
+      if (t < winStart) {
+        setCountdown(Math.max(1, Math.ceil(winStart - t)));
+      } else if (t < winEnd) {
         setCountdown(null);
-        // Start recording window: 3 seconds
-        const startTime = now();
-        const recordInterval = setInterval(() => {
-          const elapsed = now() - startTime;
-          if (elapsed >= 3) {
-            clearInterval(recordInterval);
-            setRecordProgress(1);
-            // Process frames
-            processRecording(pick);
-          } else {
-            setRecordProgress(elapsed / 3);
-          }
-        }, 50);
+        setProgress((t - winStart) / WINDOW_SEC);
+      } else {
+        clearTimer();
+        setProgress(1);
+        const frames = framesRef.current.filter((f) => f.tSec >= winStart && f.tSec <= winEnd);
+        const result = findHeldNote(frames, pick);
+        if (result.ok) {
+          if (pick === 'lowest') setLowNote(result.midi);
+          else setHighNote(result.midi);
+          setStep('result');
+          playNote(result.midi);
+        } else {
+          setError(
+            result.reason === 'no-voice'
+              ? "We couldn't hear a steady note — try again, a little louder."
+              : "We couldn't hear a steady note — try again and hold it as steady as you can.",
+          );
+          setStep('fail');
+        }
       }
-    }, 1000);
-  }, [processRecording]);
+    }, 50);
+  };
 
-  // Handle "Use this" for lowest note
-  const handleUseLow = useCallback(() => {
-    acceptRangeLow();
-    setStep('high-find');
-  }, []);
-
-  // Handle "Try again" for lowest note
-  const handleRetryLow = useCallback(() => {
+  const retry = () => {
     setError(null);
-    setStep('low-find');
-  }, []);
+    setStep('find');
+  };
 
-  // Handle "Try again" for highest note
-  const handleRetryHigh = useCallback(() => {
-    setError(null);
-    setStep('high-find');
-  }, []);
+  const useThis = () => {
+    if (pick === 'lowest') {
+      acceptRangeLow();
+      setPick('highest');
+      setStep('find');
+    } else {
+      let l = lowNote ?? 45;
+      let h = highNote ?? 64;
+      if (h < l + MIN_SPAN) h = l + MIN_SPAN;
+      if (l > h - MIN_SPAN) l = h - MIN_SPAN;
+      setLow(l);
+      setHigh(h);
+      setStep('confirm');
+    }
+  };
 
-  // Handle "Continue" from high-result → confirm (initialize nudged values)
-  const handleContinue = useCallback(() => {
-    setNudgedLow(lowNote ?? 45);
-    setNudgedHigh(highNote ?? 64);
-    setStep('confirm');
-  }, [lowNote, highNote]);
+  const nudgeLow = (d: number) => {
+    const v = Math.min(low + d, high - MIN_SPAN);
+    setLow(v);
+    playNote(v);
+  };
+  const nudgeHigh = (d: number) => {
+    const v = Math.max(high + d, low + MIN_SPAN);
+    setHigh(v);
+    playNote(v);
+  };
 
-  // Handle nudge on confirm screen
-  const handleNudgeLow = useCallback((delta: number) => {
-    setNudgedLow((prev) => Math.min(prev + delta, nudgedHigh - 5));
-  }, [nudgedHigh]);
-
-  const handleNudgeHigh = useCallback((delta: number) => {
-    setNudgedHigh((prev) => Math.max(prev - delta, nudgedLow + 5));
-  }, [nudgedLow]);
-
-  // Handle save
-  const handleSave = useCallback(() => {
-    const range = {
-      lowMidi: nudgedLow,
-      highMidi: nudgedHigh,
-      assessedAt: new Date().toISOString(),
-    };
-    setRange(range);
+  const save = () => {
+    setRange({ lowMidi: low, highMidi: high, assessedAt: new Date().toISOString() });
+    sourceRef.current?.stop();
     navigate('/');
-  }, [nudgedLow, nudgedHigh, setRange, navigate]);
+  };
 
-  // Handle "Redo" from confirm
-  const handleRedo = useCallback(() => {
+  const redo = () => {
+    resetRangeSim();
     setLowNote(null);
     setHighNote(null);
-    setStep('low-find');
-  }, []);
+    setPick('lowest');
+    setStep('find');
+  };
 
-  // Derived: keyboard range for display
-  const kbLow = Math.min(nudgedLow || 0, nudgedHigh || 0) - 12;
-  const kbHigh = Math.max(nudgedLow || 0, nudgedHigh || 0) + 12;
+  const cancel = () => {
+    clearTimer();
+    sourceRef.current?.stop();
+    navigate('/');
+  };
 
-  // Render
-  const sungMidi = display?.midi ?? null;
+  const heading = <h1>Vocal Range Assessment</h1>;
+  const sungName = sungMidi != null ? midiToName(Math.round(sungMidi)) : '';
+  const found = pick === 'lowest' ? lowNote : highNote;
 
-  if (error && (step === 'low-find' || step === 'high-find')) {
-    // Show error with retry
+  if (step === 'intro') {
     return (
       <main className="range-setup">
-        <h1>Vocal Range Assessment</h1>
-        <p className="range-error">{error}</p>
-        <button onClick={() => { setError(null); }}>
-          Try again
-        </button>
-        <p className="range-back">
-          <button onClick={() => { sourceRef.current?.stop(); navigate('/'); }}>
-            Cancel
-          </button>
-        </p>
+        {heading}
+        <p>Put on headphones. You will hold your lowest comfortable note, then your highest.</p>
+        {error && <p className="range-error">{error}</p>}
+        <button onClick={start}>Start</button>
       </main>
     );
   }
 
-  switch (step) {
-    case 'intro':
-      return (
-        <main className="range-setup">
-          <h1>Vocal Range Assessment</h1>
-          <p>
-            Put on your headphones. We need to find your lowest and highest comfortable notes.
-          </p>
-          <button onClick={async () => {
-            await startAudio();
-            setStep('low-find');
-          }}>
-            Start
-          </button>
-        </main>
-      );
+  if (step === 'confirm') {
+    const span = high - low;
+    const kbLow = Math.floor(low / 12) * 12;
+    const kbHigh = Math.ceil(high / 12) * 12;
+    return (
+      <main className="range-setup">
+        {heading}
+        <p className="range-range-display">
+          Your range: {midiToName(low)} – {midiToName(high)} ({span} semitones)
+        </p>
+        <PianoKeyboard
+          lowMidi={kbLow}
+          highMidi={kbHigh}
+          rangeMarkers={{ lowMidi: low, highMidi: high }}
+          onKeyPress={playNote}
+        />
+        <div className="range-nudge">
+          <span>Low:</span>
+          <button onClick={() => nudgeLow(-1)} aria-label="Lower the low note">−</button>
+          <span>{midiToName(low)}</span>
+          <button onClick={() => nudgeLow(1)} aria-label="Raise the low note">+</button>
+        </div>
+        <div className="range-nudge">
+          <span>High:</span>
+          <button onClick={() => nudgeHigh(-1)} aria-label="Lower the high note">−</button>
+          <span>{midiToName(high)}</span>
+          <button onClick={() => nudgeHigh(1)} aria-label="Raise the high note">+</button>
+        </div>
+        {span < WARN_SPAN && (
+          <p className="range-warning">Your range is narrow, so some lessons will not fit.</p>
+        )}
+        <div className="range-buttons">
+          <button onClick={save}>Save</button>
+          <button onClick={redo}>Redo</button>
+        </div>
+      </main>
+    );
+  }
 
-    case 'low-find':
-      return (
-        <main className="range-setup">
-          <h1>Vocal Range Assessment</h1>
-          <p className="range-prompt">Sing your lowest comfortable note and hold it.</p>
-          <PianoKeyboard
-            lowMidi={kbLow}
-            highMidi={kbHigh}
-            sungMidi={sungMidi}
-            rangeMarkers={{ lowMidi: kbLow, highMidi: kbHigh }}
-          />
-          <div className="range-note-name">
-            {sungMidi != null ? midiToName(Math.round(sungMidi)) : ''}
-          </div>
+  return (
+    <main className="range-setup">
+      {heading}
+      {step === 'fail' ? (
+        <>
+          <p className="range-error">{error}</p>
           <div className="range-buttons">
-            <button onClick={() => {
-              setStep('low-record');
-              startRecording('lowest');
-            }}>
-              Record
-            </button>
+            <button onClick={retry}>Try again</button>
           </div>
-          <p className="range-back">
-            <button onClick={() => { sourceRef.current?.stop(); navigate('/'); }}>
-              Cancel
-            </button>
-          </p>
-        </main>
-      );
-
-    case 'low-record':
-      return (
-        <main className="range-setup">
-          <h1>Vocal Range Assessment</h1>
-          <p className="range-prompt">Sing your lowest comfortable note and hold it.</p>
-          <PianoKeyboard
-            lowMidi={kbLow}
-            highMidi={kbHigh}
-            sungMidi={sungMidi}
-            rangeMarkers={{ lowMidi: kbLow, highMidi: kbHigh }}
-          />
-          <div className="range-note-name">
-            {sungMidi != null ? midiToName(Math.round(sungMidi)) : ''}
-          </div>
-          {countdown != null ? (
-            <div className="range-countdown">
-              <span className="range-countdown-number">{countdown}</span>
-            </div>
-          ) : recordProgress < 1 ? (
-            <div className="range-recording">
-              <span>Recording… hold the note</span>
-              <div className="range-progress-bar">
-                <div
-                  className="range-progress-fill"
-                  style={{ width: `${recordProgress * 100}%` }}
-                />
-              </div>
-            </div>
-          ) : null}
-          <p className="range-back">
-            <button onClick={() => { sourceRef.current?.stop(); navigate('/'); }}>
-              Cancel
-            </button>
-          </p>
-        </main>
-      );
-
-    case 'low-result':
-      return (
-        <main className="range-setup">
-          <h1>Vocal Range Assessment</h1>
-          <p className="range-result-label">Lowest note: {lowNote != null ? midiToName(lowNote) : '?'}</p>
-          <PianoKeyboard
-            lowMidi={kbLow}
-            highMidi={kbHigh}
-            targetMidi={lowNote}
-            rangeMarkers={{ lowMidi: kbLow, highMidi: kbHigh }}
-            onKeyPress={playNote}
-          />
-          <div className="range-buttons">
-            <button onClick={handleUseLow}>Use this</button>
-            <button onClick={handleRetryLow}>Try again</button>
-          </div>
-          <p className="range-back">
-            <button onClick={() => { sourceRef.current?.stop(); navigate('/'); }}>
-              Cancel
-            </button>
-          </p>
-        </main>
-      );
-
-    case 'high-find':
-      return (
-        <main className="range-setup">
-          <h1>Vocal Range Assessment</h1>
-          <p className="range-prompt">Now sing your highest comfortable note and hold it.</p>
-          <PianoKeyboard
-            lowMidi={kbLow}
-            highMidi={kbHigh}
-            sungMidi={sungMidi}
-            rangeMarkers={{ lowMidi: kbLow, highMidi: kbHigh }}
-          />
-          <div className="range-note-name">
-            {sungMidi != null ? midiToName(Math.round(sungMidi)) : ''}
-          </div>
-          <div className="range-buttons">
-            <button onClick={() => {
-              setStep('high-record');
-              startRecording('highest');
-            }}>
-              Record
-            </button>
-          </div>
-          <p className="range-back">
-            <button onClick={() => { sourceRef.current?.stop(); navigate('/'); }}>
-              Cancel
-            </button>
-          </p>
-        </main>
-      );
-
-    case 'high-record':
-      return (
-        <main className="range-setup">
-          <h1>Vocal Range Assessment</h1>
-          <p className="range-prompt">Now sing your highest comfortable note and hold it.</p>
-          <PianoKeyboard
-            lowMidi={kbLow}
-            highMidi={kbHigh}
-            sungMidi={sungMidi}
-            rangeMarkers={{ lowMidi: kbLow, highMidi: kbHigh }}
-          />
-          <div className="range-note-name">
-            {sungMidi != null ? midiToName(Math.round(sungMidi)) : ''}
-          </div>
-          {countdown != null ? (
-            <div className="range-countdown">
-              <span className="range-countdown-number">{countdown}</span>
-            </div>
-          ) : recordProgress < 1 ? (
-            <div className="range-recording">
-              <span>Recording… hold the note</span>
-              <div className="range-progress-bar">
-                <div
-                  className="range-progress-fill"
-                  style={{ width: `${recordProgress * 100}%` }}
-                />
-              </div>
-            </div>
-          ) : null}
-          <p className="range-back">
-            <button onClick={() => { sourceRef.current?.stop(); navigate('/'); }}>
-              Cancel
-            </button>
-          </p>
-        </main>
-      );
-
-    case 'high-result':
-      return (
-        <main className="range-setup">
-          <h1>Vocal Range Assessment</h1>
-          <p className="range-result-label">Highest note: {highNote != null ? midiToName(highNote) : '?'}</p>
-          <PianoKeyboard
-            lowMidi={kbLow}
-            highMidi={kbHigh}
-            targetMidi={highNote}
-            rangeMarkers={{ lowMidi: kbLow, highMidi: kbHigh }}
-            onKeyPress={playNote}
-          />
-          <div className="range-buttons">
-            <button onClick={handleContinue}>Continue</button>
-            <button onClick={handleRetryHigh}>Try again</button>
-          </div>
-          <p className="range-back">
-            <button onClick={() => { sourceRef.current?.stop(); navigate('/'); }}>
-              Cancel
-            </button>
-          </p>
-        </main>
-      );
-
-    case 'confirm': {
-      const span = nudgedHigh - nudgedLow;
-      const tooSmall = span < 7;
-      return (
-        <main className="range-setup">
-          <h1>Vocal Range Assessment</h1>
-          <p className="range-range-display">
-            Your range: {midiToName(nudgedLow)} – {midiToName(nudgedHigh)} ({span} semitones)
-          </p>
-          <PianoKeyboard
-            lowMidi={kbLow}
-            highMidi={kbHigh}
-            targetMidi={null}
-            rangeMarkers={{ lowMidi: nudgedLow, highMidi: nudgedHigh }}
-            onKeyPress={playNote}
-          />
-          <div className="range-nudge">
-            <span>Low:</span>
-            <button onClick={() => handleNudgeLow(-1)} aria-label="Lower low note">−</button>
-            <span>{midiToName(nudgedLow)}</span>
-            <button onClick={() => handleNudgeLow(1)} aria-label="Raise low note">+</button>
-          </div>
-          <div className="range-nudge">
-            <span>High:</span>
-            <button onClick={() => handleNudgeHigh(-1)} aria-label="Lower high note">−</button>
-            <span>{midiToName(nudgedHigh)}</span>
-            <button onClick={() => handleNudgeHigh(1)} aria-label="Raise high note">+</button>
-          </div>
-          {tooSmall && (
-            <p className="range-warning">
-              Your range is narrow — some lessons will not fit. You can redo the test later in Settings.
+        </>
+      ) : (
+        <>
+          {step === 'result' ? (
+            <p className="range-result-label">
+              {pick === 'lowest' ? 'Lowest' : 'Highest'} note: {found != null ? midiToName(found) : '?'}
+            </p>
+          ) : (
+            <p className="range-prompt">
+              {pick === 'lowest'
+                ? 'Sing your lowest comfortable note and hold it.'
+                : 'Now sing your highest comfortable note and hold it.'}
             </p>
           )}
-          <div className="range-buttons">
-            <button onClick={handleSave}>Save</button>
-            <button onClick={handleRedo}>Redo</button>
-          </div>
-        </main>
-      );
-    }
-
-    default:
-      return null;
-  }
+          <PianoKeyboard
+            lowMidi={FIND_LOW}
+            highMidi={FIND_HIGH}
+            sungMidi={step === 'result' ? null : sungMidi}
+            targetMidi={step === 'result' ? found : null}
+            onKeyPress={step === 'result' ? playNote : undefined}
+          />
+          {step !== 'result' && <div className="range-note-name">{sungName}</div>}
+          {step === 'find' && (
+            <div className="range-buttons">
+              <button onClick={record}>Record</button>
+            </div>
+          )}
+          {step === 'record' &&
+            (countdown != null ? (
+              <div className="range-countdown" aria-live="polite">
+                <span className="range-countdown-number">{countdown}</span>
+              </div>
+            ) : (
+              <div className="range-recording">
+                <span>Recording… hold the note</span>
+                <div className="range-progress-bar">
+                  <div className="range-progress-fill" style={{ width: `${progress * 100}%` }} />
+                </div>
+              </div>
+            ))}
+          {step === 'result' && (
+            <div className="range-buttons">
+              <button onClick={useThis}>Use this</button>
+              <button onClick={retry}>Try again</button>
+            </div>
+          )}
+        </>
+      )}
+      <p className="range-back">
+        <button onClick={cancel}>Cancel</button>
+      </p>
+    </main>
+  );
 }

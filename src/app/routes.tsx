@@ -1,4 +1,4 @@
-import { Route, Routes, Navigate } from 'react-router-dom';
+import { Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import { Home } from '../ui/screens/Home';
 import { RangeSetup } from '../ui/screens/RangeSetup';
 import { PianoDev } from '../ui/screens/dev/PianoDev';
@@ -7,6 +7,7 @@ import { useAppStore } from '../storage/store';
 
 export function AppRoutes() {
   const range = useAppStore((s) => s.range);
+  const { search } = useLocation();
 
   // Redirect to range setup if no range is set
   const hasRange = range != null;
@@ -16,7 +17,7 @@ export function AppRoutes() {
       <Route path="/range" element={<RangeSetup />} />
       <Route
         path="/"
-        element={hasRange ? <Home /> : <Navigate to="/range" />}
+        element={hasRange ? <Home /> : <Navigate to={{ pathname: '/range', search }} replace />}
       />
       <Route path="/dev/piano" element={<PianoDev />} />
       <Route path="/dev/tuner" element={<TunerDev />} />
