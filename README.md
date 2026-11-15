@@ -328,6 +328,7 @@ The loop does not rely on the models following instructions. The driver (`harnes
 | Nothing is pushed; agents do not switch, merge or reset branches | Hook, permission deny list |
 | On a model that cannot see images, the UI reviewer does not block on what only eyes can judge; that goes to `comms/UI-PASS.md` | The driver adds the instruction to the UI reviewer's prompt (`uiReviewNote` in `harness/lib/comms.mjs`) when the profile sets `TMTS_NO_IMAGES=1`, and writes `UI-PASS.md` at approval (`writeUiPass`) |
 | No epic is left without a valid `SUMMARY.md` | Driver writes it, validates it, and refuses to start the next epic without it |
+| An agent's chained command (`cd <repo>; npm run lint 2>&1 \| tail; npm test`) runs only if every part is one it may run alone. Claude Code refuses such a line in headless runs, and the local model writes them often | Hook (`allowBash` in `harness/lib/rules.mjs`): approves the line when each part matches the allow list in `.claude/settings.json` or a read-only command, none matches the deny list, any `cd` stays in the repository, and every `>` target passes the write rules. Anything else gets the normal permission check |
 
 What cannot be enforced is the quality of a review: a reviewer can still approve too easily. The validator requires evidence (screenshots, a coverage table, answered findings), not good judgment.
 
