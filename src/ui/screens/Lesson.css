@@ -33,11 +33,32 @@
   gap: 8px;
   align-items: center;
 }
+.lesson-page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 16px;
+  text-align: center;
+}
+.lesson-page button {
+  min-height: 48px;
+  min-width: 48px;
+  padding: 0 20px;
+  font-size: 1.05rem;
+}
+.lesson-controls {
+  justify-content: center;
+}
+.lesson-steps {
+  justify-content: center;
+}
 .lesson-home-button {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   min-height: 48px;
+  min-width: 48px;
   padding: 0 20px;
+  font-size: 1.05rem;
 }
 .lesson-verdict {
   font-size: 2rem;

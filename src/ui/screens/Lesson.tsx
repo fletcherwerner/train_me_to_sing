@@ -53,7 +53,7 @@ export function Lesson({ onAttemptComplete }: LessonProps) {
     return (
       <main className="dev-page lesson-page">
         <p>
-          <Link className="dev-home" to="/">
+          <Link className="lesson-home-button" to="/">
             Home
           </Link>
         </p>
@@ -79,6 +79,7 @@ function LessonRun({
   const [source, setSource] = useState<PitchSource | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
   const handleRef = useRef<PlaybackHandle | null>(null);
   const sourceRef = useRef<PitchSource | null>(null);
   const runRef = useRef(0);
@@ -105,7 +106,7 @@ function LessonRun({
     return (
       <main className="dev-page lesson-page">
         <p>
-          <Link className="dev-home" to="/">
+          <Link className="lesson-home-button" to="/">
             Home
           </Link>
         </p>
@@ -146,6 +147,7 @@ function LessonRun({
     if (running) return;
     const myRun = ++runRef.current;
     const thisStep = step;
+    setNotice(null);
     dispatch({ type: 'RUN' });
     await unlockAudio();
     if (myRun !== runRef.current) return;
@@ -168,6 +170,7 @@ function LessonRun({
     setHandle(null);
     const result = rec ? evaluateAttempt(ex, rec.frames, tol, lesson.passScore) : undefined;
     dispatch({ type: 'RUN_ENDED', result });
+    if (thisStep === 'youDo' && !result) setNotice('We could not hear the microphone for that run. Press Try again.');
     if (thisStep === 'youDo' && result) {
       dispatch({ type: 'SHOW_RESULTS' });
       onAttemptComplete?.(result);
@@ -189,7 +192,7 @@ function LessonRun({
   const header = (
     <>
       <p>
-        <Link className="dev-home" to="/">
+        <Link className="lesson-home-button" to="/">
           Home
         </Link>
       </p>
@@ -308,6 +311,11 @@ function LessonRun({
         currentIndex={live.currentNoteIndex}
         results={hasStrip && !running ? strip : undefined}
       />
+      {notice ? (
+        <p className="tuner-error" role="alert">
+          {notice}
+        </p>
+      ) : null}
       {weDoLine ? (
         <p data-testid="practice-line">{weDoLine}</p>
       ) : null}

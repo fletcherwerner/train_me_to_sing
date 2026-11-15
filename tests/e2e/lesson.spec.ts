@@ -50,6 +50,9 @@ test('sim=octaveDown: Not yet with the octave tip', async ({ page }) => {
 });
 
 test('no range redirects to range setup', async ({ page }) => {
-  await page.goto('/#/lesson/demo');
+  await page.goto('/');
+  await page.evaluate(() => {
+    location.hash = '#/lesson/demo';
+  });
   await expect(page).toHaveURL(/#\/range/);
 });
