@@ -57,3 +57,29 @@ test('settings slider stores the offset; calibrate screen is reachable', async (
   await page.getByRole('link', { name: 'Calibrate timing' }).click();
   await expect(page.getByText("You'll hear 8 clicks", { exact: false })).toBeVisible();
 });
+
+test('calibration run shows progress, can be stopped, and reaches Save/Retry', async ({ page }) => {
+  await page.addInitScript(() => {
+    if (localStorage.getItem('tmts.v1')) return;
+    localStorage.setItem(
+      'tmts.v1',
+      JSON.stringify({
+        version: 1,
+        range: { lowMidi: 45, highMidi: 64, assessedAt: '2025-01-01T00:00:00.000Z' },
+        settings: { latencyOffsetMs: 0 },
+        progress: {},
+        importedLessons: [],
+      }),
+    );
+  });
+  await page.goto('/#/settings/calibrate?sim=calibrate:200');
+  await expect(page.getByRole('link', { name: 'Home' })).toBeVisible();
+  await page.getByTestId('calibrate-start').click();
+  await expect(page.getByTestId('calibrate-beat')).toContainText('Count-in');
+  await page.getByTestId('calibrate-stop').click();
+  await expect(page.getByTestId('calibrate-start')).toBeVisible();
+  await page.getByTestId('calibrate-start').click();
+  await expect(page.getByTestId('calibrate-result')).toContainText('Measured delay', { timeout: 30000 });
+  await expect(page.getByRole('button', { name: 'Save' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Retry' })).toBeVisible();
+});

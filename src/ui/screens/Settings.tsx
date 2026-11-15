@@ -45,6 +45,7 @@ export function Settings() {
           Delay: <output data-testid="latency-value">{latencyMs} ms</output>
           <br />
           <input
+            className="latency-slider"
             type="range"
             min={0}
             max={500}
@@ -55,6 +56,15 @@ export function Settings() {
             data-testid="latency-slider"
           />
         </label>
+      </p>
+      <p>
+        <button type="button" onClick={() => setLatencyOffset(Math.max(0, latencyMs - 10), false)}>
+          −10
+        </button>{' '}
+        <button type="button" onClick={() => setLatencyOffset(Math.min(500, latencyMs + 10), false)}>
+          +10
+        </button>{' '}
+        <span>Range 0–500 ms</span>
       </p>
       <p>
         <Link to={{ pathname: '/settings/calibrate', search }} className="tap-link">

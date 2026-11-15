@@ -13,7 +13,7 @@ const STAGE_NAMES: Record<number, string> = {
 };
 
 const STRICTER_NOTE: Record<number, string> = {
-  2: 'Stricter than Stage 1: tighter pitch, longer holds and tighter timing. Calibrate timing in Settings first.',
+  2: 'Stricter than Stage 1: tighter pitch, longer holds and tighter timing.',
 };
 
 export function Home() {
@@ -73,7 +73,8 @@ export function Home() {
             </p>
             {STRICTER_NOTE[stage] ? (
               <p className="home__count" data-testid={`stage-${stage}-note`}>
-                {STRICTER_NOTE[stage]}
+                {STRICTER_NOTE[stage]}{' '}
+                <Link to={{ pathname: '/settings/calibrate', search }}>Calibrate timing</Link> first.
               </p>
             ) : null}
             <ul className="home__list">
