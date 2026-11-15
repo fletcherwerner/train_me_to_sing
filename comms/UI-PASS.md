@@ -27,3 +27,42 @@ Approved after turn 3, 2026-11-15. Review: `comms/E05/turn-03/ui-review.md`.
 - `comms/E05/turn-03/screenshots/dev-attempt-phone.png`
 - `comms/E05/turn-03/screenshots/dev-piano-laptop.png`
 - `comms/E05/turn-03/screenshots/dev-piano-phone.png`
+
+## E06 — Full lesson session: I do / We do / You do
+
+Approved after turn 3, 2026-11-15. Review: `comms/E06/turn-03/ui-review.md`.
+
+### Not verified by the UI reviewer
+
+- Real microphone, sound, the physical iPhone, dark mode.
+
+### Screens reviewed
+
+| Screen / state | Laptop | iPhone | Screenshot files |
+|----------------|--------|--------|------------------|
+| Intro, I do, We do, You do, results (octaveDown) | OK | OK | `screenshots/octaveDown-laptop-1-intro.png` to `screenshots/octaveDown-phone-11-results.png` |
+
+### Screenshots
+
+- `comms/E06/turn-03/screenshots/octaveDown-laptop-1-intro.png`
+- `comms/E06/turn-03/screenshots/octaveDown-laptop-10-youdo-running.png`
+- `comms/E06/turn-03/screenshots/octaveDown-laptop-11-results.png`
+- `comms/E06/turn-03/screenshots/octaveDown-laptop-2-ido-idle.png`
+- `comms/E06/turn-03/screenshots/octaveDown-laptop-3-ido-leadin.png`
+- `comms/E06/turn-03/screenshots/octaveDown-laptop-4-ido-running.png`
+- `comms/E06/turn-03/screenshots/octaveDown-laptop-5-ido-done.png`
+- `comms/E06/turn-03/screenshots/octaveDown-laptop-6-wedo-idle.png`
+- `comms/E06/turn-03/screenshots/octaveDown-laptop-7-wedo-running.png`
+- `comms/E06/turn-03/screenshots/octaveDown-laptop-8-wedo-done.png`
+- `comms/E06/turn-03/screenshots/octaveDown-laptop-9-youdo-idle.png`
+- `comms/E06/turn-03/screenshots/octaveDown-phone-1-intro.png`
+- `comms/E06/turn-03/screenshots/octaveDown-phone-10-youdo-running.png`
+- `comms/E06/turn-03/screenshots/octaveDown-phone-11-results.png`
+- `comms/E06/turn-03/screenshots/octaveDown-phone-2-ido-idle.png`
+- `comms/E06/turn-03/screenshots/octaveDown-phone-3-ido-leadin.png`
+- `comms/E06/turn-03/screenshots/octaveDown-phone-4-ido-running.png`
+- `comms/E06/turn-03/screenshots/octaveDown-phone-5-ido-done.png`
+- `comms/E06/turn-03/screenshots/octaveDown-phone-6-wedo-idle.png`
+- `comms/E06/turn-03/screenshots/octaveDown-phone-7-wedo-running.png`
+- `comms/E06/turn-03/screenshots/octaveDown-phone-8-wedo-done.png`
+- `comms/E06/turn-03/screenshots/octaveDown-phone-9-youdo-idle.png`
