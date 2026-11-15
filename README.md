@@ -103,7 +103,7 @@ Optional settings, as environment variables before the command:
 |----------|--------|
 | `TMTS_MODEL` | Model for every agent, passed to `claude --model` |
 | `TMTS_MAX_TURNS` | Turn limit before it asks you (default 10) |
-| `TMTS_AGENT_TIMEOUT_MIN` | Minutes before one agent run is killed (default 60) |
+| `TMTS_AGENT_TIMEOUT_MIN` | Minutes before one agent run is killed (default 180; the local model needed 51 minutes for one E02 coder run, and E03's coder did not finish in 60) |
 | `TMTS_MAX_BUDGET_USD` | Spend limit for each agent run |
 | `TMTS_SERIAL_REVIEWS=1` | Run the two reviewers one after the other instead of together |
 | `TMTS_PERMISSION_MODE` | Permission mode for agent runs (default `acceptEdits`; commands not in `.claude/settings.json` are denied) |
