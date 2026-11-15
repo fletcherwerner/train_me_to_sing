@@ -12,6 +12,7 @@
       "Bash(npx tsc:*)",
       "Bash(node harness/screenshot.mjs:*)",
       "Bash(node harness/validate.mjs:*)",
+      "Bash(node harness/dev-server.mjs:*)",
       "Bash(node harness/run-epics.mjs:*)",
       "Bash(node --test:*)",
       "Bash(node comms/:*)",

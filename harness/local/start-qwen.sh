@@ -26,4 +26,4 @@ exec > >(tee -a "$LOG") 2>&1
 exec "$HOME/.local/share/uv/tools/mlx-lm/bin/python" "$REPO/harness/local/qwen_server.py" \
   --model "$MODEL" --host "$HOST" --port "$PORT" \
   --prefill-step-size 512 --prompt-concurrency 1 --decode-concurrency 1 \
-  --prompt-cache-size 2 --prompt-cache-bytes 4000000000 "$@"
+  --prompt-cache-size 8 --prompt-cache-bytes 4000000000 "$@"

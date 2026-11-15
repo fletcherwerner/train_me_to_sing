@@ -22,7 +22,7 @@ Your prompt gives you an epic id and a turn number.
 
 Look at the running app. Do not approve from reading code alone.
 
-1. Start the dev server in the background: `npm run dev`. It serves `https://localhost:5173`.
+1. Start the dev server with `node harness/dev-server.mjs start`. It waits until the app answers, prints the address, and uses a free port if 5173 is taken. Do not start `npm run dev` yourself: the address you would assume may belong to a different server.
 2. Capture every screen the epic adds or changes, at laptop and iPhone sizes:
 
    ```
@@ -30,10 +30,10 @@ Look at the running app. Do not approve from reading code alone.
    ```
 
    `--range low,high` seeds a stored student range. Add `--sim perfect` (or another behaviour from the architecture file) to use the simulated singer. Add `--dark` for dark mode.
-3. For states that need interaction (mid-lesson, results, error messages), write a short Playwright script in `comms/<epic>/turn-<nn>/ui-scripts/` that clicks through and saves screenshots to the same folder. Use the `?sim=` options so no microphone is needed.
+3. For states that need interaction (mid-lesson, results, error messages), write a short Playwright script in `comms/<epic>/turn-<nn>/ui-scripts/` that clicks through and saves screenshots to the same folder. Use the `?sim=` options so no microphone is needed. Take the address from `appUrl()` (`import { appUrl } from '../../../../harness/lib/app-url.mjs'`), never from a typed-in port. If the coder left a script with a fixed port, copy it into your own `ui-scripts/` and replace the address with `appUrl()` before running it. Run scripts as `node comms/<epic>/turn-<nn>/ui-scripts/<name>.mjs`.
 4. Open the screenshots with the Read tool and examine them.
 5. Walk through the epic's Review script as far as you can without a real microphone or speakers. State plainly which steps you could not verify; those remain for the owner.
-6. Stop the dev server when finished.
+6. Stop the dev server when finished: `node harness/dev-server.mjs stop`.
 
 ## What to check
 
