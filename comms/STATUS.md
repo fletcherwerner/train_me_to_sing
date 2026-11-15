@@ -7,7 +7,7 @@ Maintained by the orchestrator. Status is one of: `Not started`, `In progress`, 
 | E01 | Foundation: scaffold, music core, piano | Approved | 2 | APPROVED / APPROVED | 2026-11-14 |
 | E02 | Mic pitch detection and live tuner | Approved | 2 | APPROVED / APPROVED | 2026-11-14 |
 | E03 | Vocal range assessment | Approved | 2 | APPROVED / APPROVED | 2026-11-15 |
-| E04 | Exercise model, range fitting, "I do" playback | In progress | 0 | — | 2026-11-15 |
+| E04 | Exercise model, range fitting, "I do" playback | In progress | 1 | APPROVED / CHANGES REQUIRED | 2026-11-15 |
 | E05 | Scoring engine and graded "You do" | Not started | 0 | — | — |
 | E06 | Full lesson session: I do / We do / You do | Not started | 0 | — | — |
 | E07 | Lesson catalog, tracker, Stage 1 lessons | Not started | 0 | — | — |
