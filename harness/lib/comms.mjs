@@ -448,6 +448,64 @@ Answer in the conversation, or write the answer in \`comms/${epic}/OWNER-NOTES.m
 }
 
 /** Proposed requirement changes and questions for the owner from the final turn's reviews. */
+/** Extra instructions for the UI reviewer when the model cannot see images (profile env TMTS_NO_IMAGES=1). */
+export const NO_IMAGES_UI_NOTE =
+  'This model cannot see images, so you cannot judge anything by eye. The owner does a final visual pass from comms/UI-PASS.md instead. ' +
+  'Still capture the screenshots. Check by text everything you can: labels and wording, which states appear, element sizes and positions ' +
+  '(boundingBox), computed colours and font sizes, horizontal overflow, tap target sizes, and console errors. Raise findings only for what you ' +
+  'verified this way. Anything that can only be judged by looking (whether colours read clearly, spacing, alignment, overall look) goes under ' +
+  '"Not verified" with the screen, state and screenshot file, and is never a finding and never a reason for BLOCKED - NEEDS OWNER.';
+
+export function uiReviewNote(profileEnv = {}) {
+  return profileEnv?.TMTS_NO_IMAGES === '1' ? NO_IMAGES_UI_NOTE : '';
+}
+
+export const UI_PASS_FILE = () => path.join(ROOT, 'comms', 'UI-PASS.md');
+
+/**
+ * Adds (or replaces) the epic's section in comms/UI-PASS.md: the owner's checklist for a final visual pass.
+ * It holds the approving UI review's "Not verified" and "Screens reviewed" sections and the screenshots of that turn.
+ */
+export function writeUiPass(epic, turn, title = epic) {
+  const p = loadReview(epic, turn, 'ui');
+  if (!p) return false;
+  const dir = path.join(turnDir(epic, turn), 'screenshots');
+  const shots = fs.existsSync(dir) ? fs.readdirSync(dir).filter((f) => /\.(png|jpe?g)$/i.test(f)).sort() : [];
+  const body = (name) => (p.sections[name] || '').trim() || 'None.';
+  const section = [
+    `## ${epic} — ${title}`,
+    '',
+    `Approved after turn ${turn}, ${today()}. Review: \`${rel(reviewFile(epic, turn, 'ui'))}\`.`,
+    '',
+    '### Not verified by the UI reviewer',
+    '',
+    body('Not verified'),
+    '',
+    '### Screens reviewed',
+    '',
+    body('Screens reviewed'),
+    '',
+    '### Screenshots',
+    '',
+    shots.length ? shots.map((f) => `- \`${rel(path.join(dir, f))}\``).join('\n') : 'None.',
+    '',
+  ].join('\n');
+
+  const file = UI_PASS_FILE();
+  const old = read(file) || '';
+  const bySection = new Map();
+  for (const chunk of old.split(/^(?=## E\d{2} )/m).slice(1)) bySection.set(chunk.slice(3, 6), chunk.trimEnd() + '\n');
+  bySection.set(epic, section);
+  const head = [
+    '# UI pass for the owner',
+    '',
+    'Written by the driver when an epic is approved. One section per epic: what the UI reviewer could not check (on the local model it cannot see images, so anything judged by eye is here), the screens it reviewed, and their screenshots. Work through it as a final visual pass. Edit `planning/ui-requirements.md` for anything that should become a requirement.',
+    '',
+  ].join('\n');
+  fs.writeFileSync(file, head + '\n' + [...bySection.keys()].sort().map((k) => bySection.get(k)).join('\n'));
+  return true;
+}
+
 export function writeForOwner(epic, turn) {
   const parts = [];
   for (const [type, heading] of [['ui', 'Proposed requirement changes'], ['plan', 'Questions for the owner']]) {

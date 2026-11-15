@@ -93,7 +93,7 @@ Override any of them for one run by putting the variable before the script or th
 3. Lower `TMTS_MLX_MEMORY_GB` or `--prompt-cache-bytes`, or raise the GPU's share of memory (needs your administrator password, lasts until restart): `sudo sysctl iogpu.wired_limit_mb=26000`. Do not set it higher on a 32 GB machine.
 4. Use a smaller model. This costs capability, which matters for agents that must follow a strict file format.
 
-**Images.** The local server accepts text only. In this mode the hook refuses to open screenshots and other images (`TMTS_NO_IMAGES=1` in the profile), because one image in a conversation makes every later request fail with `404 Only 'text' content type is supported`. The UI reviewer checks screens through page text, the accessibility tree and measured styles instead, and lists what it could not judge by eye under "Not verified". Look at those parts yourself.
+**Images.** The local server accepts text only. In this mode the hook refuses to open screenshots and other images (`TMTS_NO_IMAGES=1` in the profile), because one image in a conversation makes every later request fail with `404 Only 'text' content type is supported`. The driver also tells the UI reviewer (in local mode only) to check screens through page text, measured sizes, computed colours and overflow instead, to raise findings only for what it verified that way, and to put anything that needs eyes under "Not verified" rather than blocking on it. So visual-only questions do not stop the run. When an epic is approved, the driver copies that review's "Not verified" list, its screens and its screenshot paths into `comms/UI-PASS.md`, one section per epic: your checklist for a final visual pass. Skimming each epic's screenshots as it lands is cheaper than finding a problem after later epics have built on it.
 
 The `/run-epics` command in Claude Code starts the driver without `--local`. To use the local model, run the command above in a terminal, or tell the session to run it with `--local`.
 
@@ -152,6 +152,7 @@ Each epic file ends with a **Review script**: the steps to check that epic by ha
 | How one epic went, turn by turn | `comms/Exx/INDEX.md` |
 | What the loop is waiting on you for | `comms/Exx/NEEDS-INPUT.md` (exists only while stopped) |
 | Questions and suggested UI requirement changes from an approved epic | `comms/Exx/FOR-OWNER.md` |
+| What the UI reviewer could not check by eye, per approved epic, with the screenshots: your final visual pass | `comms/UI-PASS.md` |
 | The original plan for checking the epic by hand | "Review script" at the end of `planning/epics/Exx-*.md` (the `SUMMARY.md` steps reflect what was actually built) |
 
 ### Inside one turn
@@ -172,6 +173,7 @@ Every review starts with its verdict and a short summary, so the first few lines
 ```
 comms/
   STATUS.md                 one row per epic: status, turns used
+  UI-PASS.md                written at each approval: what still needs your eyes, per epic, with screenshots
   templates/                the format each file must follow
   E03/
     INDEX.md                one row per turn: verdicts and finding counts
@@ -265,7 +267,7 @@ Everything the three agents say to each other is a markdown file under `comms/`.
 | `epic-coder` | Builds the epic; revises it after feedback | `turn-NN/coder.md` |
 | `plan-reviewer` | Checks the code against the plan, the architecture and the epic | `turn-NN/plan-review.md` |
 | `ui-reviewer` | Checks the running UI against `planning/ui-requirements.md` | `turn-NN/ui-review.md`, `turn-NN/screenshots/` |
-| Driver (`harness/run-epics.mjs`) | Runs the turns, keeps the indexes, stops when required | `STATUS.md`, `Exx/INDEX.md`, `Exx/NEEDS-INPUT.md`, `Exx/FOR-OWNER.md` |
+| Driver (`harness/run-epics.mjs`) | Runs the turns, keeps the indexes, stops when required | `STATUS.md`, `UI-PASS.md`, `Exx/INDEX.md`, `Exx/NEEDS-INPUT.md`, `Exx/FOR-OWNER.md` |
 | `epic-summarizer` | Writes the owner summary after approval | `Exx/SUMMARY.md` |
 | Owner | Gives direction | `Exx/OWNER-NOTES.md`, `planning/ui-requirements.md` |
 
@@ -324,6 +326,7 @@ The loop does not rely on the models following instructions. The driver (`harnes
 | `planning/ui-requirements.md` is edited only by you | Hook, in agent sessions |
 | One README only | Hook (any session) and driver check |
 | Nothing is pushed; agents do not switch, merge or reset branches | Hook, permission deny list |
+| On a model that cannot see images, the UI reviewer does not block on what only eyes can judge; that goes to `comms/UI-PASS.md` | The driver adds the instruction to the UI reviewer's prompt (`uiReviewNote` in `harness/lib/comms.mjs`) when the profile sets `TMTS_NO_IMAGES=1`, and writes `UI-PASS.md` at approval (`writeUiPass`) |
 | No epic is left without a valid `SUMMARY.md` | Driver writes it, validates it, and refuses to start the next epic without it |
 
 What cannot be enforced is the quality of a review: a reviewer can still approve too easily. The validator requires evidence (screenshots, a coverage table, answered findings), not good judgment.

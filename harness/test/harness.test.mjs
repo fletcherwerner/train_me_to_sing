@@ -399,3 +399,36 @@ test('appUrl prefers APP_URL, then the recorded address, then the default port',
     if (had === null) fs.rmSync(URL_FILE, { force: true }); else fs.writeFileSync(URL_FILE, had);
   }
 });
+
+test('writeUiPass collects each approved epic into one sorted, replaceable checklist', () => {
+  const review = (notVerified) => `# r\n\n**Verdict:** APPROVED\n\n**Blocking open:** 0 · **Non-blocking open:** 0\n\n## Summary\nx\n## Screens reviewed\n\n| Screen | Laptop |\n|---|---|\n| /dev/attempt | OK |\n\n## Requirements checked\nx\n## Findings\n\nNone.\n\n## Previous findings\n\nNone.\n\n## Not verified\n\n${notVerified}\n\n## Proposed requirement changes\n\nNone\n`;
+  const put = (epic, turn, text, shots = []) => {
+    const d = lib.turnDir(epic, turn);
+    fs.mkdirSync(path.join(d, 'screenshots'), { recursive: true });
+    fs.writeFileSync(path.join(d, 'ui-review.md'), text);
+    for (const s of shots) fs.writeFileSync(path.join(d, 'screenshots', s), 'png');
+  };
+  fs.rmSync(lib.UI_PASS_FILE(), { force: true });
+  put('E07', 2, review('- Chip colours on the phone result screen.'), ['b.png', 'a.png']);
+  assert.equal(lib.writeUiPass('E07', 2, 'Lesson catalog'), true);
+  put('E03', 1, review('- Dark mode.'));
+  lib.writeUiPass('E03', 1, 'Vocal range');
+  let text = fs.readFileSync(lib.UI_PASS_FILE(), 'utf8');
+  assert.ok(text.indexOf('## E03 — Vocal range') < text.indexOf('## E07 — Lesson catalog'), 'sorted by epic');
+  assert.match(text, /Chip colours on the phone result screen/);
+  assert.match(text, /- `comms\/E07\/turn-02\/screenshots\/a\.png`\n- `comms\/E07\/turn-02\/screenshots\/b\.png`/);
+  put('E07', 3, review('- Only the strip spacing now.'));
+  lib.writeUiPass('E07', 3, 'Lesson catalog');
+  text = fs.readFileSync(lib.UI_PASS_FILE(), 'utf8');
+  assert.equal(text.match(/## E07 /g).length, 1, 'an epic approved again replaces its section');
+  assert.match(text, /Only the strip spacing now/);
+  assert.doesNotMatch(text, /Chip colours/);
+  assert.match(text, /Dark mode/);
+  assert.equal(lib.writeUiPass('E09', 1), false, 'no review, nothing written');
+});
+
+test('the UI reviewer gets the no-images note only when the profile says the model cannot see', () => {
+  assert.match(lib.uiReviewNote({ TMTS_NO_IMAGES: '1' }), /never a reason for BLOCKED - NEEDS OWNER/);
+  assert.equal(lib.uiReviewNote({}), '');
+  assert.equal(lib.uiReviewNote(undefined), '');
+});
