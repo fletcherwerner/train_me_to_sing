@@ -65,6 +65,7 @@ export function AttemptDev() {
   const handleRef = useRef<PlaybackHandle | null>(null);
   const sourceRef = useRef<PitchSource | null>(null);
   const runRef = useRef(0);
+  const resultRef = useRef<HTMLElement | null>(null);
 
   const template = DEV_TEMPLATES.find((t) => t.id === templateId) ?? DEV_TEMPLATES[0];
   const tol = getTolerance(tolId);
@@ -81,6 +82,10 @@ export function AttemptDev() {
     },
     [],
   );
+
+  useEffect(() => {
+    if (result) resultRef.current?.scrollIntoView?.({ block: 'start' });
+  }, [result]);
 
   if (!range) {
     return (
@@ -203,6 +208,10 @@ export function AttemptDev() {
         sungMidi={live.sungMidi}
         rangeMarkers={{ lowMidi: range.lowMidi, highMidi: range.highMidi }}
       />
+      <p data-testid="note-labels" style={{ fontSize: '1.5rem', fontWeight: 700, margin: '8px 0' }}>
+        Target: {live.targetMidi === null ? '—' : midiToName(live.targetMidi)} · Sung:{' '}
+        {live.sungMidi === null ? '—' : midiToName(live.sungMidi)}
+      </p>
       <CentsMeter cents={live.cents} toleranceCents={tol.cents} />
       {exercise ? (
         <>
@@ -224,7 +233,7 @@ export function AttemptDev() {
       </p>
       {error ? <p className="tuner-error">{error}</p> : null}
       {result && exercise ? (
-        <section data-testid="attempt-result">
+        <section data-testid="attempt-result" ref={resultRef}>
           <h2>
             <span data-testid="attempt-score">
               {hits} of {result.notes.length} notes ({Math.round(result.score * 100)}%)
