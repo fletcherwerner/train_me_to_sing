@@ -346,6 +346,17 @@ test('the real E01 files and summary pass the validator', () => {
   assert.equal(run('E01', 'summary').status, 0);
 });
 
+test('a dispute repeated after the owner answered stops the loop; one from before the answer does not', () => {
+  const disputing = (id) => `## Response to findings\n\n| Finding | Response | Note |\n|---|---|---|\n| ${id} | Disputed | why |\n`;
+  write(`comms/E07/turn-02/coder.md`, disputing('UI-E07-T1-01'));
+  write(`comms/E07/turn-03/coder.md`, disputing('UI-E07-T1-01'));
+  write(`comms/E07/turn-04/coder.md`, disputing('UI-E07-T1-01'));
+  assert.deepEqual(lib.repeatedDisputes('E07', 2), []);
+  assert.deepEqual(lib.repeatedDisputes('E07', 3), ['UI-E07-T1-01']);
+  assert.deepEqual(lib.repeatedDisputes('E07', 3, 2), []); // the owner answered after turn 2, as in E06
+  assert.deepEqual(lib.repeatedDisputes('E07', 4, 2), ['UI-E07-T1-01']);
+});
+
 test('guard: a chained agent command is allowed only when every part is', () => {
   const perms = JSON.parse(fs.readFileSync(new URL('../../.claude/settings.json', import.meta.url), 'utf8')).permissions;
   const ok = (cmd, role = 'epic-coder') => rules.allowBash(cmd, perms, env(role, 2));

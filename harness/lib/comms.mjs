@@ -129,6 +129,17 @@ export function parseCoder(text) {
   return { statuses, sections: secs, responses, text };
 }
 
+/**
+ * Finding ids the coder disputed in this turn and the one before. A dispute made before the owner's last answer
+ * (turns up to `sinceTurn`) does not count: after an answer the coder often cites it as the reason for a dispute.
+ */
+export function repeatedDisputes(epic, turn, sinceTurn = 0) {
+  if (turn - 1 <= Math.max(1, sinceTurn)) return [];
+  const disputed = (n) => (parseCoder(read(path.join(turnDir(epic, n), FILES.coder)) || '').responses).filter((r) => r.response === 'Disputed').map((r) => r.id);
+  const before = new Set(disputed(turn - 1));
+  return disputed(turn).filter((id) => before.has(id));
+}
+
 function reviewFile(epic, turn, type) {
   return path.join(turnDir(epic, turn), FILES[type]);
 }

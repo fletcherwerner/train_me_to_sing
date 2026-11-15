@@ -27,7 +27,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import {
   ROOT, EPIC_RE, FILES, pad, rel, read, git, today, commsDir, turnDir, turnNumbers,
   lastRecordedTurn, validateCoder, validateReview, validateSummary, approvalGate, openAfterTurn,
-  parseCoder, readStatus, readEpicTable, setStatusRow, setIndexRow, writeNeedsInput, writeForOwner, writeUiPass, uiReviewNote,
+  parseCoder, repeatedDisputes, readStatus, readEpicTable, setStatusRow, setIndexRow, writeNeedsInput, writeForOwner, writeUiPass, uiReviewNote,
 } from './lib/comms.mjs';
 import { loadProfile, checkReachable, checkModel, flushCache } from './lib/profile.mjs';
 
@@ -321,12 +321,9 @@ async function loopEpic(epic) {
     if (coder.statuses[0] === 'BLOCKED - NEEDS OWNER') {
       stopForOwner(epic, done, 'The coding agent reported a blocker', `See "Blocker" in comms/${epic}/turn-${pad(turn)}/coder.md.`);
     }
-    if (turn > 1) {
-      const prev = turn > 2 ? parseCoder(read(path.join(turnDir(epic, turn - 1), FILES.coder)) || '') : { responses: [] };
-      const twice = coder.responses.filter((r) => r.response === 'Disputed' && prev.responses.some((p) => p.id === r.id && p.response === 'Disputed'));
-      if (twice.length) {
-        stopForOwner(epic, done, `The coder disputed ${twice.map((r) => r.id).join(', ')} two turns in a row`, 'Decide whether the reviewer or the coder is right, and say so in OWNER-NOTES.md.');
-      }
+    const twice = repeatedDisputes(epic, turn, baseTurn(epic));
+    if (twice.length) {
+      stopForOwner(epic, done, `The coder disputed ${twice.join(', ')} two turns in a row`, 'Decide whether the reviewer or the coder is right, and say so in OWNER-NOTES.md.');
     }
 
     // Reviewers
