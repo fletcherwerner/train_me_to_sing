@@ -15,7 +15,7 @@
 //   TMTS_CLAUDE_BIN        the claude executable (default: claude)
 //   TMTS_PERMISSION_MODE   default acceptEdits; unlisted commands are denied in headless runs
 //   TMTS_MAX_TURNS         turn limit before asking the owner (default 10)
-//   TMTS_AGENT_TIMEOUT_MIN minutes before an agent is killed (default 60)
+//   TMTS_AGENT_TIMEOUT_MIN minutes before an agent is killed (default 180)
 //   TMTS_MAX_BUDGET_USD    spend limit per agent run
 //   TMTS_SERIAL_REVIEWS=1  run the two reviewers one after the other
 //
@@ -34,7 +34,7 @@ import { loadProfile, checkReachable, checkModel, flushCache } from './lib/profi
 let TRAILER = 'Co-Authored-By: Claude <noreply@anthropic.com>';
 let PROFILE = null; // set in main() from --local / --profile=<name>
 const MAX_TURNS = Number(process.env.TMTS_MAX_TURNS || 10);
-const TIMEOUT_MS = Number(process.env.TMTS_AGENT_TIMEOUT_MIN || 60) * 60_000;
+const TIMEOUT_MS = Number(process.env.TMTS_AGENT_TIMEOUT_MIN || 180) * 60_000;
 const CLAUDE = process.env.TMTS_CLAUDE_BIN || 'claude';
 const AGENT = { coder: 'epic-coder', plan: 'plan-reviewer', ui: 'ui-reviewer', summary: 'epic-summarizer' };
 
