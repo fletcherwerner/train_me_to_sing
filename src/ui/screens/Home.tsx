@@ -31,6 +31,9 @@ export function Home() {
         <li>
           <Link to="/dev/tuner">Tuner (pitch detection)</Link>
         </li>
+        <li>
+          <Link to="/dev/exercise">Exercise playback (I do)</Link>
+        </li>
       </ul>
     </main>
   );
