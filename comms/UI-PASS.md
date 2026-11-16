@@ -235,3 +235,48 @@ The script is `ui-scripts/import.mjs`. It uses a fresh browser profile, so the s
 - `comms/E10/turn-01/screenshots/import-summary-phone.png`
 - `comms/E10/turn-01/screenshots/settings-laptop.png`
 - `comms/E10/turn-01/screenshots/settings-phone.png`
+
+## S01 — Spike: local profiles
+
+Approved after turn 1, 2026-11-16. Review: `comms/S01/turn-01/ui-review.md`.
+
+### Not verified by the UI reviewer
+
+- Review script steps 4–6 as a full run, meaning a real range test and passing a lesson. These need a microphone, and the Playwright e2e covers the same sequence. I only created profiles through the UI.
+- Step 8, the `npm run build && npm run preview` view of the unavailable message. I did not run it.
+- The non-blocking "Couldn't save to the profile file" notice. I could not trigger a save failure.
+- Step 3, opening the JSON file in an editor.
+
+### Screens reviewed
+
+| Screen / state | Laptop | iPhone | Screenshot files |
+|----------------|--------|--------|------------------|
+| Settings, no profile, empty list | OK | OK | `screenshots/settings-noprofile-laptop.png`, `screenshots/settings-noprofile-phone.png` |
+| Settings, profile active, list of two | OK | OK | `screenshots/settings-active-laptop.png`, `screenshots/settings-active-phone.png` |
+| Duplicate-name error | OK | OK | `screenshots/duplicate-laptop.png`, `screenshots/duplicate-phone.png` |
+| Empty name error | OK | OK | `screenshots/emptyname-laptop.png`, `screenshots/emptyname-phone.png` |
+| Start fresh goes to range setup | OK | OK | `screenshots/after-create-fresh-laptop.png`, `screenshots/after-create-fresh-phone.png` |
+| Home with the profile link (Copy mode, range kept) | OK | OK | `screenshots/copy-home-laptop.png`, `screenshots/copy-home-phone.png` |
+| Dark mode, Settings and Home | n/a | OK | `screenshots/settings-dark-phone.png`, `screenshots/copy-home-phone-dark.png` |
+
+### Screenshots
+
+- `comms/S01/turn-01/screenshots/after-create-fresh-laptop.png`
+- `comms/S01/turn-01/screenshots/after-create-fresh-phone.png`
+- `comms/S01/turn-01/screenshots/copy-home-laptop.png`
+- `comms/S01/turn-01/screenshots/copy-home-phone-dark.png`
+- `comms/S01/turn-01/screenshots/copy-home-phone.png`
+- `comms/S01/turn-01/screenshots/duplicate-laptop.png`
+- `comms/S01/turn-01/screenshots/duplicate-phone.png`
+- `comms/S01/turn-01/screenshots/emptyname-laptop.png`
+- `comms/S01/turn-01/screenshots/emptyname-phone.png`
+- `comms/S01/turn-01/screenshots/home-dark-phone.png`
+- `comms/S01/turn-01/screenshots/home-profile-laptop.png`
+- `comms/S01/turn-01/screenshots/home-profile-phone.png`
+- `comms/S01/turn-01/screenshots/settings-active-laptop.png`
+- `comms/S01/turn-01/screenshots/settings-active-phone.png`
+- `comms/S01/turn-01/screenshots/settings-dark-phone.png`
+- `comms/S01/turn-01/screenshots/settings-filled-laptop.png`
+- `comms/S01/turn-01/screenshots/settings-filled-phone.png`
+- `comms/S01/turn-01/screenshots/settings-noprofile-laptop.png`
+- `comms/S01/turn-01/screenshots/settings-noprofile-phone.png`
