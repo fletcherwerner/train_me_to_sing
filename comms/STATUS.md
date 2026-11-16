@@ -16,5 +16,5 @@ Maintained by the orchestrator. Status is one of: `Not started`, `In progress`, 
 | E10 | PWA install, hosting, export/import | Approved | 1 | APPROVED / APPROVED | 2026-11-16 |
 | S01 | Spike: local profiles | Approved | 1 | APPROVED / APPROVED | 2026-11-16 |
 | S02 | Spike: scrolling pitch graph | Approved | 1 | APPROVED / APPROVED | 2026-11-16 |
-| E11 | MIDI import | Not started | 0 | — | — |
+| E11 | MIDI import | Approved | 1 | APPROVED / APPROVED | 2026-11-16 |
 | E12 | Capacitor iOS wrapper | Not started | 0 | — | — |

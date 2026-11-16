@@ -1,0 +1,32 @@
+import { chromium } from 'playwright';
+import { appUrl } from '../../../../harness/lib/app-url.mjs';
+const out='comms/E11/turn-01/screenshots/';
+const seed={version:1,range:{lowMidi:45,highMidi:64,assessedAt:'2025-01-01T00:00:00.000Z'},settings:{latencyOffsetMs:0},progress:{},importedLessons:[]};
+const b=await chromium.launch();
+for (const [name,vp,dark] of [['laptop',{width:1280,height:800}],['phone',{width:393,height:852}],['phone-dark',{width:393,height:852},true]]) {
+  const c=await b.newContext({viewport:vp,ignoreHTTPSErrors:true,colorScheme:dark?'dark':'light'});
+  const p=await c.newPage();
+  await p.addInitScript(d=>{if(!localStorage.getItem('tmts.v1'))localStorage.setItem('tmts.v1',JSON.stringify(d))},seed);
+  await p.goto(appUrl()+'/#/?sim=perfect'); await p.waitForTimeout(800);
+  await p.screenshot({path:out+`${name}-1-home.png`,fullPage:true});
+  await p.getByTestId('import-midi-link').scrollIntoViewIfNeeded();
+  await p.getByTestId('import-midi-link').click(); await p.waitForTimeout(500);
+  await p.screenshot({path:out+`${name}-2-import-empty.png`,fullPage:true});
+  await p.getByTestId('midi-file').setInputFiles('tests/fixtures/two-tracks.mid'); await p.waitForTimeout(500);
+  await p.screenshot({path:out+`${name}-3-two-tracks.png`,fullPage:true});
+  const t=p.getByTestId('track-1'); 
+  await p.locator('[data-testid^=track-]').first().click().catch(()=>{});
+  await p.waitForTimeout(300);
+  await p.screenshot({path:out+`${name}-4-selected.png`,fullPage:true});
+  const sw=await p.evaluate(()=>document.documentElement.scrollWidth);
+  console.log(name,'scrollWidth',sw);
+  await p.getByTestId('midi-file').setInputFiles('tests/fixtures/c-major-scale.mid'); await p.waitForTimeout(400);
+  await p.getByTestId('add-lesson').click(); await p.waitForTimeout(600);
+  await p.screenshot({path:out+`${name}-5-home-mysongs.png`,fullPage:true});
+  const del=p.getByTestId('my-songs').getByRole('button').first();
+  console.log(name,'delbox',JSON.stringify(await del.boundingBox()));
+  await del.click(); await p.waitForTimeout(300);
+  await p.screenshot({path:out+`${name}-6-delete-confirm.png`,fullPage:true});
+  await c.close();
+}
+await b.close();

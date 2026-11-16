@@ -1,0 +1,15 @@
+import { chromium } from 'playwright';
+import { appUrl } from '../../../../harness/lib/app-url.mjs';
+const out='comms/E11/turn-01/screenshots/';
+const seed={version:1,range:{lowMidi:60,highMidi:64,assessedAt:'2025-01-01T00:00:00.000Z'},settings:{latencyOffsetMs:0},progress:{},importedLessons:[]};
+const b=await chromium.launch();
+const c=await b.newContext({viewport:{width:393,height:852},ignoreHTTPSErrors:true});
+const p=await c.newPage();
+await p.addInitScript(d=>{if(!localStorage.getItem('tmts.v1'))localStorage.setItem('tmts.v1',JSON.stringify(d))},seed);
+await p.goto(appUrl()+'/#/import'); await p.waitForTimeout(800);
+await p.getByTestId('midi-file').setInputFiles('tests/fixtures/c-major-scale.mid'); await p.waitForTimeout(400);
+await p.screenshot({path:out+'phone-9-nofit-import.png',fullPage:true});
+await p.getByTestId('add-lesson').click(); await p.waitForTimeout(600);
+await p.getByTestId('my-songs').scrollIntoViewIfNeeded();
+await p.getByTestId('my-songs').screenshot({path:out+'phone-10-nofit-home.png'});
+await b.close();

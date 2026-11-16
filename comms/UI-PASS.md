@@ -236,6 +236,59 @@ The script is `ui-scripts/import.mjs`. It uses a fresh browser profile, so the s
 - `comms/E10/turn-01/screenshots/settings-laptop.png`
 - `comms/E10/turn-01/screenshots/settings-phone.png`
 
+## E11 — MIDI import
+
+Approved after turn 1, 2026-11-16. Review: `comms/E11/turn-01/ui-review.md`.
+
+### Not verified by the UI reviewer
+
+- Preview audio (needs speakers).
+- Running an imported lesson by hand. I did not do this; the e2e test covers it.
+- A real nursery-rhyme `.mid` file; I used the generated fixtures only.
+- iPhone Safari, including the file picker.
+
+### Screens reviewed
+
+| Screen / state | Laptop | iPhone | Screenshot files |
+|----------------|--------|--------|------------------|
+| Import, empty | OK | OK | `screenshots/laptop-2-import-empty.png`, `screenshots/phone-2-import-empty.png` |
+| Import, two tracks, chord warning | OK | OK | `screenshots/laptop-7-chords-selected.png`, `screenshots/phone-7-chords-selected.png` |
+| Import, melody selected, fits | OK | OK | `screenshots/laptop-8-melody-narrow-range.png`, `screenshots/phone-8-melody-narrow-range.png` |
+| Import, melody selected, does not fit | OK | OK | `screenshots/phone-9-nofit-import.png` |
+| Import, dark mode | OK | OK | `screenshots/phone-dark-8-melody-narrow-range.png` |
+| Home, My songs and import link | OK | OK | `screenshots/laptop-5-home-mysongs.png`, `screenshots/phone-5-home-mysongs.png` |
+| Home, imported lesson that does not fit | OK | OK | `screenshots/phone-10-nofit-home.png` |
+| Home, delete confirmation | OK | OK | `screenshots/laptop-6-delete-confirm.png`, `screenshots/phone-6-delete-confirm.png` |
+
+### Screenshots
+
+- `comms/E11/turn-01/screenshots/laptop-1-home.png`
+- `comms/E11/turn-01/screenshots/laptop-2-import-empty.png`
+- `comms/E11/turn-01/screenshots/laptop-3-two-tracks.png`
+- `comms/E11/turn-01/screenshots/laptop-4-selected.png`
+- `comms/E11/turn-01/screenshots/laptop-5-home-mysongs.png`
+- `comms/E11/turn-01/screenshots/laptop-6-delete-confirm.png`
+- `comms/E11/turn-01/screenshots/laptop-7-chords-selected.png`
+- `comms/E11/turn-01/screenshots/laptop-8-melody-narrow-range.png`
+- `comms/E11/turn-01/screenshots/phone-1-home.png`
+- `comms/E11/turn-01/screenshots/phone-10-nofit-home.png`
+- `comms/E11/turn-01/screenshots/phone-2-import-empty.png`
+- `comms/E11/turn-01/screenshots/phone-3-two-tracks.png`
+- `comms/E11/turn-01/screenshots/phone-4-selected.png`
+- `comms/E11/turn-01/screenshots/phone-5-home-mysongs.png`
+- `comms/E11/turn-01/screenshots/phone-6-delete-confirm.png`
+- `comms/E11/turn-01/screenshots/phone-7-chords-selected.png`
+- `comms/E11/turn-01/screenshots/phone-8-melody-narrow-range.png`
+- `comms/E11/turn-01/screenshots/phone-9-nofit-import.png`
+- `comms/E11/turn-01/screenshots/phone-dark-1-home.png`
+- `comms/E11/turn-01/screenshots/phone-dark-2-import-empty.png`
+- `comms/E11/turn-01/screenshots/phone-dark-3-two-tracks.png`
+- `comms/E11/turn-01/screenshots/phone-dark-4-selected.png`
+- `comms/E11/turn-01/screenshots/phone-dark-5-home-mysongs.png`
+- `comms/E11/turn-01/screenshots/phone-dark-6-delete-confirm.png`
+- `comms/E11/turn-01/screenshots/phone-dark-7-chords-selected.png`
+- `comms/E11/turn-01/screenshots/phone-dark-8-melody-narrow-range.png`
+
 ## S01 — Spike: local profiles
 
 Approved after turn 1, 2026-11-16. Review: `comms/S01/turn-01/ui-review.md`.
