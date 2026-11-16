@@ -316,6 +316,75 @@ These need an iPhone, Xcode and a real microphone, so they remain for the owner:
 
 None.
 
+## E13 — Hardening and polish: audio recovery, run-screen layout, UI leftovers
+
+Approved after turn 1, 2026-11-16. Review: `comms/E13/turn-01/ui-review.md`.
+
+### Not verified by the UI reviewer
+
+- Review script steps 1–3 with real headphones, Bluetooth or sleep/wake. I only used the `suspendAudio` and `loseMic` test hooks.
+- The range-test failure screens (step 1) and the Calibrate recovery screen.
+- Step 6 by ear. I did see an orange sung key on the piano for a flat note with `sim=flat40`.
+- Step 8, dark mode (UR-27) on every screen.
+- Step 9, the Import progress prompt (boxed, Merge primary, Replace danger and warning). It needs a file picked.
+- Step 10: whether Settings lists only "Open the tuner" in a production build. The dev server shows dev links by design.
+- The 393×660 window.
+- Everything that needs a real iPhone.
+
+### Screens reviewed
+
+| Screen / state | Laptop | iPhone | Screenshot files |
+|----------------|--------|--------|------------------|
+| Lesson You do, running (s1-05) | OK | OK | `screenshots/l-youdo-run-laptop.png`, `screenshots/l-youdo-run-phone.png` |
+| Lesson You do, running, flat sung note (s3-01) | OK | OK | `screenshots/l-flat-youdo-phone.png`, `screenshots/l-flat-youdo-laptop.png` |
+| Sound stopped mid-run | OK | OK | `screenshots/l-stalled-phone.png`, `screenshots/l-stalled-laptop.png` |
+| Microphone lost, Reconnect microphone | OK | OK | `screenshots/l-miclost-phone.png`, `screenshots/l-miclost-laptop.png` |
+| Results (fail) | OK | OK | `screenshots/results-flat40-phone.png`, `screenshots/results-flat40-laptop.png` |
+| Home | OK | OK | `screenshots/home-phone.png`, `screenshots/home-laptop.png` |
+| Settings | OK | OK | `screenshots/settings-phone.png`, `screenshots/settings-laptop.png` |
+| Range test (find) | OK | OK | `screenshots/range-find-phone.png`, `screenshots/range-find-laptop.png` |
+| Import MIDI (start) | OK | OK | `screenshots/import-phone.png`, `screenshots/import-laptop.png` |
+
+### Screenshots
+
+- `comms/E13/turn-01/screenshots/calibrate-laptop.png`
+- `comms/E13/turn-01/screenshots/calibrate-phone.png`
+- `comms/E13/turn-01/screenshots/home-laptop.png`
+- `comms/E13/turn-01/screenshots/home-phone.png`
+- `comms/E13/turn-01/screenshots/import-laptop.png`
+- `comms/E13/turn-01/screenshots/import-phone.png`
+- `comms/E13/turn-01/screenshots/l-flat-youdo-laptop.png`
+- `comms/E13/turn-01/screenshots/l-flat-youdo-phone.png`
+- `comms/E13/turn-01/screenshots/l-ido-idle-laptop.png`
+- `comms/E13/turn-01/screenshots/l-ido-idle-phone.png`
+- `comms/E13/turn-01/screenshots/l-ido-run-laptop.png`
+- `comms/E13/turn-01/screenshots/l-ido-run-phone.png`
+- `comms/E13/turn-01/screenshots/l-intro-laptop.png`
+- `comms/E13/turn-01/screenshots/l-intro-phone.png`
+- `comms/E13/turn-01/screenshots/l-miclost-laptop.png`
+- `comms/E13/turn-01/screenshots/l-miclost-phone.png`
+- `comms/E13/turn-01/screenshots/l-stalled-laptop.png`
+- `comms/E13/turn-01/screenshots/l-stalled-phone.png`
+- `comms/E13/turn-01/screenshots/l-wedo-done-laptop.png`
+- `comms/E13/turn-01/screenshots/l-wedo-done-phone.png`
+- `comms/E13/turn-01/screenshots/l-wedo-idle-laptop.png`
+- `comms/E13/turn-01/screenshots/l-wedo-idle-phone.png`
+- `comms/E13/turn-01/screenshots/l-wedo-run-laptop.png`
+- `comms/E13/turn-01/screenshots/l-wedo-run-phone.png`
+- `comms/E13/turn-01/screenshots/l-youdo-run-laptop.png`
+- `comms/E13/turn-01/screenshots/l-youdo-run-phone.png`
+- `comms/E13/turn-01/screenshots/probe-s301.png`
+- `comms/E13/turn-01/screenshots/range-find-laptop.png`
+- `comms/E13/turn-01/screenshots/range-find-phone.png`
+- `comms/E13/turn-01/screenshots/range-laptop.png`
+- `comms/E13/turn-01/screenshots/range-phone.png`
+- `comms/E13/turn-01/screenshots/results-flat40-laptop.png`
+- `comms/E13/turn-01/screenshots/results-flat40-phone.png`
+- `comms/E13/turn-01/screenshots/results-perfect-laptop.png`
+- `comms/E13/turn-01/screenshots/results-perfect-phone.png`
+- `comms/E13/turn-01/screenshots/settings-laptop.png`
+- `comms/E13/turn-01/screenshots/settings-phone.png`
+
 ## S01 — Spike: local profiles
 
 Approved after turn 1, 2026-11-16. Review: `comms/S01/turn-01/ui-review.md`.

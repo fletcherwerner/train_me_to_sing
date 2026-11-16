@@ -1,7 +1,8 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useMemo, useRef, useState } from 'react';
 import { useAppStore } from '../../../storage/store';
-import { unlockAudio } from '../../../audio/audioEngine';
+import { ensureAudioRunning } from '../../../audio/audioEngine';
+import { SOUND_PAUSED_MSG } from '../../audioMessages';
 import { playExercise, type PlaybackHandle } from '../../../audio/exercisePlayer';
 import { displayRange, fit } from '../../../core/exercise/fit';
 import { parseNotation } from '../../../core/exercise/notation';
@@ -45,6 +46,8 @@ const DEV_TEMPLATES: ExerciseTemplate[] = [
 
 export function ExerciseDev() {
   const range = useAppStore((s) => s.range);
+  const { search } = useLocation();
+  const [notice, setNotice] = useState<string | null>(null);
   const [templateId, setTemplateId] = useState(DEV_TEMPLATES[0].id);
   const [handle, setHandle] = useState<PlaybackHandle | null>(null);
   const handleRef = useRef<PlaybackHandle | null>(null);
@@ -58,13 +61,17 @@ export function ExerciseDev() {
     return (
       <main className="dev-page">
         <p>
-          <Link className="dev-home" to="/">
+          <Link className="nav-link" to={{ pathname: '/', search }}>
             Home
           </Link>
         </p>
         <h1>Exercise playback</h1>
         <p>
-          No range set. <Link to="/range">Set your range</Link> first.
+          No range set.{' '}
+          <Link to={{ pathname: '/range', search }} className="nav-link">
+            Set your range
+          </Link>{' '}
+          first.
         </p>
       </main>
     );
@@ -72,7 +79,11 @@ export function ExerciseDev() {
 
   const play = async () => {
     if (!exercise) return;
-    await unlockAudio();
+    if (!(await ensureAudioRunning())) {
+      setNotice(SOUND_PAUSED_MSG);
+      return;
+    }
+    setNotice(null);
     handleRef.current?.stop();
     const h = playExercise(exercise, { playMelody: true, metronome: true, playStartNote: false });
     handleRef.current = h;
@@ -97,7 +108,7 @@ export function ExerciseDev() {
   return (
     <main className="dev-page">
       <p>
-        <Link className="dev-home" to="/">
+        <Link className="nav-link" to={{ pathname: '/', search }}>
           Home
         </Link>
       </p>
@@ -141,14 +152,19 @@ export function ExerciseDev() {
           />
         </>
       ) : null}
+      {notice ? (
+        <p className="tuner-error" role="alert">
+          {notice}
+        </p>
+      ) : null}
       <p>
-        <button onClick={play} disabled={!exercise || playing}>
+        <button className="btn btn--primary" onClick={play} disabled={!exercise || playing}>
           Play
         </button>{' '}
-        <button onClick={play} disabled={!exercise}>
+        <button className="btn" onClick={play} disabled={!exercise}>
           Repeat
         </button>{' '}
-        <button onClick={stop} disabled={!playing}>
+        <button className="btn" onClick={stop} disabled={!playing}>
           Stop
         </button>
       </p>

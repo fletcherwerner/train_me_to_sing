@@ -61,7 +61,7 @@ test('small range disables lessons that do not fit', async ({ page }) => {
   await seed(page, 50, 53);
   await page.goto('/#/');
   await expect(page.getByTestId('lesson-s1-03')).toHaveAttribute('aria-disabled', 'true');
-  await expect(page.getByTestId('status-s1-03')).toContainText('Needs 4 semitones; your range is 3');
+  await expect(page.getByTestId('status-s1-03')).toContainText("Doesn't fit: needs 4 semitones; your range is 3");
   await expect(page.getByTestId('lesson-s1-01')).toHaveAttribute('href', /lesson\/s1-01/);
 });
 

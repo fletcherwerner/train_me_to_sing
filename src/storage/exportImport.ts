@@ -32,7 +32,8 @@ export function parseImport(text: string): ParseResult {
 export function summarizeImport(data: StoredData): string {
   const passed = Object.values(data.progress).filter((p) => p.passed).length;
   const range = data.range ? `Range ${midiToName(data.range.lowMidi)}–${midiToName(data.range.highMidi)}` : 'No range';
-  return `${range}, ${passed} ${passed === 1 ? 'lesson' : 'lessons'} passed`;
+  const attempted = Object.values(data.progress).filter((p) => p.attempts > 0).length;
+  return `${range}, ${passed} ${passed === 1 ? 'lesson' : 'lessons'} passed, ${attempted} attempted`;
 }
 
 /**

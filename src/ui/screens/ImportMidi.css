@@ -3,3 +3,7 @@
 .import-midi__warn { font-weight: 700; }
 .import-midi__actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .dev-page input.import-midi__title { width: min(20em, 100%); }
+.import-midi__field { display: flex; flex-direction: column; gap: 4px; margin: 8px 0; }
+.dev-page .import-midi__field input { width: 100%; box-sizing: border-box; }
+.dev-page input.import-midi__title { width: 100%; max-width: 20em; }
+.import-midi__bars { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }

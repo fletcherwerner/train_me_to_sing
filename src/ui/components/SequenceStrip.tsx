@@ -26,10 +26,11 @@ export function SequenceStrip({ notes, currentIndex, results, onChipPress, expan
     const list = listRef.current;
     const chip = currentRef.current;
     if (!list || !chip) return;
-    const top = chip.offsetTop;
-    const bottom = top + chip.offsetHeight;
-    if (top < list.scrollTop) list.scrollTop = top;
-    else if (bottom > list.scrollTop + list.clientHeight) list.scrollTop = bottom - list.clientHeight;
+    // Live strip: one row scrolling sideways. Expanded strip: wraps, scrolls (if at all) vertically.
+    const left = chip.offsetLeft - list.offsetLeft;
+    const right = left + chip.offsetWidth;
+    if (left < list.scrollLeft) list.scrollLeft = left;
+    else if (right > list.scrollLeft + list.clientWidth) list.scrollLeft = right - list.clientWidth;
   }, [currentIndex]);
 
   return (
@@ -57,7 +58,8 @@ export function SequenceStrip({ notes, currentIndex, results, onChipPress, expan
             className={cls.join(' ')}
             data-testid={`chip-${n.index}`}
             aria-current={isCurrent ? 'true' : undefined}
-            style={{ width: Math.max(r === undefined ? MIN_W : MIN_W_RESULT, n.durationSec * PX_PER_SEC) }}
+            // Duration only sets a minimum width; the chip grows to fit its text.
+            style={{ minWidth: Math.max(r === undefined ? MIN_W : MIN_W_RESULT, n.durationSec * PX_PER_SEC) }}
           >
             {onChipPress ? (
               <button

@@ -1,7 +1,14 @@
-import { Link, Navigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useLocation, useParams } from 'react-router-dom';
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { useAppStore } from '../../storage/store';
-import { unlockAudio } from '../../audio/audioEngine';
+import { ensureAudioRunning, now, watchAudioClock } from '../../audio/audioEngine';
+import {
+  isMicMissing,
+  MIC_LOST_MSG,
+  MIC_MISSING_MSG,
+  SOUND_PAUSED_MSG,
+  SOUND_STOPPED_MSG,
+} from '../audioMessages';
 import { playExercise, playPreviewNote, type PlaybackHandle } from '../../audio/exercisePlayer';
 import { createPitchSource, recordFrames, registerSimExercise, clearSimExercise } from '../../audio/pitch';
 import type { PitchSource } from '../../audio/pitch/PitchSource';
@@ -19,7 +26,7 @@ import { PianoKeyboard } from '../components/PianoKeyboard';
 import { CentsMeter } from '../components/CentsMeter';
 import { SequenceStrip } from '../components/SequenceStrip';
 import { NowSinging } from '../components/NowSinging';
-import { PitchGraph, ResultsGraph } from '../components/PitchGraph';
+import { GraphLegend, PitchGraph, ResultsGraph } from '../components/PitchGraph';
 import type { PitchFrame } from '../../audio/pitch/PitchSource';
 import { BeatIndicator } from '../components/BeatIndicator';
 import { useLiveAttempt } from '../hooks/useLiveAttempt';
@@ -45,6 +52,20 @@ const STEP_LABELS: { step: 'iDo' | 'weDo' | 'youDo'; label: string }[] = [
   { step: 'youDo', label: 'You do' },
 ];
 
+/** Home at the left, title centred, on one row. Home keeps the query string (?sim=...). */
+function LessonHeader({ title }: { title: string }) {
+  const { search } = useLocation();
+  return (
+    <header className="page-header lesson-header">
+      <Link className="nav-link" to={{ pathname: '/', search }}>
+        Home
+      </Link>
+      <h1 className="lesson-title">{title}</h1>
+      <span />
+    </header>
+  );
+}
+
 export function Lesson({ onAttemptComplete }: LessonProps) {
   const { lessonId } = useParams();
   const lesson = lessonId ? getLesson(lessonId) : undefined;
@@ -53,12 +74,7 @@ export function Lesson({ onAttemptComplete }: LessonProps) {
   if (!lesson) {
     return (
       <main className="dev-page lesson-page">
-        <p>
-          <Link className="lesson-home-button" to="/">
-            Home
-          </Link>
-        </p>
-        <h1>Lesson not found</h1>
+        <LessonHeader title="Lesson not found" />
         <p>We couldn&apos;t find that lesson. Go back home and pick another.</p>
       </main>
     );
@@ -75,6 +91,7 @@ function LessonRun({
   range: { lowMidi: number; highMidi: number };
   onAttemptComplete?: (result: AttemptResult) => void;
 }) {
+  const { search } = useLocation();
   const latencyMs = useAppStore((s) => s.settings.latencyOffsetMs);
   const calibrated = useAppStore((s) => s.settings.calibratedAt !== undefined);
   const recordAttempt = useAppStore((s) => s.recordAttempt);
@@ -84,6 +101,10 @@ function LessonRun({
   const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  /** The last run did not complete because sound stopped; the run button then reads "Try again". */
+  const [soundFailed, setSoundFailed] = useState(false);
+  const [micLost, setMicLost] = useState(false);
+  const offLostRef = useRef<(() => void) | null>(null);
   const handleRef = useRef<PlaybackHandle | null>(null);
   const sourceRef = useRef<PitchSource | null>(null);
   const runRef = useRef(0);
@@ -124,8 +145,19 @@ function LessonRun({
     return () => document.removeEventListener('visibilitychange', onVisibility);
   }, [running]);
 
+  // If the audio clock stops mid-run, abandon the run: nothing is scored or saved.
+  useEffect(() => {
+    if (!running) return;
+    return watchAudioClock(() => {
+      stopRef.current();
+      setSoundFailed(true);
+      setNotice(SOUND_STOPPED_MSG);
+    });
+  }, [running]);
+
   useEffect(
     () => () => {
+      offLostRef.current?.();
       runRef.current++;
       handleRef.current?.stop();
       sourceRef.current?.stop();
@@ -137,12 +169,7 @@ function LessonRun({
   if (!fitted.ok) {
     return (
       <main className="dev-page lesson-page">
-        <p>
-          <Link className="lesson-home-button" to="/">
-            Home
-          </Link>
-        </p>
-        <h1>{lesson.title}</h1>
+        <LessonHeader title={lesson.title} />
         <p data-testid="fit-info">
           This lesson needs {fitted.neededSemitones} semitones, but your range is {fitted.haveSemitones}. Redo your
           range test, or pick another lesson.
@@ -153,23 +180,61 @@ function LessonRun({
   const fullEx = fitted.exercise;
   const ex = playEx ?? fullEx;
 
+  /** Creates and starts a new microphone source. Throws on failure (mic-denied, mic-missing, ...). */
+  const connectSource = async () => {
+    const src = createPitchSource();
+    await src.start();
+    offLostRef.current?.();
+    sourceRef.current?.stop();
+    sourceRef.current = src;
+    offLostRef.current =
+      src.onLost?.(() => {
+        // The microphone went away by itself: abandon any run (no attempt is saved) and offer to reconnect.
+        stopRef.current();
+        setMicLost(true);
+        setSoundFailed(false);
+        setNotice(MIC_LOST_MSG);
+      }) ?? null;
+    setSource(src);
+  };
+
+  const startError = (err: unknown) =>
+    isMicMissing(err)
+      ? MIC_MISSING_MSG
+      : err instanceof Error && err.message === 'mic-denied'
+        ? 'Microphone access denied. Allow microphone access in your browser settings, reload, and press Start again.'
+        : 'We could not start the microphone. Check your settings and press Start again.';
+
   const begin = async () => {
     setError(null);
     setStarting(true);
     try {
-      await unlockAudio();
-      const src = createPitchSource();
-      await src.start();
-      sourceRef.current?.stop();
-      sourceRef.current = src;
-      setSource(src);
+      if (!(await ensureAudioRunning())) {
+        setError(SOUND_PAUSED_MSG);
+        return;
+      }
+      await connectSource();
       dispatch({ type: 'BEGIN' });
     } catch (err) {
-      setError(
-        err instanceof Error && err.message === 'mic-denied'
-          ? 'Microphone access denied. Allow microphone access in your browser settings, reload, and press Start again.'
-          : 'We could not start the microphone. Check your settings and press Start again.',
-      );
+      setError(startError(err));
+    } finally {
+      setStarting(false);
+    }
+  };
+
+  const reconnect = async () => {
+    setStarting(true);
+    try {
+      if (!(await ensureAudioRunning())) {
+        setSoundFailed(true);
+        setNotice(SOUND_PAUSED_MSG);
+        return;
+      }
+      await connectSource();
+      setMicLost(false);
+      setNotice(null);
+    } catch (err) {
+      setNotice(startError(err));
     } finally {
       setStarting(false);
     }
@@ -181,12 +246,19 @@ function LessonRun({
     const myRun = ++runRef.current;
     const thisStep = step;
     setNotice(null);
+    setSoundFailed(false);
     if (thisStep === 'youDo') setYouDoFrames(null);
     if (thisStep === 'weDo') setWeDoFrames(null);
     setResultPhrase(activePhraseIdx);
     dispatch({ type: 'RUN' });
-    await unlockAudio();
+    const audioOk = await ensureAudioRunning();
     if (myRun !== runRef.current) return;
+    if (!audioOk) {
+      dispatch({ type: 'STOP' });
+      setSoundFailed(true);
+      setNotice(SOUND_PAUSED_MSG);
+      return;
+    }
     const h = playExercise(ex, {
       playMelody: thisStep !== 'youDo',
       metronome: true,
@@ -206,6 +278,13 @@ function LessonRun({
     handleRef.current = null;
     setHandle(null);
     setLiveFrames(null);
+    // The run ends on a wall-clock timer. If the audio clock never got to the end, it stalled: do not score.
+    if (h.endSec - now() > 0.5) {
+      dispatch({ type: 'STOP' });
+      setSoundFailed(true);
+      setNotice(SOUND_STOPPED_MSG);
+      return;
+    }
     if (thisStep === 'youDo') setYouDoFrames(rec ? rec.frames : null);
     if (thisStep === 'weDo') setWeDoFrames(rec ? rec.frames : null);
     const result = rec ? evaluateAttempt(ex, rec.frames, tol, lesson.passScore) : undefined;
@@ -234,16 +313,7 @@ function LessonRun({
   const resultMatches = shownResult !== null && resultPhrase === activePhraseIdx;
   const strip = shownResult && resultMatches ? shownResult.notes.map((n) => n.hit) : undefined;
   const hasLyrics = ex.notes.some((n) => n.lyric);
-  const header = (
-    <>
-      <p>
-        <Link className="lesson-home-button" to="/">
-          Home
-        </Link>
-      </p>
-      <h1 className="lesson-title">{lesson.title}</h1>
-    </>
-  );
+  const header = <LessonHeader title={lesson.title} />;
 
   if (step === 'intro') {
     return (
@@ -255,12 +325,15 @@ function LessonRun({
         {lesson.stage === 2 && !calibrated && lesson.order === 1 ? (
           <p data-testid="calibrate-hint">
             Tip: timing is graded fairly only if the app knows your device&apos;s delay.{' '}
-            <Link to="/settings/calibrate">Calibrate timing</Link> first.
+            <Link to={{ pathname: '/settings/calibrate', search }} className="nav-link">
+              Calibrate timing
+            </Link>{' '}
+            first.
           </p>
         ) : null}
         <p>
-          <button onClick={begin} disabled={starting}>
-            Start
+          <button className="btn btn--primary" onClick={begin} disabled={starting}>
+            {error === SOUND_PAUSED_MSG ? 'Try again' : 'Start'}
           </button>
         </p>
         {error ? (
@@ -290,7 +363,23 @@ function LessonRun({
         <p className="lesson-tip" data-testid="results-tip">
           <strong>Tip:</strong> {pickTip(r)}
         </p>
-        {youDoFrames ? <ResultsGraph exercise={ex} range={range} frames={youDoFrames} /> : null}
+        <p className="lesson-actions" data-testid="results-actions">
+          <button
+            className={r.passed ? 'btn' : 'btn btn--primary'}
+            onClick={() => dispatch({ type: 'BACK_TO', step: 'youDo' })}
+          >
+            Try again
+          </button>
+          <button className="btn" onClick={() => dispatch({ type: 'BACK_TO', step: 'iDo' })}>
+            Hear it again
+          </button>
+        </p>
+        {youDoFrames ? (
+          <>
+            <GraphLegend />
+            <ResultsGraph exercise={ex} range={range} frames={youDoFrames} />
+          </>
+        ) : null}
         <SequenceStrip
           expanded
           notes={ex.notes}
@@ -311,21 +400,17 @@ function LessonRun({
           </ul>
         ) : null}
         {misses.length > 0 ? (
-          <ul className="lesson-misses" data-testid="missed-notes">
-            {misses.map((m) => (
-              <li key={m.index}>
-                Note {m.index + 1} ({midiToName(m.targetMidi)}): {describeReason(m)}
-              </li>
-            ))}
-          </ul>
+          <section className="lesson-missed">
+            <h2 className="lesson-missed__heading">Missed notes</h2>
+            <ul className="lesson-misses" data-testid="missed-notes">
+              {misses.map((m) => (
+                <li key={m.index}>
+                  Note {m.index + 1} ({midiToName(m.targetMidi)}): {describeReason(m)}
+                </li>
+              ))}
+            </ul>
+          </section>
         ) : null}
-        <p className="lesson-controls">
-          <button onClick={() => dispatch({ type: 'BACK_TO', step: 'youDo' })}>Try again</button>
-          <button onClick={() => dispatch({ type: 'BACK_TO', step: 'iDo' })}>Hear it again</button>
-          <Link className="lesson-home-button" to="/">
-            Home
-          </Link>
-        </p>
       </main>
     );
   }
@@ -341,14 +426,13 @@ function LessonRun({
     <main className="dev-page lesson-page">
       {header}
       <ol className="lesson-steps" aria-label="Lesson steps">
-        {STEP_LABELS.map(({ step: s, label }, i) => (
+        {STEP_LABELS.map(({ step: s, label }) => (
           <li
             key={s}
             className={s === step ? 'lesson-steps__item lesson-steps__item--current' : 'lesson-steps__item'}
             aria-current={s === step ? 'step' : undefined}
           >
-            {i > 0 ? <span aria-hidden="true"> · </span> : null}
-            {label}
+            <span className="lesson-steps__label">{label}</span>
           </li>
         ))}
       </ol>
@@ -379,8 +463,6 @@ function LessonRun({
             </select>
           </label>
         </p>
-      ) : phrases ? (
-        <p className="lesson-phrase lesson-phrase--spacer" aria-hidden="true" />
       ) : null}
       {hasLyrics ? <NowSinging notes={ex.notes} currentIndex={running ? live.currentNoteIndex : null} /> : null}
       <PitchGraph
@@ -390,11 +472,13 @@ function LessonRun({
         frames={liveFrames}
         showSung={step !== 'iDo'}
       />
+      <GraphLegend showYou={step !== 'iDo'} />
       <PianoKeyboard
         lowMidi={disp.lowMidi}
         highMidi={disp.highMidi}
         targetMidi={live.targetMidi}
         sungMidi={live.sungMidi}
+        matchCents={tol.cents}
         rangeMarkers={{ lowMidi: range.lowMidi, highMidi: range.highMidi }}
       />
       <p className="lesson-notes" data-testid="note-labels">
@@ -415,32 +499,63 @@ function LessonRun({
       {weDoLine ? (
         <p data-testid="practice-line">{weDoLine}</p>
       ) : null}
-      {weDoLine && weDoFrames && !running ? <ResultsGraph exercise={ex} range={range} frames={weDoFrames} /> : null}
+      {weDoLine && weDoFrames && !running ? (
+        <>
+          <GraphLegend />
+          <ResultsGraph exercise={ex} range={range} frames={weDoFrames} />
+        </>
+      ) : null}
       <p className="lesson-controls">
         {running ? (
-          <button onClick={stop}>Stop</button>
+          <button className="btn btn--primary" onClick={stop}>
+            Stop
+          </button>
         ) : (
           <>
-            <button onClick={run} data-testid="run-button">
-              {step === 'iDo' ? (ranOnce ? 'Repeat' : 'Play') : step === 'weDo' ? (ranOnce ? 'Repeat' : 'Sing along') : ranOnce ? 'Try again' : 'Start'}
-            </button>
+            {micLost ? (
+              <button className="btn btn--primary" onClick={reconnect} disabled={starting} data-testid="reconnect-mic">
+                Reconnect microphone
+              </button>
+            ) : (
+              <button className="btn btn--primary" onClick={run} data-testid="run-button">
+                {soundFailed
+                  ? 'Try again'
+                  : step === 'iDo'
+                    ? ranOnce
+                      ? 'Repeat'
+                      : 'Play'
+                    : step === 'weDo'
+                      ? ranOnce
+                        ? 'Repeat'
+                        : 'Sing along'
+                      : ranOnce
+                        ? 'Try again'
+                        : 'Start'}
+              </button>
+            )}
             {step === 'iDo' ? (
-              <button onClick={() => dispatch({ type: 'NEXT' })} disabled={session.iDoPlays < 1}>
+              <button className="btn" onClick={() => dispatch({ type: 'NEXT' })} disabled={session.iDoPlays < 1}>
                 Next
               </button>
             ) : null}
             {step === 'weDo' ? (
               <>
-                <button onClick={() => dispatch({ type: 'NEXT' })}>Next</button>
-                <button onClick={() => dispatch({ type: 'BACK_TO', step: 'iDo' })}>Back to I do</button>
+                <button className="btn" onClick={() => dispatch({ type: 'NEXT' })}>
+                  Next
+                </button>
+                <button className="btn" onClick={() => dispatch({ type: 'BACK_TO', step: 'iDo' })}>
+                  Back to I do
+                </button>
               </>
             ) : null}
             {step === 'youDo' ? (
               <>
-                <button onClick={() => dispatch({ type: 'SHOW_RESULTS' })} disabled={!session.youDoResult}>
+                <button className="btn" onClick={() => dispatch({ type: 'SHOW_RESULTS' })} disabled={!session.youDoResult}>
                   See results
                 </button>
-                <button onClick={() => dispatch({ type: 'BACK_TO', step: 'weDo' })}>Back</button>
+                <button className="btn" onClick={() => dispatch({ type: 'BACK_TO', step: 'weDo' })}>
+                  Back
+                </button>
               </>
             ) : null}
           </>

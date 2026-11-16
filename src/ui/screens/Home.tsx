@@ -52,7 +52,7 @@ export function Home() {
           {profileName ? (
             <p>
               <Link to={{ pathname: '/settings', search }} className="home__profile" data-testid="home-profile">
-                Profile: <strong>{profileName}</strong>
+                Profile:{' '}<strong>{profileName}</strong>
               </Link>
             </p>
           ) : null}
@@ -60,8 +60,9 @@ export function Home() {
             Your range: <strong>{midiToName(range.lowMidi)} – {midiToName(range.highMidi)}</strong>
           </p>
         </div>
-        <Link to={{ pathname: '/settings', search }} className="tap-link home__settings" aria-label="Settings">
-          <span aria-hidden="true">⚙</span> Settings
+        <Link to={{ pathname: '/settings', search }} className="nav-link home__settings">
+          <span aria-hidden="true">⚙</span>{' '}
+          Settings
         </Link>
       </header>
 
@@ -72,7 +73,7 @@ export function Home() {
             <strong>{next.lesson.title}</strong>
           </p>
           <p>{next.lesson.goal}</p>
-          <Link to={{ pathname: `/lesson/${next.lesson.id}`, search }} className="home__continue-link">
+          <Link to={{ pathname: `/lesson/${next.lesson.id}`, search }} className="btn btn--primary home__continue-link">
             Start lesson
           </Link>
         </section>
@@ -90,7 +91,10 @@ export function Home() {
             {STRICTER_NOTE[stage] ? (
               <p className="home__count" data-testid={`stage-${stage}-note`}>
                 {STRICTER_NOTE[stage]}{' '}
-                <Link to={{ pathname: '/settings/calibrate', search }}>Calibrate timing</Link> first.
+                <Link to={{ pathname: '/settings/calibrate', search }} className="nav-link">
+                  Calibrate timing
+                </Link>{' '}
+                first.
               </p>
             ) : null}
             <ul className="home__list">
@@ -110,7 +114,7 @@ export function Home() {
                       </span>
                     ) : (
                       <span className="home__status home__status--locked" data-testid={`status-${lesson.id}`}>
-                        Needs {fitResult.neededSemitones} semitones; your range is {fitResult.haveSemitones}
+                        Doesn&apos;t fit: needs {fitResult.neededSemitones} semitones; your range is {fitResult.haveSemitones}
                       </span>
                     )}
                   </>
@@ -157,7 +161,7 @@ export function Home() {
                     </span>
                   ) : (
                     <span className="home__status home__status--locked" data-testid={`status-${lesson.id}`}>
-                      Needs {fitResult.neededSemitones} semitones; your range is {fitResult.haveSemitones}
+                      Doesn&apos;t fit: needs {fitResult.neededSemitones} semitones; your range is {fitResult.haveSemitones}
                     </span>
                   )}
                 </>
@@ -176,6 +180,7 @@ export function Home() {
                     )}
                     <button
                       type="button"
+                      className="btn btn--danger home__delete"
                       onClick={() => setConfirmId(lesson.id)}
                       aria-label={`Delete ${lesson.title}`}
                       data-testid={`delete-${lesson.id}`}
@@ -188,6 +193,7 @@ export function Home() {
                       <p>Delete “{lesson.title}” and its progress?</p>
                       <button
                         type="button"
+                        className="btn btn--danger"
                         onClick={() => {
                           removeImportedLesson(lesson.id);
                           setConfirmId(null);
@@ -196,7 +202,7 @@ export function Home() {
                       >
                         Delete
                       </button>{' '}
-                      <button type="button" onClick={() => setConfirmId(null)}>
+                      <button type="button" className="btn" onClick={() => setConfirmId(null)}>
                         Cancel
                       </button>
                     </div>
@@ -209,7 +215,7 @@ export function Home() {
       ) : null}
 
       <p className="home__link-row">
-        <Link to={{ pathname: '/import', search }} className="tap-link" data-testid="import-midi-link">
+        <Link to={{ pathname: '/import', search }} className="nav-link" data-testid="import-midi-link">
           Import a MIDI file
         </Link>
       </p>

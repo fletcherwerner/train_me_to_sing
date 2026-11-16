@@ -17,6 +17,7 @@
   gap: 12px;
   padding: 8px 12px;
   border-radius: 8px;
+  /* Dark amber in both colour schemes, so white text always has strong contrast. */
   background: #5c3a00;
   color: #fff;
   pointer-events: auto;

@@ -80,6 +80,28 @@ function pathFor(frames: GraphFrame[], bounds: PitchBounds, height: number, pps:
   return d;
 }
 
+/** "target" (thick black) and "you" (thin red) samples. Drawn, so it does not rely on colour. */
+export function GraphLegend({ showYou = true }: { showYou?: boolean }) {
+  return (
+    <div className="graph-legend" data-testid="graph-legend" aria-hidden="true">
+      <span className="graph-legend__item" data-testid="legend-target">
+        <svg width="28" height="10" viewBox="0 0 28 10">
+          <line className="graph-legend__sample-target" x1="0" x2="28" y1="5" y2="5" />
+        </svg>
+        target
+      </span>
+      {showYou ? (
+        <span className="graph-legend__item" data-testid="legend-you">
+          <svg width="28" height="10" viewBox="0 0 28 10">
+            <line className="graph-legend__sample-you" x1="0" x2="28" y1="5" y2="5" />
+          </svg>
+          you
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
 export interface PitchGraphProps {
   /** The notes shown: the phrase being practised or the whole exercise. */
   exercise: ResolvedExercise;

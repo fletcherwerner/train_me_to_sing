@@ -1,16 +1,33 @@
+.dev-page.lesson-page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 8px 16px;
+  text-align: center;
+  box-sizing: border-box;
+}
+/* Home at the left, title centred, one row (E13 B1). Layout comes from .page-header in index.css. */
+.lesson-header { min-height: 48px; margin: 0 0 2px; }
 .lesson-page .lesson-title {
-  margin: 0 0 4px;
-  font-size: 1.4rem;
+  margin: 0;
+  font-size: 1.3rem;
+  line-height: 1.2;
 }
 .lesson-steps {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   list-style: none;
-  margin: 4px 0;
+  margin: 2px 0;
   padding: 0;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
 }
-.lesson-steps__item--current {
+/* The dot is a separator drawn with equal space on both sides; it is never underlined. */
+.lesson-steps__item + .lesson-steps__item::before {
+  content: '·';
+  display: inline-block;
+  margin: 0 0.6em;
+}
+.lesson-steps__item--current .lesson-steps__label {
   font-weight: 800;
   text-decoration: underline;
   text-underline-offset: 4px;
@@ -19,59 +36,53 @@
   opacity: 0.65;
 }
 .lesson-instruction {
-  margin: 4px 0;
-  font-size: 1.1rem;
+  margin: 2px 0;
+  font-size: 1.05rem;
 }
 .lesson-notes {
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   font-weight: 700;
-  margin: 8px 0;
+  margin: 4px 0;
 }
 .lesson-controls {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
-}
-.lesson-page {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 16px;
-  text-align: center;
-}
-.lesson-page button {
-  min-height: 48px;
-  min-width: 48px;
-  padding: 0 20px;
-  font-size: 1.05rem;
-}
-.lesson-controls {
   justify-content: center;
-}
-.lesson-steps {
-  justify-content: center;
-}
-.lesson-home-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 48px;
-  min-width: 48px;
-  padding: 0 20px;
-  font-size: 1.05rem;
+  margin: 6px 0;
 }
 .lesson-verdict {
   font-size: 2rem;
   margin: 8px 0 0;
 }
-.lesson-phrase {
+.lesson-score {
+  font-size: 1.3rem;
+  font-weight: 700;
   margin: 4px 0;
+}
+.lesson-tip { margin: 8px 0; font-size: 1.1rem; }
+.lesson-phrase {
+  margin: 2px 0;
 }
 .lesson-phrase select {
   min-height: 44px;
   font-size: 1.05rem;
 }
-.lesson-phrase--spacer { min-height: 44px; }
+/* Results: action buttons sit under the tip and are not sticky. */
+.lesson-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin: 8px 0 12px;
+}
+.lesson-missed {
+  max-width: 560px;
+  margin: 12px auto;
+  text-align: left;
+}
+.lesson-missed__heading { font-size: 1.1rem; margin: 0 0 4px; }
 .lesson-misses {
   list-style: none;
   text-align: left;
@@ -80,26 +91,21 @@
   columns: 2 220px;
   font-size: 0.95rem;
 }
-.lesson-misses--lines { columns: 1; font-weight: 700; }
-.lesson-tip { margin: 8px 0; font-size: 1.1rem; }
-@media (max-height: 900px) and (min-width: 700px) {
-  .lesson-page { padding-top: 8px; padding-bottom: 8px; }
-  .dev-page.lesson-page .piano { max-height: 100px; }
-  .lesson-page .sequence-strip { margin: 6px 0; }
-  .lesson-notes { margin: 4px 0; font-size: 1.3rem; }
+.lesson-missed .lesson-misses { margin: 0; }
+.lesson-misses--lines { columns: 1; font-weight: 700; width: fit-content; max-width: 100%; margin: 8px auto; }
+.dev-page.lesson-page .piano {
+  max-height: 110px;
+  /* Range labels hang below the keys. */
+  margin-bottom: 14px;
 }
-/* On a phone the page may scroll; keep the run controls (Stop) in view. */
+/* A phone window: keep the run controls (Stop) in view. The bar is the last thing on the page, so when the
+   page is scrolled to the bottom it covers nothing. */
 @media (max-width: 699px) {
   .lesson-page .lesson-controls {
     position: sticky;
     bottom: 0;
     z-index: 2;
-    padding: 8px 0;
+    padding: 6px 0;
     background: Canvas;
   }
-}
-.lesson-score {
-  font-size: 1.3rem;
-  font-weight: 700;
-  margin: 4px 0;
 }

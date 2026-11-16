@@ -123,14 +123,19 @@ export function ImportMidi() {
   return (
     <main className="dev-page import-midi">
       <p>
-        <Link to={{ pathname: '/', search }} className="tap-link">
-          ← Home
+        <Link to={{ pathname: '/', search }} className="nav-link">
+          Home
         </Link>
       </p>
       <h1>Import a MIDI file</h1>
       <p>Choose a .mid file, pick the track with the melody, and add it as a lesson.</p>
       <p>
-        <button type="button" onClick={() => fileRef.current?.click()} data-testid="midi-button">
+        <button
+          type="button"
+          className={parsed ? 'btn' : 'btn btn--primary'}
+          onClick={() => fileRef.current?.click()}
+          data-testid="midi-button"
+        >
           Choose MIDI file
         </button>
         <input
@@ -169,11 +174,12 @@ export function ImportMidi() {
                     ) : null}
                   </span>
                   <span className="import-midi__actions">
-                    <button type="button" onClick={() => void preview(i)} data-testid={`preview-${i}`}>
+                    <button type="button" className="btn" onClick={() => void preview(i)} data-testid={`preview-${i}`}>
                       Preview
                     </button>{' '}
                     <button
                       type="button"
+                      className={trackIdx === null && i === 0 ? 'btn btn--primary' : 'btn'}
                       aria-pressed={trackIdx === i}
                       onClick={() => setTrackIdx(i)}
                       data-testid={`select-${i}`}
@@ -189,46 +195,42 @@ export function ImportMidi() {
           {trackIdx !== null ? (
             <section className="import-midi__options">
               <h2>Options</h2>
-              <p>
-                <label>
-                  Title{' '}
-                  <input
-                    type="text"
-                    className="import-midi__title"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    data-testid="import-title"
-                  />
-                </label>
-              </p>
-              <p>
-                <label>
-                  Tempo (40–160 bpm){' '}
-                  <input
-                    type="number"
-                    min={40}
-                    max={160}
-                    value={tempo}
-                    onChange={(e) => setTempo(Number(e.target.value))}
-                    data-testid="import-tempo"
-                  />
-                </label>
-              </p>
+              <label className="import-midi__field">
+                <span>Title</span>
+                <input
+                  type="text"
+                  className="import-midi__title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  data-testid="import-title"
+                />
+              </label>
+              <label className="import-midi__field">
+                <span>Tempo (40–160 bpm)</span>
+                <input
+                  type="number"
+                  min={40}
+                  max={160}
+                  value={tempo}
+                  onChange={(e) => setTempo(Number(e.target.value))}
+                  data-testid="import-tempo"
+                />
+              </label>
               {!tempoValid ? (
                 <p className="tuner-error" role="alert">
                   Tempo must be between 40 and 160.
                 </p>
               ) : null}
-              <p>
-                <label>
-                  First bar (optional){' '}
+              <div className="import-midi__bars">
+                <label className="import-midi__field">
+                  <span>First bar (optional)</span>
                   <input type="number" min={1} value={startBar} onChange={(e) => setStartBar(e.target.value)} data-testid="import-start-bar" />
-                </label>{' '}
-                <label>
-                  Last bar (optional){' '}
+                </label>
+                <label className="import-midi__field">
+                  <span>Last bar (optional)</span>
                   <input type="number" min={1} value={endBar} onChange={(e) => setEndBar(e.target.value)} data-testid="import-end-bar" />
                 </label>
-              </p>
+              </div>
 
               <h2>Summary</h2>
               {built?.ok ? (
@@ -238,7 +240,7 @@ export function ImportMidi() {
                   </p>
                   <p data-testid="import-fit">{fitText}</p>
                   <p>
-                    <button type="button" onClick={add} disabled={!tempoValid} data-testid="add-lesson">
+                    <button type="button" className="btn btn--primary" onClick={add} disabled={!tempoValid} data-testid="add-lesson">
                       Add lesson
                     </button>
                   </p>

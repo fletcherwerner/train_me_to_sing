@@ -1,7 +1,8 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAppStore } from '../../../storage/store';
-import { unlockAudio } from '../../../audio/audioEngine';
+import { ensureAudioRunning } from '../../../audio/audioEngine';
+import { isMicMissing, MIC_MISSING_MSG, SOUND_PAUSED_MSG } from '../../audioMessages';
 import { playExercise, type PlaybackHandle } from '../../../audio/exercisePlayer';
 import { createPitchSource, recordFrames, registerSimExercise, clearSimExercise } from '../../../audio/pitch';
 import type { PitchSource } from '../../../audio/pitch/PitchSource';
@@ -35,6 +36,7 @@ const DEV_TEMPLATES: ExerciseTemplate[] = [
 
 export function AttemptDev() {
   const range = useAppStore((s) => s.range);
+  const { search } = useLocation();
   const latencyMs = useAppStore((s) => s.settings.latencyOffsetMs);
   const [templateId, setTemplateId] = useState(DEV_TEMPLATES[0].id);
   const [tolId, setTolId] = useState('t1');
@@ -71,13 +73,17 @@ export function AttemptDev() {
     return (
       <main className="dev-page">
         <p>
-          <Link className="dev-home" to="/">
+          <Link className="nav-link" to={{ pathname: '/', search }}>
             Home
           </Link>
         </p>
         <h1>Graded attempt</h1>
         <p>
-          No range set. <Link to="/range">Set your range</Link> first.
+          No range set.{' '}
+          <Link to={{ pathname: '/range', search }} className="nav-link">
+            Set your range
+          </Link>{' '}
+          first.
         </p>
       </main>
     );
@@ -100,7 +106,10 @@ export function AttemptDev() {
     setResult(null);
     setError(null);
     try {
-      await unlockAudio();
+      if (!(await ensureAudioRunning())) {
+        setError(SOUND_PAUSED_MSG);
+        return;
+      }
       const src = createPitchSource();
       await src.start();
       if (run !== runRef.current) {
@@ -122,9 +131,11 @@ export function AttemptDev() {
     } catch (err) {
       cleanup();
       setError(
-        err instanceof Error && err.message === 'mic-denied'
-          ? 'Microphone access denied. Allow microphone access in your browser settings and reload.'
-          : 'Failed to start the microphone. Check your settings and try again.',
+        isMicMissing(err)
+          ? MIC_MISSING_MSG
+          : err instanceof Error && err.message === 'mic-denied'
+            ? 'Microphone access denied. Allow microphone access in your browser settings and reload.'
+            : 'Failed to start the microphone. Check your settings and try again.',
       );
     }
   };
@@ -142,7 +153,7 @@ export function AttemptDev() {
   return (
     <main className="dev-page">
       <p>
-        <Link className="dev-home" to="/">
+        <Link className="nav-link" to={{ pathname: '/', search }}>
           Home
         </Link>
       </p>
@@ -186,6 +197,7 @@ export function AttemptDev() {
         highMidi={disp.highMidi}
         targetMidi={live.targetMidi}
         sungMidi={live.sungMidi}
+        matchCents={tol.cents}
         rangeMarkers={{ lowMidi: range.lowMidi, highMidi: range.highMidi }}
       />
       <p data-testid="note-labels" style={{ fontSize: '1.5rem', fontWeight: 700, margin: '8px 0' }}>
@@ -204,10 +216,10 @@ export function AttemptDev() {
         </>
       ) : null}
       <p>
-        <button onClick={start} disabled={!exercise || running}>
+        <button className="btn btn--primary" onClick={start} disabled={!exercise || running}>
           Start attempt
         </button>{' '}
-        <button onClick={stop} disabled={!running}>
+        <button className="btn" onClick={stop} disabled={!running}>
           Stop
         </button>
       </p>

@@ -1,16 +1,20 @@
-import { now } from '../audioEngine';
+import { now, setLoseMicHook } from '../audioEngine';
 import type { PitchFrame, PitchSource } from './PitchSource';
 
 export type SynthBehaviour = (tSec: number) => number | null;
 
-export function createSyntheticPitchSource(behaviour: SynthBehaviour): PitchSource {
+export function createSyntheticPitchSource(
+  behaviour: SynthBehaviour,
+): PitchSource & { loseForTest(): void } {
   const listeners = new Set<(f: PitchFrame) => void>();
+  const lostListeners = new Set<() => void>();
   let animFrameId: number | null = null;
   let running = false;
+  let lost = false;
   let lastTime: number | null = null;
 
   function tick() {
-    if (!running) return;
+    if (!running || lost) return;
     const t = now();
     // Track elapsed time for the behaviour function
     if (lastTime === null) {
@@ -29,9 +33,24 @@ export function createSyntheticPitchSource(behaviour: SynthBehaviour): PitchSour
     animFrameId = requestAnimationFrame(tick);
   }
 
+  /** Simulates the microphone disconnecting. Used by window.__tmtsTest.loseMic(). */
+  function lose() {
+    if (lost) return;
+    lost = true;
+    running = false;
+    if (animFrameId != null) {
+      cancelAnimationFrame(animFrameId);
+      animFrameId = null;
+    }
+    for (const cb of [...lostListeners]) cb();
+    lostListeners.clear();
+  }
+
   async function start(): Promise<void> {
     running = true;
+    lost = false;
     lastTime = null;
+    setLoseMicHook(lose);
     animFrameId = requestAnimationFrame(tick);
   }
 
@@ -48,7 +67,12 @@ export function createSyntheticPitchSource(behaviour: SynthBehaviour): PitchSour
     return () => listeners.delete(cb);
   }
 
-  return { start, stop, subscribe };
+  function onLost(cb: () => void) {
+    lostListeners.add(cb);
+    return () => lostListeners.delete(cb);
+  }
+
+  return { start, stop, subscribe, onLost, loseForTest: lose };
 }
 
 export function constantPitch(midi: number): SynthBehaviour {

@@ -1,6 +1,13 @@
-import { useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { unlockAudio, now } from '../../audio/audioEngine';
+import { ensureAudioRunning, now, watchAudioClock } from '../../audio/audioEngine';
+import {
+  isMicMissing,
+  MIC_LOST_MSG,
+  MIC_MISSING_MSG,
+  SOUND_PAUSED_MSG,
+  SOUND_STOPPED_MSG,
+} from '../audioMessages';
 import { createTonePlayer, type TonePlayer } from '../../audio/tonePlayer';
 import { createPitchSource, acceptRangeLow, resetRangeSim } from '../../audio/pitch';
 import { PianoKeyboard } from '../components/PianoKeyboard';
@@ -38,18 +45,31 @@ export function RangeSetup() {
   const playerRef = useRef<TonePlayer | null>(null);
   const framesRef = useRef<PitchFrame[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const stopWatchRef = useRef<(() => void) | null>(null);
+  const offLostRef = useRef<(() => void) | null>(null);
+  const stepRef = useRef<Step>('intro');
+  const needsReconnect = useRef(false);
+  const { search } = useLocation();
+
+  const goStep = (s: Step) => {
+    stepRef.current = s;
+    setStep(s);
+  };
 
   const clearTimer = () => {
     if (timerRef.current != null) {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
+    stopWatchRef.current?.();
+    stopWatchRef.current = null;
   };
 
   useEffect(() => {
     resetRangeSim();
     return () => {
       clearTimer();
+      offLostRef.current?.();
       sourceRef.current?.stop();
       playerRef.current?.stopAll();
     };
@@ -58,9 +78,18 @@ export function RangeSetup() {
   const player = () => (playerRef.current ??= createTonePlayer());
   const playNote = useCallback((midi: number) => player().playNote(midi, now(), 0.7), []);
 
-  const start = async () => {
+  const failWith = (message: string) => {
+    clearTimer();
+    setCountdown(null);
+    setError(message);
+    goStep('fail');
+  };
+
+  /** Creates and starts a fresh pitch source. Returns false (and sets the error) on failure. */
+  const connect = async (): Promise<boolean> => {
+    offLostRef.current?.();
+    sourceRef.current?.stop();
     try {
-      await unlockAudio();
       const src = createPitchSource();
       sourceRef.current = src;
       src.subscribe((f) => {
@@ -68,22 +97,47 @@ export function RangeSetup() {
         if (framesRef.current.length > 600) framesRef.current.splice(0, framesRef.current.length - 600);
         setSungMidi(f.midi);
       });
+      offLostRef.current =
+        src.onLost?.(() => {
+          needsReconnect.current = true;
+          // A lost microphone only matters while we still need it.
+          if (stepRef.current !== 'confirm') failWith(MIC_LOST_MSG);
+        }) ?? null;
       await src.start();
-      setStep('find');
+      needsReconnect.current = false;
+      return true;
     } catch (err) {
       setError(
-        err instanceof Error && err.message === 'mic-denied'
-          ? 'Microphone access was denied. Allow it in your browser settings and reload.'
-          : 'Could not start the microphone. Check your settings and try again.',
+        isMicMissing(err)
+          ? MIC_MISSING_MSG
+          : err instanceof Error && err.message === 'mic-denied'
+            ? 'Microphone access was denied. Allow it in your browser settings and reload.'
+            : 'Could not start the microphone. Check your settings and try again.',
       );
+      return false;
     }
   };
 
-  const record = () => {
+  const start = async () => {
+    setError(null);
+    if (!(await ensureAudioRunning())) {
+      needsReconnect.current = true;
+      failWith(SOUND_PAUSED_MSG);
+      return;
+    }
+    if (await connect()) goStep('find');
+  };
+
+  const record = async () => {
     clearTimer();
-    setStep('record');
+    if (!(await ensureAudioRunning())) {
+      failWith(SOUND_PAUSED_MSG);
+      return;
+    }
+    goStep('record');
     setCountdown(COUNT_SEC);
     setProgress(0);
+    stopWatchRef.current = watchAudioClock(() => failWith(SOUND_STOPPED_MSG));
     const t0 = now() + 0.05;
     // Clicks are scheduled on the audio clock.
     for (let i = 0; i < COUNT_SEC; i++) player().playNote(81, t0 + i, 0.06);
@@ -104,30 +158,37 @@ export function RangeSetup() {
         if (result.ok) {
           if (pick === 'lowest') setLowNote(result.midi);
           else setHighNote(result.midi);
-          setStep('result');
+          goStep('result');
           playNote(result.midi);
         } else {
-          setError(
+          failWith(
             result.reason === 'no-voice'
               ? "We couldn't hear a steady note — try again, a little louder."
               : "We couldn't hear a steady note — try again and hold it as steady as you can.",
           );
-          setStep('fail');
         }
       }
     }, 50);
   };
 
-  const retry = () => {
+  /** Back to the find step. Reconnects the microphone first if it was lost or never started. */
+  const retry = async () => {
     setError(null);
-    setStep('find');
+    if (needsReconnect.current) {
+      if (!(await ensureAudioRunning())) {
+        failWith(SOUND_PAUSED_MSG);
+        return;
+      }
+      if (!(await connect())) return;
+    }
+    goStep('find');
   };
 
   const useThis = () => {
     if (pick === 'lowest') {
       acceptRangeLow();
       setPick('highest');
-      setStep('find');
+      goStep('find');
     } else {
       let l = lowNote ?? 45;
       let h = highNote ?? 64;
@@ -135,7 +196,7 @@ export function RangeSetup() {
       if (l > h - MIN_SPAN) l = h - MIN_SPAN;
       setLow(l);
       setHigh(h);
-      setStep('confirm');
+      goStep('confirm');
     }
   };
 
@@ -153,31 +214,32 @@ export function RangeSetup() {
   const save = () => {
     setRange({ lowMidi: low, highMidi: high, assessedAt: new Date().toISOString() });
     sourceRef.current?.stop();
-    navigate('/');
+    navigate({ pathname: '/', search });
   };
 
-  const redo = () => {
+  const redo = async () => {
     resetRangeSim();
     setLowNote(null);
     setHighNote(null);
     setPick('lowest');
-    setStep('find');
+    await retry();
   };
 
-  const cancel = () => {
-    clearTimer();
-    sourceRef.current?.stop();
-    playerRef.current?.stopAll();
-    navigate('/');
-  };
-
-  const cancelLink = (
+  // Home is always the first element, top left. Leaving the screen stops everything via the unmount cleanup.
+  const homeLink = (
     <p className="range-back">
-      <button onClick={cancel}>Home</button>
+      <Link to={{ pathname: '/', search }} className="nav-link">
+        Home
+      </Link>
     </p>
   );
 
-  const heading = <h1>Vocal Range Assessment</h1>;
+  const heading = (
+    <>
+      {homeLink}
+      <h1>Vocal Range Assessment</h1>
+    </>
+  );
   const sungName = sungMidi != null ? midiToName(Math.round(sungMidi)) : '';
   const found = pick === 'lowest' ? lowNote : highNote;
 
@@ -188,9 +250,10 @@ export function RangeSetup() {
         <p>Put on headphones. You will hold your lowest comfortable note, then your highest.</p>
         {error && <p className="range-error">{error}</p>}
         <div className="range-buttons">
-          <button onClick={start}>Start</button>
+          <button className="btn btn--primary" onClick={start}>
+            Start
+          </button>
         </div>
-        {cancelLink}
       </main>
     );
   }
@@ -213,24 +276,27 @@ export function RangeSetup() {
         />
         <div className="range-nudge">
           <span>Low:</span>
-          <button onClick={() => nudgeLow(-1)} aria-label="Lower the low note">−</button>
+          <button className="btn" onClick={() => nudgeLow(-1)} aria-label="Lower the low note">−</button>
           <span>{midiToName(low)}</span>
-          <button onClick={() => nudgeLow(1)} aria-label="Raise the low note">+</button>
+          <button className="btn" onClick={() => nudgeLow(1)} aria-label="Raise the low note">+</button>
         </div>
         <div className="range-nudge">
           <span>High:</span>
-          <button onClick={() => nudgeHigh(-1)} aria-label="Lower the high note">−</button>
+          <button className="btn" onClick={() => nudgeHigh(-1)} aria-label="Lower the high note">−</button>
           <span>{midiToName(high)}</span>
-          <button onClick={() => nudgeHigh(1)} aria-label="Raise the high note">+</button>
+          <button className="btn" onClick={() => nudgeHigh(1)} aria-label="Raise the high note">+</button>
         </div>
         {span < WARN_SPAN && (
           <p className="range-warning">Your range is narrow, so some lessons will not fit.</p>
         )}
         <div className="range-buttons">
-          <button onClick={save}>Save</button>
-          <button onClick={redo}>Redo</button>
+          <button className="btn btn--primary" onClick={save}>
+            Save
+          </button>
+          <button className="btn" onClick={redo}>
+            Redo
+          </button>
         </div>
-        {cancelLink}
       </main>
     );
   }
@@ -242,7 +308,9 @@ export function RangeSetup() {
         <>
           <p className="range-error">{error}</p>
           <div className="range-buttons">
-            <button onClick={retry}>Try again</button>
+            <button className="btn btn--primary" onClick={retry}>
+              Try again
+            </button>
           </div>
         </>
       ) : (
@@ -268,7 +336,9 @@ export function RangeSetup() {
           {step !== 'result' && <div className="range-note-name">{sungName}</div>}
           {step === 'find' && (
             <div className="range-buttons">
-              <button onClick={record}>Record</button>
+              <button className="btn btn--primary" onClick={record}>
+                Record
+              </button>
             </div>
           )}
           {step === 'record' &&
@@ -291,13 +361,16 @@ export function RangeSetup() {
             ))}
           {step === 'result' && (
             <div className="range-buttons">
-              <button onClick={useThis}>Use this</button>
-              <button onClick={retry}>Try again</button>
+              <button className="btn btn--primary" onClick={useThis}>
+                Use this
+              </button>
+              <button className="btn" onClick={retry}>
+                Try again
+              </button>
             </div>
           )}
         </>
       )}
-      {cancelLink}
     </main>
   );
 }

@@ -1,7 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAppStore } from '../../storage/store';
-import { now, unlockAudio } from '../../audio/audioEngine';
+import { ensureAudioRunning, now, watchAudioClock } from '../../audio/audioEngine';
+import {
+  isMicMissing,
+  MIC_LOST_MSG,
+  MIC_MISSING_MSG,
+  SOUND_PAUSED_MSG,
+  SOUND_STOPPED_MSG,
+} from '../audioMessages';
 import { scheduleClick, stopClicks } from '../../audio/metronome';
 import { createPitchSource } from '../../audio/pitch';
 import type { PitchFrame, PitchSource } from '../../audio/pitch/PitchSource';
@@ -77,12 +84,28 @@ export function Calibrate() {
   const start = async () => {
     const myRun = ++runRef.current;
     setSaved(false);
+    let stopWatch: (() => void) | null = null;
+    let offLost: (() => void) | null = null;
+    // Abandons the measurement and offers Retry.
+    const abandon = (message: string) => {
+      if (myRun !== runRef.current) return;
+      runRef.current++;
+      stopClicks();
+      sourceRef.current?.stop();
+      setError(message);
+      setPhase('error');
+    };
     try {
-      await unlockAudio();
+      if (!(await ensureAudioRunning())) {
+        abandon(SOUND_PAUSED_MSG);
+        return;
+      }
       sourceRef.current?.stop();
       const src = simulatedSource(search) ?? createPitchSource();
       await src.start();
       sourceRef.current = src;
+      offLost = src.onLost?.(() => abandon(MIC_LOST_MSG)) ?? null;
+      stopWatch = watchAudioClock(() => abandon(SOUND_STOPPED_MSG));
       const frames: PitchFrame[] = [];
       const unsub = src.subscribe((f) => frames.push(f));
       const t0 = now() + 0.5;
@@ -109,6 +132,8 @@ export function Calibrate() {
       });
       window.clearInterval(ticker);
       window.clearInterval(pulseTimer);
+      stopWatch();
+      offLost?.();
       unsub();
       src.stop();
       if (myRun !== runRef.current) return;
@@ -120,10 +145,14 @@ export function Calibrate() {
         setPhase('result');
       }
     } catch (err) {
+      stopWatch?.();
+      offLost?.();
       setError(
-        err instanceof Error && err.message === 'mic-denied'
-          ? 'Microphone access denied. Allow microphone access in your browser settings, reload, and try again.'
-          : 'We could not start the microphone. Check your settings and try again.',
+        isMicMissing(err)
+          ? MIC_MISSING_MSG
+          : err instanceof Error && err.message === 'mic-denied'
+            ? 'Microphone access denied. Allow microphone access in your browser settings, reload, and try again.'
+            : 'We could not start the microphone. Check your settings and try again.',
       );
       setPhase('error');
     }
@@ -131,11 +160,11 @@ export function Calibrate() {
 
   return (
     <main className="dev-page">
-      <p>
-        <Link to={{ pathname: '/', search }} className="tap-link">
+      <p className="nav-row">
+        <Link to={{ pathname: '/', search }} className="nav-link">
           Home
         </Link>{' '}
-        <Link to={{ pathname: '/settings', search }} className="tap-link">
+        <Link to={{ pathname: '/settings', search }} className="nav-link">
           Settings
         </Link>
       </p>
@@ -154,7 +183,7 @@ export function Calibrate() {
           ) : null}
           {phase === 'error' ? <p role="alert">{error}</p> : null}
           <p>
-            <button onClick={start} data-testid="calibrate-start">
+            <button className="btn btn--primary" onClick={start} data-testid="calibrate-start">
               {phase === 'intro' ? 'Start' : 'Try again'}
             </button>
           </p>
@@ -175,7 +204,7 @@ export function Calibrate() {
                 : `Click ${Math.min(beat - COUNT_IN, MEASURED)} of ${MEASURED} — say "ta"`}
           </p>
           <p>
-            <button onClick={stop} data-testid="calibrate-stop">
+            <button className="btn btn--primary" onClick={stop} data-testid="calibrate-stop">
               Stop
             </button>
           </p>
@@ -187,6 +216,7 @@ export function Calibrate() {
           <p data-testid="calibrate-result">Measured delay: {measured} ms</p>
           <p>
             <button
+              className="btn btn--primary"
               onClick={() => {
                 setLatencyOffset(measured, true);
                 setSaved(true);
@@ -195,7 +225,9 @@ export function Calibrate() {
             >
               Save
             </button>{' '}
-            <button onClick={start}>Retry</button>
+            <button className="btn" onClick={start}>
+              Retry
+            </button>
           </p>
           {saved ? <p role="status">Saved.</p> : null}
         </>

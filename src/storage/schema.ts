@@ -60,6 +60,12 @@ export function loadData(): StoredData {
   }
 }
 
-export function saveData(data: StoredData): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+/** Returns false when the write failed (full or blocked storage). */
+export function saveData(data: StoredData): boolean {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    return true;
+  } catch {
+    return false;
+  }
 }
