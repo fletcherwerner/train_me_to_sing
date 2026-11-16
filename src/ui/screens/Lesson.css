@@ -88,6 +88,16 @@
   .lesson-page .sequence-strip { margin: 6px 0; }
   .lesson-notes { margin: 4px 0; font-size: 1.3rem; }
 }
+/* On a phone the page may scroll; keep the run controls (Stop) in view. */
+@media (max-width: 699px) {
+  .lesson-page .lesson-controls {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    padding: 8px 0;
+    background: Canvas;
+  }
+}
 .lesson-score {
   font-size: 1.3rem;
   font-weight: 700;
