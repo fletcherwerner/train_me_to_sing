@@ -17,4 +17,4 @@ Maintained by the orchestrator. Status is one of: `Not started`, `In progress`, 
 | S01 | Spike: local profiles | Approved | 1 | APPROVED / APPROVED | 2026-11-16 |
 | S02 | Spike: scrolling pitch graph | Approved | 1 | APPROVED / APPROVED | 2026-11-16 |
 | E11 | MIDI import | Approved | 1 | APPROVED / APPROVED | 2026-11-16 |
-| E12 | Capacitor iOS wrapper | In progress | 3 | APPROVED / APPROVED | 2026-11-16 |
+| E12 | Capacitor iOS wrapper | Approved | 3 | APPROVED / APPROVED | 2026-11-16 |
