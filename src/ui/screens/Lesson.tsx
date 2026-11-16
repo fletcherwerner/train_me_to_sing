@@ -21,6 +21,7 @@ import { SequenceStrip } from '../components/SequenceStrip';
 import { NowSinging } from '../components/NowSinging';
 import { BeatIndicator } from '../components/BeatIndicator';
 import { useLiveAttempt } from '../hooks/useLiveAttempt';
+import { useWakeLock } from '../hooks/useWakeLock';
 import { describeReason } from '../describeReason';
 import { describeTolerance } from '../describeTolerance';
 import './Lesson.css';
@@ -101,6 +102,21 @@ function LessonRun({
     [exercise, activePhraseIdx, phrases],
   );
   const live = useLiveAttempt(graded ? source : null, handle, playEx, tol);
+
+  useWakeLock(running);
+
+  // Returning from the background can leave the AudioContext suspended: abandon the run.
+  const stopRef = useRef<() => void>(() => undefined);
+  useEffect(() => {
+    if (!running) return;
+    const onVisibility = () => {
+      if (document.visibilityState !== 'hidden') return;
+      stopRef.current();
+      setNotice('Paused — tap to restart');
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, [running]);
 
   useEffect(
     () => () => {
@@ -197,6 +213,7 @@ function LessonRun({
     setHandle(null);
     dispatch({ type: 'STOP' });
   };
+  stopRef.current = stop;
 
   const disp = displayRange(range);
   const hasStrip = step === 'weDo' || step === 'youDo';

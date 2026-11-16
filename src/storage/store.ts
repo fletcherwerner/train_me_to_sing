@@ -1,11 +1,14 @@
 import { create } from 'zustand';
 import { loadData, saveData, type StoredData } from './schema';
+import { mergeData, replaceData } from './exportImport';
 import type { AttemptResult } from '../core/scoring/types';
 
 interface AppStore extends StoredData {
   setRange: (range: StoredData['range']) => void;
   recordAttempt: (lessonId: string, result: AttemptResult) => void;
   resetProgress: () => void;
+  /** Replace or merge imported data. The device's latency offset is always kept. */
+  importProgress: (incoming: StoredData, mode: 'replace' | 'merge') => void;
   /** `calibrated` is true when the value came from the calibration screen. */
   setLatencyOffset: (ms: number, calibrated: boolean) => void;
 }
@@ -40,6 +43,10 @@ export const useAppStore = create<AppStore>((set, get) => {
       });
     },
     resetProgress: () => commit({ progress: {} }),
+    importProgress: (incoming, mode) => {
+      const local = snapshot(get());
+      commit(mode === 'merge' ? mergeData(local, incoming) : replaceData(local, incoming));
+    },
     setLatencyOffset: (ms, calibrated) => {
       const settings = get().settings;
       commit({
