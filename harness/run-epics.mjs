@@ -427,7 +427,7 @@ async function main() {
       return;
     }
     ids = target === 'next' ? [table[first].id] : table.slice(first).map((r) => r.id);
-  } else fail(`Unknown argument "${target}". Use an epic id (E03), next, or all.`);
+  } else fail(`Unknown argument "${target}". Use an epic or spike id (E03, S01), next, or all.`);
 
   if (target !== 'all' && ids.length === 1 && status.find((s) => s.id === ids[0])?.status === 'Approved') {
     console.log(`${ids[0]} is already Approved. To redo it, set its row in comms/STATUS.md to "In progress" and add comms/${ids[0]}/OWNER-NOTES.md.`);

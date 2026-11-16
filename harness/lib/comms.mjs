@@ -11,13 +11,14 @@ export const ROOT = process.env.TMTS_ROOT
   ? path.resolve(process.env.TMTS_ROOT)
   : path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
-export const EPIC_RE = /^E\d{2}$/;
+// Epics are E01..E99; spikes slotted between them in the README epic table are S01..S99.
+export const EPIC_RE = /^[ES]\d{2}$/;
 export const FILES = { coder: 'coder.md', plan: 'plan-review.md', ui: 'ui-review.md' };
 export const VERDICTS = ['APPROVED', 'CHANGES REQUIRED', 'BLOCKED - NEEDS OWNER'];
 export const CODER_STATUSES = ['READY FOR REVIEW', 'BLOCKED - NEEDS OWNER'];
 export const CHECK_COMMANDS = ['npm run lint', 'npm test', 'npm run test:e2e', 'npm run build'];
 
-const ID = '(?:PLAN|UI)-E\\d{2}-T\\d+-\\d+';
+const ID = '(?:PLAN|UI)-[ES]\\d{2}-T\\d+-\\d+';
 
 const REQUIRED_HEADINGS = {
   coder: ['Summary', 'Checks', 'Not done', 'How to see it'],
@@ -353,7 +354,7 @@ export function readStatus() {
   const text = read(statusPath()) || '';
   return text
     .split('\n')
-    .map((l) => /^\|\s*(E\d{2})\s*\|\s*(.*?)\s*\|\s*(.*?)\s*\|\s*(.*?)\s*\|\s*(.*?)\s*\|\s*(.*?)\s*\|\s*$/.exec(l))
+    .map((l) => /^\|\s*([ES]\d{2})\s*\|\s*(.*?)\s*\|\s*(.*?)\s*\|\s*(.*?)\s*\|\s*(.*?)\s*\|\s*(.*?)\s*\|\s*$/.exec(l))
     .filter(Boolean)
     .map((m) => ({ id: m[1], title: m[2], status: m[3], turns: m[4], verdicts: m[5], updated: m[6] }));
 }
@@ -376,9 +377,9 @@ export function readEpicTable() {
   const text = read(path.join(ROOT, 'README.md')) || '';
   const rows = [];
   for (const l of text.split('\n')) {
-    const m = /^\|\s*(E\d{2})\s*\|\s*\[(.+?)\]\(([^)]+)\)\s*\|(.*)\|(.*)\|\s*$/.exec(l);
+    const m = /^\|\s*([ES]\d{2})\s*\|\s*\[(.+?)\]\(([^)]+)\)\s*\|(.*)\|(.*)\|\s*$/.exec(l);
     if (!m) continue;
-    const deps = (m[5].replace(/\([^)]*\)/g, '').match(/E\d{2}/g) || []);
+    const deps = (m[5].replace(/\([^)]*\)/g, '').match(/[ES]\d{2}/g) || []);
     rows.push({ id: m[1], title: m[2], file: m[3], deps });
   }
   return rows;
@@ -505,7 +506,7 @@ export function writeUiPass(epic, turn, title = epic) {
   const file = UI_PASS_FILE();
   const old = read(file) || '';
   const bySection = new Map();
-  for (const chunk of old.split(/^(?=## E\d{2} )/m).slice(1)) bySection.set(chunk.slice(3, 6), chunk.trimEnd() + '\n');
+  for (const chunk of old.split(/^(?=## [ES]\d{2} )/m).slice(1)) bySection.set(chunk.slice(3, 6), chunk.trimEnd() + '\n');
   bySection.set(epic, section);
   const head = [
     '# UI pass for the owner',
