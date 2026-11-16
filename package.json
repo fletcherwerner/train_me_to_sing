@@ -10,11 +10,16 @@
     "test": "vitest run",
     "test:e2e": "playwright test",
     "lint": "eslint .",
-    "icons": "node scripts/make-icons.mjs",
+    "ios:sync": "npm run build && npx cap sync ios",
+    "ios:open": "npx cap open ios",
+    "icons":"node scripts/make-icons.mjs",
     "fixtures": "node scripts/make-midi-fixture.mjs",
     "test:harness": "node --test harness/test"
   },
   "dependencies": {
+    "@capacitor/cli": "^7.6.10",
+    "@capacitor/core": "^8.6.2",
+    "@capacitor/ios": "^8.6.2",
     "@tonejs/midi": "^2.0.28",
     "pitchy": "^4.1.0",
     "react": "^18.3.1",

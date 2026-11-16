@@ -1,3 +1,5 @@
+import { Capacitor } from '@capacitor/core';
+
 /**
  * Registers the service worker (production builds only) and reports when an update has taken over.
  * The generated worker skips waiting (registerType 'autoUpdate'), so a new version becomes the
@@ -5,6 +7,8 @@
  */
 export function registerServiceWorker(onUpdateReady: () => void): void {
   if (!import.meta.env.PROD || !('serviceWorker' in navigator)) return;
+  // The native shell serves the app from bundled files; a service worker would only add a second cache.
+  if (Capacitor.isNativePlatform()) return;
   const hadController = navigator.serviceWorker.controller !== null;
   let first = !hadController;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
