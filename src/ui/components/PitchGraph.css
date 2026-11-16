@@ -1,0 +1,27 @@
+.pitch-graph {
+  /* Own light background so black and red read the same in dark mode. */
+  background: #fafafa;
+  color: #222;
+  border: 1px solid #bbb;
+  border-radius: 6px;
+  width: 100%;
+  height: 160px;
+  overflow: hidden;
+  margin: 6px 0;
+  position: relative;
+  box-sizing: border-box;
+}
+@media (min-width: 700px) {
+  .pitch-graph { height: 220px; }
+}
+.pitch-graph svg { display: block; }
+.pitch-graph__grid { stroke: #000; stroke-opacity: 0.08; stroke-width: 1; }
+.pitch-graph__black-row { fill: #000; fill-opacity: 0.06; }
+.pitch-graph__now { stroke: #1976d2; stroke-width: 1.5; stroke-dasharray: 4 3; }
+.pitch-graph__target { stroke: #000; stroke-width: 6; stroke-linecap: butt; }
+.pitch-graph__sung { fill: none; stroke: #d32f2f; stroke-width: 3; stroke-linecap: butt; stroke-linejoin: round; }
+.pitch-graph__label { font: 10px system-ui, sans-serif; fill: #444; }
+.pitch-graph__marker { font: 12px system-ui, sans-serif; fill: #d32f2f; }
+.pitch-graph--results { display: flex; }
+.pitch-graph--results .pitch-graph__labels { flex: none; background: #fafafa; }
+.pitch-graph__scroll { overflow-x: auto; overflow-y: hidden; flex: none; max-width: 100%; }

@@ -19,6 +19,8 @@ import { PianoKeyboard } from '../components/PianoKeyboard';
 import { CentsMeter } from '../components/CentsMeter';
 import { SequenceStrip } from '../components/SequenceStrip';
 import { NowSinging } from '../components/NowSinging';
+import { PitchGraph, ResultsGraph } from '../components/PitchGraph';
+import type { PitchFrame } from '../../audio/pitch/PitchSource';
 import { BeatIndicator } from '../components/BeatIndicator';
 import { useLiveAttempt } from '../hooks/useLiveAttempt';
 import { useWakeLock } from '../hooks/useWakeLock';
@@ -95,6 +97,9 @@ function LessonRun({
   const phrases = lesson.exercise.phrases;
   // null = whole song. Only I do and We do use a phrase; You do and Results use the whole song.
   const [phraseIdx, setPhraseIdx] = useState<number | null>(null);
+  // Frames of the run in progress (filled live) and of the last You do attempt. In memory only, never saved.
+  const [liveFrames, setLiveFrames] = useState<PitchFrame[] | null>(null);
+  const [youDoFrames, setYouDoFrames] = useState<PitchFrame[] | null>(null);
   const [resultPhrase, setResultPhrase] = useState<number | null>(null);
   const activePhraseIdx = step === 'iDo' || step === 'weDo' ? phraseIdx : null;
   const playEx = useMemo(
@@ -175,6 +180,7 @@ function LessonRun({
     const myRun = ++runRef.current;
     const thisStep = step;
     setNotice(null);
+    if (thisStep === 'youDo') setYouDoFrames(null);
     setResultPhrase(activePhraseIdx);
     dispatch({ type: 'RUN' });
     await unlockAudio();
@@ -190,12 +196,15 @@ function LessonRun({
     if (thisStep !== 'iDo' && sourceRef.current) {
       registerSimExercise(ex, h.startSec);
       rec = recordFrames(sourceRef.current, h.startSec, h.endSec, latencyMs / 1000);
+      setLiveFrames(rec.frames);
     }
     await h.done;
     rec?.stop();
     if (myRun !== runRef.current) return;
     handleRef.current = null;
     setHandle(null);
+    setLiveFrames(null);
+    if (thisStep === 'youDo') setYouDoFrames(rec ? rec.frames : null);
     const result = rec ? evaluateAttempt(ex, rec.frames, tol, lesson.passScore) : undefined;
     dispatch({ type: 'RUN_ENDED', result });
     if (thisStep === 'youDo' && !result) setNotice('We could not hear the microphone for that run. Press Try again.');
@@ -211,6 +220,7 @@ function LessonRun({
     handleRef.current?.stop();
     handleRef.current = null;
     setHandle(null);
+    setLiveFrames(null);
     dispatch({ type: 'STOP' });
   };
   stopRef.current = stop;
@@ -277,6 +287,7 @@ function LessonRun({
         <p className="lesson-tip" data-testid="results-tip">
           <strong>Tip:</strong> {pickTip(r)}
         </p>
+        {youDoFrames ? <ResultsGraph exercise={ex} range={range} frames={youDoFrames} /> : null}
         <SequenceStrip
           expanded
           notes={ex.notes}
@@ -369,6 +380,13 @@ function LessonRun({
         <p className="lesson-phrase lesson-phrase--spacer" aria-hidden="true" />
       ) : null}
       {hasLyrics ? <NowSinging notes={ex.notes} currentIndex={running ? live.currentNoteIndex : null} /> : null}
+      <PitchGraph
+        exercise={ex}
+        range={range}
+        startSec={handle?.startSec ?? null}
+        frames={liveFrames}
+        showSung={step !== 'iDo'}
+      />
       <PianoKeyboard
         lowMidi={disp.lowMidi}
         highMidi={disp.highMidi}
