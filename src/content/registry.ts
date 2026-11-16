@@ -1,6 +1,7 @@
 import { stage1Lessons } from './builtin/stage1';
 import { stage2Lessons } from './builtin/stage2';
 import { stage3Lessons } from './builtin/stage3';
+import { importedSource } from './importedSource';
 import type { Lesson, LessonSource } from './types';
 
 const sources: LessonSource[] = [];
@@ -20,3 +21,4 @@ export function getLesson(id: string): Lesson | undefined {
 }
 
 registerSource({ list: () => [...stage1Lessons, ...stage2Lessons, ...stage3Lessons] });
+registerSource(importedSource);

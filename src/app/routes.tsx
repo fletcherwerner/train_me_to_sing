@@ -4,6 +4,7 @@ import { RangeSetup } from '../ui/screens/RangeSetup';
 import { Settings } from '../ui/screens/Settings';
 import { Calibrate } from '../ui/screens/Calibrate';
 import { Lesson } from '../ui/screens/Lesson';
+import { ImportMidi } from '../ui/screens/ImportMidi';
 import { PianoDev } from '../ui/screens/dev/PianoDev';
 import { TunerDev } from '../ui/screens/dev/TunerDev';
 import { ExerciseDev } from '../ui/screens/dev/ExerciseDev';
@@ -27,6 +28,7 @@ export function AppRoutes() {
       <Route path="/settings" element={<Settings />} />
       <Route path="/settings/calibrate" element={<Calibrate />} />
       <Route path="/lesson/:lessonId" element={<Lesson />} />
+      <Route path="/import" element={<ImportMidi />} />
       <Route path="/dev/piano" element={<PianoDev />} />
       <Route path="/dev/tuner" element={<TunerDev />} />
       <Route path="/dev/exercise" element={<ExerciseDev />} />

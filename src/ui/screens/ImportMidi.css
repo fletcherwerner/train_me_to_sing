@@ -1,0 +1,5 @@
+.import-midi__track { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 8px 12px; border: 1px solid currentColor; border-radius: 10px; }
+.import-midi__track--selected { border-width: 3px; }
+.import-midi__warn { font-weight: 700; }
+.import-midi__actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.dev-page input.import-midi__title { width: min(20em, 100%); }

@@ -16,6 +16,11 @@
 .home__status--passed { font-weight: 700; }
 .home__row--disabled { opacity: 0.55; border-style: dashed; cursor: not-allowed; }
 .home__row--disabled .home__status { flex-shrink: 1; max-width: 50%; }
+.home__mysongs-item { display: flex; flex-direction: column; gap: 4px; }
+.home__mysongs-row { display: flex; gap: 8px; align-items: stretch; }
+.home__mysongs-row .home__row { flex: 1; }
+.home__link-row { margin: 24px 0 8px; }
+.home__confirm { padding: 8px 12px; border: 2px solid currentColor; border-radius: 10px; }
 @media (max-width: 600px) {
   .home__row { flex-wrap: wrap; }
   .home__row--disabled .home__status { max-width: none; text-align: left; }

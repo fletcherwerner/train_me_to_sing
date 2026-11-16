@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAppStore } from '../../storage/store';
 import { midiToName } from '../../core/music/notes';
@@ -20,11 +21,17 @@ const STRICTER_NOTE: Record<number, string> = {
 export function Home() {
   const range = useAppStore((s) => s.range);
   const progress = useAppStore((s) => s.progress);
+  const removeImportedLesson = useAppStore((s) => s.removeImportedLesson);
+  const importedRaw = useAppStore((s) => s.importedLessons);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+  void importedRaw; // subscribe so the list refreshes when songs are added or removed
   const profileName = useProfileStatus((s) => s.activeName);
   const { search } = useLocation();
   if (!range) return null;
 
-  const lessons = getAllLessons().map((lesson) => ({ lesson, fitResult: fit(lesson.exercise, range) }));
+  const all = getAllLessons().map((lesson) => ({ lesson, fitResult: fit(lesson.exercise, range) }));
+  const lessons = all.filter((l) => l.lesson.source !== 'imported');
+  const mySongs = all.filter((l) => l.lesson.source === 'imported');
   const next = lessons.find((l) => l.fitResult.ok && !progress[l.lesson.id]?.passed);
   const stages = [...new Set(lessons.map((l) => l.lesson.stage))];
 
@@ -130,6 +137,82 @@ export function Home() {
           </section>
         );
       })}
+
+      {mySongs.length > 0 ? (
+        <section className="home__stage" aria-label="My songs" data-testid="my-songs">
+          <h2>My songs</h2>
+          <ul className="home__list">
+            {mySongs.map(({ lesson, fitResult }) => {
+              const st = status(lesson);
+              const body = (
+                <>
+                  <span className="home__row-main">
+                    <span className="home__row-title">{lesson.title}</span>
+                    <span className="home__row-notes">{lesson.exercise.notes.length} notes</span>
+                  </span>
+                  {fitResult.ok ? (
+                    <span className={`home__status home__status--${st.kind}`} data-testid={`status-${lesson.id}`}>
+                      <span aria-hidden="true">{st.icon} </span>
+                      {st.text}
+                    </span>
+                  ) : (
+                    <span className="home__status home__status--locked" data-testid={`status-${lesson.id}`}>
+                      Needs {fitResult.neededSemitones} semitones; your range is {fitResult.haveSemitones}
+                    </span>
+                  )}
+                </>
+              );
+              return (
+                <li key={lesson.id} className="home__mysongs-item">
+                  <div className="home__mysongs-row">
+                    {fitResult.ok ? (
+                      <Link className="home__row" data-testid={`lesson-${lesson.id}`} to={{ pathname: `/lesson/${lesson.id}`, search }}>
+                        {body}
+                      </Link>
+                    ) : (
+                      <div className="home__row home__row--disabled" data-testid={`lesson-${lesson.id}`} aria-disabled="true">
+                        {body}
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setConfirmId(lesson.id)}
+                      aria-label={`Delete ${lesson.title}`}
+                      data-testid={`delete-${lesson.id}`}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                  {confirmId === lesson.id ? (
+                    <div className="home__confirm" role="alertdialog" aria-label={`Delete ${lesson.title}?`} data-testid={`confirm-${lesson.id}`}>
+                      <p>Delete “{lesson.title}” and its progress?</p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          removeImportedLesson(lesson.id);
+                          setConfirmId(null);
+                        }}
+                        data-testid={`confirm-delete-${lesson.id}`}
+                      >
+                        Delete
+                      </button>{' '}
+                      <button type="button" onClick={() => setConfirmId(null)}>
+                        Cancel
+                      </button>
+                    </div>
+                  ) : null}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      ) : null}
+
+      <p className="home__link-row">
+        <Link to={{ pathname: '/import', search }} className="tap-link" data-testid="import-midi-link">
+          Import a MIDI file
+        </Link>
+      </p>
     </main>
   );
 }
