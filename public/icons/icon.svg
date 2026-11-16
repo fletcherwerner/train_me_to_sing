@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#1f3a5f"/>
+  <!-- piano keys -->
+  <rect x="96" y="150" width="86" height="212" rx="10" fill="#fff"/>
+  <rect x="192" y="150" width="86" height="212" rx="10" fill="#fff"/>
+  <rect x="150" y="150" width="56" height="130" rx="8" fill="#0d1b2e"/>
+  <!-- sound wave -->
+  <g fill="none" stroke="#7fd1ff" stroke-width="16" stroke-linecap="round">
+    <path d="M318 214 Q340 256 318 298"/>
+    <path d="M352 188 Q392 256 352 324"/>
+    <path d="M386 162 Q444 256 386 350"/>
+  </g>
+</svg>

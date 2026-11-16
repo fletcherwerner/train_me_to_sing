@@ -214,7 +214,7 @@ comms/
 | [`planning/01-architecture.md`](planning/01-architecture.md) | Tech stack, folder layout, shared types and rules every epic follows |
 | [`planning/02-lesson-catalog.md`](planning/02-lesson-catalog.md) | Lessons, note data, tolerance profiles |
 | [`planning/ui-requirements.md`](planning/ui-requirements.md) | What the owner needs from the UI. Owned and updated by the owner. |
-| `planning/epics/` | One file per epic, built in order |
+| `planning/epics/` | One file per epic, built in order. A spike (`S01`, …) is a smaller piece of work slotted between epics; the driver runs it in its place in the table below, the same way as an epic |
 
 ### Epics
 
@@ -232,6 +232,8 @@ Every epic ends with something you can open and review. "Depends on" means those
 | E08 | [Stage 2 scales, tighter tolerances, latency calibration](planning/epics/E08-scales-calibration.md) | Scale lessons; a calibration screen | E07 |
 | E09 | [Stage 3 songs with lyrics](planning/epics/E09-songs.md) | Five songs with lyrics under the notes | E08 |
 | E10 | [PWA install, hosting, export/import](planning/epics/E10-pwa-export.md) | App installed on the iPhone home screen; progress moved between devices | E07 (E09 preferred) |
+| S01 | [Spike: local profiles](planning/epics/S01-local-profiles.md) | Create and load profiles, each saving its own range and passed lessons to a file under `profiles/` | E10 |
+| S02 | [Spike: scrolling pitch graph](planning/epics/S02-pitch-graph.md) | Target notes stream in as black lines with your voice drawn in red; the results screen shows the whole attempt as a graph | S01 |
 | E11 | [MIDI import](planning/epics/E11-midi-import.md) | Import a MIDI file and sing it as a lesson | E09 |
 | E12 | [Capacitor iOS wrapper](planning/epics/E12-capacitor-ios.md) | A real iOS app installed from Xcode | E10 |
 
@@ -248,7 +250,7 @@ Every epic ends with something you can open and review. "Depends on" means those
 
 These were decided without asking; say so if any is wrong.
 
-1. **Sequence strip.** The view is keyboard-only. Because timing is graded, the lesson screen also shows a row of small note chips (one per note, current one highlighted, lyric underneath for songs) and a beat indicator. It is not a scrolling piano roll.
+1. **Sequence strip.** The view is keyboard-only. Because timing is graded, the lesson screen also shows a row of small note chips (one per note, current one highlighted, lyric underneath for songs) and a beat indicator. It is not a scrolling piano roll. Changed by S02: a scrolling pitch graph (target in black, voice in red) is added above the piano.
 2. **"You do" still shows the target key.** The app stops playing the melody, but the target key stays lit and a metronome clicks. The first note is played once before the 4-click lead-in.
 3. **Exercises that don't fit your range** are shown in the tracker but disabled, with the reason. Nothing is octave-folded to make it fit.
 4. **AirPods.** On iPhone, using a Bluetooth headset's mic drops playback quality and adds delay. Wired headphones, or AirPods with calibration (E08), are the supported setups.

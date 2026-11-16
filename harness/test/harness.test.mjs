@@ -346,6 +346,40 @@ test('the real E01 files and summary pass the validator', () => {
   assert.equal(run('E01', 'summary').status, 0);
 });
 
+test('spikes (S01) are read from the epic table and status file in table order, with their dependencies', () => {
+  const readme = fs.existsSync(path.join(tmp, 'README.md')) ? fs.readFileSync(path.join(tmp, 'README.md'), 'utf8') : null;
+  const status = fs.existsSync(path.join(tmp, 'comms/STATUS.md')) ? fs.readFileSync(path.join(tmp, 'comms/STATUS.md'), 'utf8') : null;
+  write('README.md', '| # | Epic | You can review | Depends on |\n|---|---|---|---|\n| E10 | [PWA](planning/epics/E10-pwa.md) | x | E07 (E09 preferred) |\n| S01 | [Spike: profiles](planning/epics/S01-p.md) | x | E10 |\n| E11 | [MIDI](planning/epics/E11-midi.md) | x | E09 |\n');
+  write('comms/STATUS.md', '| E10 | PWA | Approved | 1 | — | — |\n| S01 | Spike: profiles | Not started | 0 | — | — |\n');
+  try {
+    assert.deepEqual(lib.readEpicTable().map((r) => [r.id, r.deps.join()]), [['E10', 'E07'], ['S01', 'E10'], ['E11', 'E09']]);
+    assert.deepEqual(lib.readStatus().map((r) => r.id), ['E10', 'S01']);
+    assert.ok(lib.EPIC_RE.test('S01') && !lib.EPIC_RE.test('X01'));
+    lib.setStatusRow('S01', { status: 'In progress' });
+    assert.equal(lib.readStatus()[1].status, 'In progress');
+  } finally {
+    if (readme === null) fs.rmSync(path.join(tmp, 'README.md')); else write('README.md', readme);
+    if (status === null) fs.rmSync(path.join(tmp, 'comms/STATUS.md')); else write('comms/STATUS.md', status);
+  }
+});
+
+test('owner notes are recognised for epics and spikes, and nothing else is', () => {
+  assert.ok(lib.isOwnerNotes('comms/E10/OWNER-NOTES.md'));
+  assert.ok(lib.isOwnerNotes('comms/S01/OWNER-NOTES.md'));
+  assert.ok(!lib.isOwnerNotes('comms/E10/turn-01/OWNER-NOTES.md'));
+  assert.ok(!lib.isOwnerNotes('src/OWNER-NOTES.md'));
+  assert.ok(!lib.isOwnerNotes('comms/STATUS.md'));
+});
+
+test('a spike turn with spike finding ids validates', () => {
+  const S = 'S01';
+  const ui = review('ui').replaceAll(E, S);
+  write(`comms/${S}/turn-01/coder.md`, coder().replaceAll(E, S));
+  write(`comms/${S}/turn-01/ui-review.md`, ui);
+  write(`comms/${S}/turn-01/screenshots/a.png`, 'x');
+  assert.deepEqual(lib.validateReview(S, 1, 'ui').errors, []);
+});
+
 test('a dispute repeated after the owner answered stops the loop; one from before the answer does not', () => {
   const disputing = (id) => `## Response to findings\n\n| Finding | Response | Note |\n|---|---|---|\n| ${id} | Disputed | why |\n`;
   write(`comms/E07/turn-02/coder.md`, disputing('UI-E07-T1-01'));

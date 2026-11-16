@@ -133,7 +133,7 @@ export function checkBash(command, env = process.env) {
       continue;
     }
     if (!/\bgit\s+merge\b/.test(commandSkeleton(segment)) || branch !== 'main') continue;
-    const m = /epic\/(E\d{2})/.exec(segment.replace(/\s(?:-m|--message)(?:=|\s+)(?:"[^"]*"|'[^']*'|\S+)/g, ''));
+    const m = /epic\/([ES]\d{2})/.exec(segment.replace(/\s(?:-m|--message)(?:=|\s+)(?:"[^"]*"|'[^']*'|\S+)/g, ''));
     if (m) {
       const gate = approvalGate(m[1]);
       if (!gate.ok) return `Blocked: ${m[1]} may not be merged until both reviews approve.\n- ${gate.errors.join('\n- ')}`;

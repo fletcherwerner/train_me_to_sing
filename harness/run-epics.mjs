@@ -27,7 +27,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import {
   ROOT, EPIC_RE, FILES, pad, rel, read, git, today, commsDir, turnDir, turnNumbers,
   lastRecordedTurn, validateCoder, validateReview, validateSummary, approvalGate, openAfterTurn,
-  parseCoder, repeatedDisputes, readStatus, readEpicTable, setStatusRow, setIndexRow, writeNeedsInput, writeForOwner, writeUiPass, uiReviewNote,
+  parseCoder, repeatedDisputes, isOwnerNotes, readStatus, readEpicTable, setStatusRow, setIndexRow, writeNeedsInput, writeForOwner, writeUiPass, uiReviewNote,
 } from './lib/comms.mjs';
 import { loadProfile, checkReachable, checkModel, flushCache } from './lib/profile.mjs';
 
@@ -188,7 +188,7 @@ function switchToEpicBranch(epic) {
   const name = `epic/${epic}`;
   if (branch() === name) return;
   // The owner's notes are untracked and carry over a branch switch, so they do not count as dirty.
-  if (dirtyPaths().filter((f) => !/OWNER-NOTES\.md$/.test(f)).length) throw new Stop(`Uncommitted changes on ${branch()}. Commit or stash them before running ${epic}.`);
+  if (dirtyPaths().filter((f) => !isOwnerNotes(f)).length) throw new Stop(`Uncommitted changes on ${branch()}. Commit or stash them before running ${epic}.`);
   const exists = git(['rev-parse', '--verify', '-q', name]).ok;
   if (!exists && branch() !== 'main') git(['switch', '-q', 'main']);
   const r = exists ? git(['switch', '-q', name]) : git(['switch', '-q', '-c', name]);
@@ -208,7 +208,7 @@ function checkCoderScope(epic, turn, base) {
   const changed = new Set([...git(['diff', '--name-only', `${base}..HEAD`]).out.split('\n'), ...dirtyPaths()].filter(Boolean));
   const bad = [];
   for (const f of changed) {
-    if (f === `comms/${epic}/turn-${pad(turn)}/coder.md`) continue;
+    if (f === `comms/${epic}/turn-${pad(turn)}/coder.md` || isOwnerNotes(f)) continue;
     if (/^(planning|comms|harness|\.claude)\//.test(f) || f === 'README.md' || f === 'CLAUDE.md') bad.push(f);
   }
   bad.push(...strayReadmes().map((f) => `${f} (only the root README.md is allowed)`));
@@ -218,7 +218,7 @@ function checkCoderScope(epic, turn, base) {
 
 function checkReviewerScope(epic, turn) {
   const ok = COMMS_OWNED(epic, turn);
-  return [...dirtyPaths().filter((f) => !ok.test(f)), ...strayReadmes()];
+  return [...dirtyPaths().filter((f) => !ok.test(f) && !isOwnerNotes(f)), ...strayReadmes()];
 }
 
 const devServerPids = () =>
@@ -427,7 +427,7 @@ async function main() {
       return;
     }
     ids = target === 'next' ? [table[first].id] : table.slice(first).map((r) => r.id);
-  } else fail(`Unknown argument "${target}". Use an epic id (E03), next, or all.`);
+  } else fail(`Unknown argument "${target}". Use an epic or spike id (E03, S01), next, or all.`);
 
   if (target !== 'all' && ids.length === 1 && status.find((s) => s.id === ids[0])?.status === 'Approved') {
     console.log(`${ids[0]} is already Approved. To redo it, set its row in comms/STATUS.md to "In progress" and add comms/${ids[0]}/OWNER-NOTES.md.`);
