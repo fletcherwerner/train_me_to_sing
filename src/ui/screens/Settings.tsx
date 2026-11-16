@@ -4,6 +4,7 @@ import { useAppStore } from '../../storage/store';
 import type { StoredData } from '../../storage/schema';
 import { parseImport, saveExport, summarizeImport } from '../../storage/exportImport';
 import { midiToName } from '../../core/music/notes';
+import { ProfilesSection } from '../components/ProfilesSection';
 import './Home.css';
 
 export function Settings() {
@@ -62,6 +63,8 @@ export function Settings() {
         </Link>
       </p>
       <h1>Settings</h1>
+
+      <ProfilesSection />
 
       <h2>Your range</h2>
       {range ? (

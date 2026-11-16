@@ -4,6 +4,7 @@ import { midiToName } from '../../core/music/notes';
 import { getAllLessons } from '../../content/registry';
 import { fit } from '../../core/exercise/fit';
 import type { Lesson } from '../../content/types';
+import { useProfileStatus } from '../../storage/profiles';
 import './Home.css';
 
 const STAGE_NAMES: Record<number, string> = {
@@ -19,6 +20,7 @@ const STRICTER_NOTE: Record<number, string> = {
 export function Home() {
   const range = useAppStore((s) => s.range);
   const progress = useAppStore((s) => s.progress);
+  const profileName = useProfileStatus((s) => s.activeName);
   const { search } = useLocation();
   if (!range) return null;
 
@@ -40,6 +42,13 @@ export function Home() {
       <header className="home__header">
         <div>
           <h1>Train Me To Sing</h1>
+          {profileName ? (
+            <p>
+              <Link to={{ pathname: '/settings', search }} className="home__profile" data-testid="home-profile">
+                Profile: <strong>{profileName}</strong>
+              </Link>
+            </p>
+          ) : null}
           <p data-testid="home-range">
             Your range: <strong>{midiToName(range.lowMidi)} – {midiToName(range.highMidi)}</strong>
           </p>

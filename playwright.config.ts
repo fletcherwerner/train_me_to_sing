@@ -1,13 +1,19 @@
 import { defineConfig, devices } from '@playwright/test';
+import { E2E_PROFILES_DIR } from './tests/e2e/profilesDir';
+
+// The e2e dev server has its own port so it never reuses a dev server you started by hand:
+// that one would write test profiles into the real `profiles/` folder.
+const E2E_URL = 'https://localhost:5174';
 
 export default defineConfig({
   testDir: './tests/e2e',
-  use: { baseURL: 'https://localhost:5173', ignoreHTTPSErrors: true },
+  use: { baseURL: E2E_URL, ignoreHTTPSErrors: true },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: [
     {
-      command: 'npm run dev -- --strictPort',
-      url: 'https://localhost:5173',
+      command: 'npm run dev -- --strictPort --port 5174',
+      env: { TMTS_PROFILES_DIR: E2E_PROFILES_DIR },
+      url: E2E_URL,
       ignoreHTTPSErrors: true,
       reuseExistingServer: true,
       timeout: 60_000,
