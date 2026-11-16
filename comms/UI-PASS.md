@@ -280,3 +280,52 @@ Approved after turn 1, 2026-11-16. Review: `comms/S01/turn-01/ui-review.md`.
 - `comms/S01/turn-01/screenshots/settings-filled-phone.png`
 - `comms/S01/turn-01/screenshots/settings-noprofile-laptop.png`
 - `comms/S01/turn-01/screenshots/settings-noprofile-phone.png`
+
+## S02 — Spike: scrolling pitch graph
+
+Approved after turn 1, 2026-11-16. Review: `comms/S02/turn-01/ui-review.md`.
+
+### Not verified by the UI reviewer
+
+- Review-script steps 2, 3 and 5 with a real voice: going sharp or flat on purpose, the gap when you pause, and singing one note low. I used only `sim=perfect` and `sim=octaveDown`.
+- Step 6: the Stage 3 song results scroll sideways inside the graph box. Not exercised.
+- Reduced-motion behaviour.
+- Real iPhone and sound. Whether the graph and the audio feel in sync can only be judged by ear.
+
+### Screens reviewed
+
+| Screen / state | Laptop | iPhone | Screenshot files |
+|----------------|--------|--------|------------------|
+| I do, count-in and running (black only) | OK | OK | `screenshots/laptop-perfect-1-ido-countin.png`, `screenshots/phone-perfect-2-ido-run.png` |
+| We do (sim=perfect) | OK | OK | `screenshots/laptop-perfect-3-wedo.png`, `screenshots/phone-perfect-3-wedo.png` |
+| You do running, on target | OK | OK | `screenshots/laptop-perfect-4-youdo.png`, `screenshots/phone-perfect-4-youdo.png` |
+| You do, octave low (▼ marker at the now line) | OK | OK | `screenshots/laptop-octaveDown-4-youdo.png`, `screenshots/phone-octaveDown-4-youdo.png` |
+| Results, passed (red lies on black) | OK | OK | `screenshots/laptop-perfect-5-results.png`, `screenshots/phone-perfect-5-results-full.png` |
+| Results, octave error (red an octave below) | OK | OK | `screenshots/laptop-octaveDown-5-results-full.png`, `screenshots/phone-octaveDown-5-results.png` |
+
+### Screenshots
+
+- `comms/S02/turn-01/screenshots/laptop-octaveDown-1-ido-countin.png`
+- `comms/S02/turn-01/screenshots/laptop-octaveDown-2-ido-run.png`
+- `comms/S02/turn-01/screenshots/laptop-octaveDown-3-wedo.png`
+- `comms/S02/turn-01/screenshots/laptop-octaveDown-4-youdo.png`
+- `comms/S02/turn-01/screenshots/laptop-octaveDown-5-results-full.png`
+- `comms/S02/turn-01/screenshots/laptop-octaveDown-5-results.png`
+- `comms/S02/turn-01/screenshots/laptop-perfect-1-ido-countin.png`
+- `comms/S02/turn-01/screenshots/laptop-perfect-2-ido-run.png`
+- `comms/S02/turn-01/screenshots/laptop-perfect-3-wedo.png`
+- `comms/S02/turn-01/screenshots/laptop-perfect-4-youdo.png`
+- `comms/S02/turn-01/screenshots/laptop-perfect-5-results-full.png`
+- `comms/S02/turn-01/screenshots/laptop-perfect-5-results.png`
+- `comms/S02/turn-01/screenshots/phone-octaveDown-1-ido-countin.png`
+- `comms/S02/turn-01/screenshots/phone-octaveDown-2-ido-run.png`
+- `comms/S02/turn-01/screenshots/phone-octaveDown-3-wedo.png`
+- `comms/S02/turn-01/screenshots/phone-octaveDown-4-youdo.png`
+- `comms/S02/turn-01/screenshots/phone-octaveDown-5-results-full.png`
+- `comms/S02/turn-01/screenshots/phone-octaveDown-5-results.png`
+- `comms/S02/turn-01/screenshots/phone-perfect-1-ido-countin.png`
+- `comms/S02/turn-01/screenshots/phone-perfect-2-ido-run.png`
+- `comms/S02/turn-01/screenshots/phone-perfect-3-wedo.png`
+- `comms/S02/turn-01/screenshots/phone-perfect-4-youdo.png`
+- `comms/S02/turn-01/screenshots/phone-perfect-5-results-full.png`
+- `comms/S02/turn-01/screenshots/phone-perfect-5-results.png`
