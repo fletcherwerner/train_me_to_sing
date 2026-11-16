@@ -29,7 +29,7 @@ Fixed the one blocking finding: `ios/App/CapApp-SPM/Package.swift` now declares 
 | Finding | Response | What was done, or why disputed or deferred |
 |---------|----------|--------------------------------------------|
 | PLAN-E12-T2-01 | Fixed | Package.swift line 7 now `.iOS(.v15)`; grep found no other iOS 14 setting in `ios/`. |
-| PLAN-E12-T1-01 | Deferred | Simulator build still needs the owner. Run the command in `docs/ios-build.md` and confirm `** BUILD SUCCEEDED **`. |
+| PLAN-E12-T1-01 | Fixed (build unverified) | Both deployment targets now match Capacitor 8; the sandbox still blocks `xcodebuild`, so the owner must run it. Run the command in `docs/ios-build.md` and confirm `** BUILD SUCCEEDED **`. |
 | PLAN-E12-T1-02 | Deferred | CLI 8 needs Node 22; not installed here. |
 | PLAN-E12-T1-03 | Deferred | Waiting on the owner's bundle id. |
 
