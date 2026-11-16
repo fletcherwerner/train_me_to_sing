@@ -20,7 +20,8 @@
   }
 }
 
-.piano { user-select: none; -webkit-user-select: none; }
+/* Label font sizes are set inline from the rendered scale (see PianoKeyboard.tsx); labels may spill below the box. */
+.piano { user-select: none; -webkit-user-select: none; overflow: visible; }
 .piano-key { stroke: var(--key-outline); stroke-width: 0.8; cursor: pointer; }
 .piano-key--white { fill: var(--key-white); }
 .piano-key--black { fill: var(--key-black); }

@@ -9,6 +9,7 @@ vi.mock('../audioEngine', () => ({
     mockTime += 0.016;
     return mockTime;
   },
+  setLoseMicHook: () => undefined,
 }));
 
 describe('SyntheticPitchSource', () => {
@@ -33,6 +34,25 @@ describe('SyntheticPitchSource', () => {
         resolve();
       }, 200);
     });
+  });
+
+  it('onLost fires once and frames stop', async () => {
+    mockTime = 0;
+    const frames: PitchFrame[] = [];
+    const src = createSyntheticPitchSource(constantPitch(60));
+    const lost = vi.fn();
+    src.onLost?.(lost);
+    src.subscribe((f) => frames.push(f));
+    await src.start();
+    await new Promise((r) => setTimeout(r, 100));
+    expect(frames.length).toBeGreaterThan(0);
+    src.loseForTest();
+    src.loseForTest();
+    expect(lost).toHaveBeenCalledTimes(1);
+    const n = frames.length;
+    await new Promise((r) => setTimeout(r, 100));
+    expect(frames.length).toBe(n);
+    src.stop();
   });
 
   it('emits null when behaviour returns null', () => {

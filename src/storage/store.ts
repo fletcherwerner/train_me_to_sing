@@ -5,6 +5,8 @@ import type { AttemptResult } from '../core/scoring/types';
 import type { Lesson } from '../content/types';
 
 interface AppStore extends StoredData {
+  /** True when the last write to storage failed. */
+  saveFailed: boolean;
   setRange: (range: StoredData['range']) => void;
   recordAttempt: (lessonId: string, result: AttemptResult) => void;
   resetProgress: () => void;
@@ -25,11 +27,12 @@ function snapshot(s: AppStore): StoredData {
 export const useAppStore = create<AppStore>((set, get) => {
   const commit = (patch: Partial<StoredData>) => {
     const updated: StoredData = { ...snapshot(get()), ...patch };
-    saveData(updated);
-    set(updated);
+    const ok = saveData(updated);
+    set({ ...updated, saveFailed: !ok });
   };
   return {
     ...loadData(),
+    saveFailed: false,
     setRange: (range) => commit({ range }),
     recordAttempt: (lessonId, result) => {
       const progress = get().progress;

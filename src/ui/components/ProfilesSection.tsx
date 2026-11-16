@@ -87,7 +87,7 @@ export function ProfilesSection() {
                 Copy current range and progress
               </label>
             </fieldset>
-            <button type="submit" disabled={busy} data-testid="profile-create">
+            <button type="submit" className="btn btn--primary" disabled={busy} data-testid="profile-create">
               Create profile
             </button>
           </form>
@@ -106,7 +106,7 @@ export function ProfilesSection() {
                 <li key={p.id}>
                   <button
                     type="button"
-                    className="profiles__row"
+                    className="btn profiles__row"
                     disabled={busy}
                     onClick={() => onLoad(p.id)}
                     data-testid={`profile-${p.id}`}

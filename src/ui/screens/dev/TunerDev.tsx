@@ -1,6 +1,7 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
-import { unlockAudio } from '../../../audio/audioEngine';
+import { ensureAudioRunning } from '../../../audio/audioEngine';
+import { isMicMissing, MIC_MISSING_MSG, SOUND_PAUSED_MSG } from '../../audioMessages';
 import { createPitchSource } from '../../../audio/pitch';
 import { PianoKeyboard } from '../../components/PianoKeyboard';
 import { CentsMeter } from '../../components/CentsMeter';
@@ -8,6 +9,7 @@ import { centsBetween, midiToName, midiToFreq } from '../../../core/music/notes'
 import type { PitchFrame } from '../../../audio/pitch/PitchSource';
 
 export function TunerDev() {
+  const { search } = useLocation();
   const [started, setStarted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [display, setDisplay] = useState<PitchFrame | null>(null);
@@ -34,11 +36,16 @@ export function TunerDev() {
   const start = async () => {
     setError(null);
     try {
-      await unlockAudio();
+      if (!(await ensureAudioRunning())) {
+        setError(SOUND_PAUSED_MSG);
+        return;
+      }
       await sourceRef.current?.start();
       setStarted(true);
     } catch (err) {
-      if (err instanceof Error && err.message === 'mic-denied') {
+      if (isMicMissing(err)) {
+        setError(MIC_MISSING_MSG);
+      } else if (err instanceof Error && err.message === 'mic-denied') {
         setError('Microphone access denied. Please allow microphone access in your browser settings and reload.');
       } else {
         setError('Failed to start microphone. Please check your settings and try again.');
@@ -71,16 +78,20 @@ export function TunerDev() {
   return (
     <main className="dev-page">
       <p>
-        <Link className="dev-home" to="/">
+        <Link className="nav-link" to={{ pathname: '/', search }}>
           Home
         </Link>
       </p>
       <h1>Tuner</h1>
       <p>
         {!started ? (
-          <button onClick={start}>Start</button>
+          <button className="btn btn--primary" onClick={start}>
+            Start
+          </button>
         ) : (
-          <button onClick={stop}>Stop</button>
+          <button className="btn btn--primary" onClick={stop}>
+            Stop
+          </button>
         )}
       </p>
       {error ? (

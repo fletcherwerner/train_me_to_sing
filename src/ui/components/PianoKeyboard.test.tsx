@@ -34,6 +34,23 @@ describe('PianoKeyboard', () => {
     expect(screen.getByTestId('key-64')).toHaveClass('piano-key--sung-match');
   });
 
+  it('applies the lesson tolerance to the sung key colour', () => {
+    const { rerender } = render(
+      <PianoKeyboard lowMidi={48} highMidi={72} targetMidi={64} sungMidi={63.6} matchCents={35} />,
+    );
+    expect(screen.getByTestId('key-64')).toHaveClass('piano-key--sung-off');
+    expect(screen.getByTestId('key-64')).not.toHaveClass('piano-key--sung-match');
+    rerender(<PianoKeyboard lowMidi={48} highMidi={72} targetMidi={64} sungMidi={63.6} matchCents={50} />);
+    expect(screen.getByTestId('key-64')).toHaveClass('piano-key--sung-match');
+    rerender(<PianoKeyboard lowMidi={48} highMidi={72} targetMidi={64} sungMidi={64.2} matchCents={35} />);
+    expect(screen.getByTestId('key-64')).toHaveClass('piano-key--sung-match');
+    rerender(<PianoKeyboard lowMidi={48} highMidi={72} targetMidi={64} sungMidi={64.2} matchCents={50} />);
+    expect(screen.getByTestId('key-64')).toHaveClass('piano-key--sung-match');
+    // No target: unchanged, whatever the tolerance.
+    rerender(<PianoKeyboard lowMidi={48} highMidi={72} sungMidi={63.6} matchCents={10} />);
+    expect(screen.getByTestId('key-64')).toHaveClass('piano-key--sung-match');
+  });
+
   it('shows an edge arrow for out-of-range sung pitch', () => {
     const { rerender } = render(<PianoKeyboard lowMidi={48} highMidi={72} sungMidi={43.2} />);
     expect(screen.getByTestId('edge-arrow')).toHaveTextContent('◀ G2');

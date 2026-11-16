@@ -1,4 +1,4 @@
-import { useRef, useState, type ChangeEvent } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAppStore } from '../../storage/store';
 import type { StoredData } from '../../storage/schema';
@@ -48,6 +48,14 @@ export function Settings() {
     else setImportError(result.error);
   };
 
+  const promptRef = useRef<HTMLDivElement>(null);
+  const promptHeadingRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    if (!pending) return;
+    promptRef.current?.scrollIntoView?.({ block: 'center' });
+    promptHeadingRef.current?.focus({ preventScroll: true });
+  }, [pending]);
+
   const applyImport = (mode: 'replace' | 'merge') => {
     if (!pending) return;
     importProgress(pending, mode);
@@ -57,12 +65,13 @@ export function Settings() {
 
   return (
     <main className="dev-page">
-      <p>
-        <Link to={{ pathname: '/', search }} className="tap-link">
+      <header className="page-header">
+        <Link to={{ pathname: '/', search }} className="nav-link">
           Home
         </Link>
-      </p>
-      <h1>Settings</h1>
+        <h1>Settings</h1>
+        <span />
+      </header>
 
       <ProfilesSection />
 
@@ -78,7 +87,7 @@ export function Settings() {
         <p>No range set yet.</p>
       )}
       <p>
-        <Link to={{ pathname: '/range', search }} className="tap-link">
+        <Link to={{ pathname: '/range', search }} className="nav-link">
           Redo range test
         </Link>
       </p>
@@ -102,29 +111,32 @@ export function Settings() {
         </label>
       </p>
       <p>
-        <button type="button" onClick={() => setLatencyOffset(Math.max(0, latencyMs - 10), false)}>
+        <button type="button" className="btn" onClick={() => setLatencyOffset(Math.max(0, latencyMs - 10), false)}>
           −10
         </button>{' '}
-        <button type="button" onClick={() => setLatencyOffset(Math.min(500, latencyMs + 10), false)}>
+        <button type="button" className="btn" onClick={() => setLatencyOffset(Math.min(500, latencyMs + 10), false)}>
           +10
         </button>{' '}
         <span>Range 0–500 ms</span>
       </p>
       <p>
-        <Link to={{ pathname: '/settings/calibrate', search }} className="tap-link">
+        <Link to={{ pathname: '/settings/calibrate', search }} className="nav-link">
           Calibrate timing
         </Link>
       </p>
 
       <h2>Progress</h2>
       <p>
-        <button onClick={() => setConfirming(true)}>Reset progress</button>
+        <button className="btn btn--danger" onClick={() => setConfirming(true)}>
+          Reset progress
+        </button>
       </p>
       {done ? <p role="status">Progress cleared. Your range was kept.</p> : null}
       {confirming ? (
         <div role="alertdialog" aria-modal="true" aria-labelledby="reset-title" className="settings__dialog">
           <p id="reset-title">Clear all lesson progress? Your range is kept. This cannot be undone.</p>
           <button
+            className="btn btn--danger"
             onClick={() => {
               resetProgress();
               setConfirming(false);
@@ -133,19 +145,21 @@ export function Settings() {
           >
             Yes, clear progress
           </button>{' '}
-          <button onClick={() => setConfirming(false)}>Cancel</button>
+          <button className="btn" onClick={() => setConfirming(false)}>
+            Cancel
+          </button>
         </div>
       ) : null}
 
       <h2>Move progress between devices</h2>
       <p>
-        <button type="button" onClick={onExport} data-testid="export-button">
+        <button type="button" className="btn" onClick={onExport} data-testid="export-button">
           Export progress
         </button>
       </p>
       {exportMsg ? <p role="status">{exportMsg}</p> : null}
       <p>
-        <button type="button" onClick={() => fileRef.current?.click()} data-testid="import-button">
+        <button type="button" className="btn" onClick={() => fileRef.current?.click()} data-testid="import-button">
           Import progress
         </button>
         <input
@@ -163,39 +177,64 @@ export function Settings() {
         </p>
       ) : null}
       {pending ? (
-        <div role="alertdialog" aria-modal="true" aria-labelledby="import-title" className="settings__dialog">
+        <div
+          ref={promptRef}
+          role="alertdialog"
+          aria-modal="true"
+          aria-labelledby="import-heading"
+          className="settings__dialog"
+          data-testid="import-prompt"
+        >
+          <h3 id="import-heading" ref={promptHeadingRef} tabIndex={-1}>
+            Import progress
+          </h3>
           <p id="import-title" data-testid="import-summary">
-            {summarizeImport(pending)}. Replace everything on this device, or merge it with what you have?
+            {summarizeImport(pending)}. Merge it with what you have, or replace everything on this device?
           </p>
-          <button type="button" onClick={() => applyImport('replace')}>
-            Replace
-          </button>{' '}
-          <button type="button" onClick={() => applyImport('merge')}>
-            Merge
-          </button>{' '}
-          <button type="button" onClick={() => setPending(null)}>
-            Cancel
-          </button>
+          <div className="settings__dialog-actions">
+            <button type="button" className="btn btn--primary" onClick={() => applyImport('merge')}>
+              Merge
+            </button>
+            <button type="button" className="btn" onClick={() => setPending(null)}>
+              Cancel
+            </button>
+          </div>
+          <div className="settings__dialog-danger">
+            <p>Replace deletes the range and progress on this device. This cannot be undone.</p>
+            <button type="button" className="btn btn--danger" onClick={() => applyImport('replace')}>
+              Replace
+            </button>
+          </div>
         </div>
       ) : null}
       {importDone ? <p role="status">{importDone}</p> : null}
       <p>Your timing delay is never imported; it belongs to this device.</p>
 
-      <h2>Developer pages</h2>
-      <ul>
-        <li>
-          <Link to="/dev/tuner">Tuner (pitch detection)</Link>
-        </li>
-        <li>
-          <Link to="/dev/piano">Piano keyboard</Link>
-        </li>
-        <li>
-          <Link to="/dev/exercise">Exercise playback</Link>
-        </li>
-        <li>
-          <Link to="/dev/attempt">Attempt scoring</Link>
-        </li>
-      </ul>
+      <h2>Check your microphone</h2>
+      <p>
+        <Link to={{ pathname: '/dev/tuner', search }} className="nav-link">
+          Open the tuner
+        </Link>
+      </p>
+      {import.meta.env.DEV ? (
+        <ul className="settings__dev-links" data-testid="dev-links">
+          <li>
+            <Link to={{ pathname: '/dev/piano', search }} className="nav-link">
+              Piano keyboard
+            </Link>
+          </li>
+          <li>
+            <Link to={{ pathname: '/dev/exercise', search }} className="nav-link">
+              Exercise playback
+            </Link>
+          </li>
+          <li>
+            <Link to={{ pathname: '/dev/attempt', search }} className="nav-link">
+              Attempt scoring
+            </Link>
+          </li>
+        </ul>
+      ) : null}
     </main>
   );
 }

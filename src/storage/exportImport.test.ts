@@ -108,6 +108,6 @@ describe('export / import', () => {
         progress: { a: p(true, 1, 1, 'x'), b: p(false, 1, 1, 'x'), c: p(true, 1, 1, 'x') },
       }),
     );
-    expect(s).toBe('Range E2–C4, 2 lessons passed');
+    expect(s).toBe('Range E2–C4, 2 lessons passed, 3 attempted');
   });
 });

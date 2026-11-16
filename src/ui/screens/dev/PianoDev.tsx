@@ -41,13 +41,13 @@ export function PianoDev() {
   return (
     <main className="dev-page">
       <p>
-        <Link className="dev-home" to="/">
+        <Link className="nav-link" to="/">
           Home
         </Link>
       </p>
       <h1>Piano</h1>
       <p>
-        <button onClick={start} disabled={started}>
+        <button className="btn btn--primary" onClick={start} disabled={started}>
           {started ? "Started" : "Start"}
         </button>
       </p>

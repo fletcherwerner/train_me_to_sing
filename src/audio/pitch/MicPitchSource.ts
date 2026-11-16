@@ -27,6 +27,7 @@ export function createMicPitchSource(): PitchSource {
   let analyserNode: AnalyserNode | null = null;
   let animFrameId: number | null = null;
   const listeners = new Set<(f: PitchFrame) => void>();
+  const lostListeners = new Set<() => void>();
   const buffer = new Float32Array(2048);
   // Rolling buffer of last 5 raw midi values for median smoothing
   const rawBuffer: (number | null)[] = [];
@@ -42,17 +43,27 @@ export function createMicPitchSource(): PitchSource {
   }
 
   async function start() {
-    const ctx = getAudioContext();
     try {
       stream = await navigator.mediaDevices.getUserMedia({
         audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
       });
     } catch (err) {
-      if (err instanceof Error && err.name === 'NotAllowedError') {
-        throw new Error('mic-denied');
-      }
+      const name = (err as { name?: string } | null)?.name;
+      if (name === 'NotAllowedError') throw new Error('mic-denied');
+      if (name === 'NotFoundError' || name === 'OverconstrainedError') throw new Error('mic-missing');
       throw err;
     }
+    const ctx = getAudioContext();
+    const track = stream.getAudioTracks()[0];
+    track?.addEventListener('ended', () => {
+      if (stream === null) return; // stop() already ran
+      if (animFrameId != null) {
+        cancelAnimationFrame(animFrameId);
+        animFrameId = null;
+      }
+      for (const cb of [...lostListeners]) cb();
+      lostListeners.clear();
+    });
     sourceNode = ctx.createMediaStreamSource(stream);
     analyserNode = ctx.createAnalyser();
     analyserNode.fftSize = 2048;
@@ -118,5 +129,10 @@ export function createMicPitchSource(): PitchSource {
     return () => listeners.delete(cb);
   }
 
-  return { start, stop, subscribe };
+  function onLost(cb: () => void) {
+    lostListeners.add(cb);
+    return () => lostListeners.delete(cb);
+  }
+
+  return { start, stop, subscribe, onLost };
 }

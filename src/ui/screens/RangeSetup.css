@@ -16,7 +16,7 @@
 }
 
 .range-error {
-  color: #dc2626;
+  color: var(--danger);
   font-weight: 600;
   margin-bottom: 16px;
 }
@@ -61,7 +61,7 @@
 
 .range-progress-bar {
   height: 8px;
-  background: #e5e7eb;
+  background: var(--track);
   border-radius: 4px;
   overflow: hidden;
   margin-top: 8px;
@@ -69,12 +69,14 @@
 
 .range-progress-fill {
   height: 100%;
-  background: #3b82f6;
+  background: var(--theme);
   transition: width 0.1s linear;
 }
 
 .range-warning {
-  color: #f59e0b;
+  color: inherit;
+  border-left: 4px solid #f59e0b;
+  padding-left: 8px;
   font-weight: 500;
   margin: 16px 0;
 }
@@ -87,9 +89,6 @@
 }
 
 .range-buttons button {
-  font-size: 1.1rem;
-  padding: 10px 24px;
-  min-height: 44px;
   min-width: 120px;
 }
 
@@ -103,25 +102,19 @@
 }
 
 .range-nudge button {
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   font-size: 1.3rem;
   padding: 0;
 }
 
 .range-back {
-  margin-top: 24px;
+  margin: 0 0 8px;
+  text-align: left;
 }
 
 .range-countdown-dim {
   opacity: 0.3;
-}
-
-.range-back button {
-  font-size: 0.9rem;
-  padding: 8px 16px;
-  min-height: 44px;
-  min-width: 44px;
 }
 
 @media (max-width: 600px) {
