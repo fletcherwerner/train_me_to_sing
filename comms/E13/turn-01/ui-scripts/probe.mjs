@@ -1,0 +1,13 @@
+import { chromium } from '@playwright/test';
+import { appUrl } from '../../../../harness/lib/app-url.mjs';
+const out = new URL('../screenshots/', import.meta.url).pathname;
+const seed = JSON.stringify({ version: 1, range: { lowMidi: 45, highMidi: 64, assessedAt: new Date().toISOString() }, settings: { latencyOffsetMs: 0 }, progress: {}, importedLessons: [] });
+const b = await chromium.launch();
+const ctx = await b.newContext({ ignoreHTTPSErrors: true, viewport: { width: 393, height: 852 } });
+await ctx.addInitScript((v) => { if (!localStorage.getItem('tmts.v1')) localStorage.setItem('tmts.v1', v); }, seed);
+const page = await ctx.newPage();
+await page.goto(appUrl() + '/#/lesson/s3-01?sim=perfect');
+await page.waitForTimeout(800);
+console.log(await page.locator('body').innerText());
+await page.screenshot({ path: out + 'probe-s301.png' });
+await b.close();
