@@ -40,7 +40,12 @@ for (const size of [
     await page.getByRole('button', { name: 'Next' }).click();
     await page.getByRole('button', { name: 'Sing along' }).click();
     await expect(page.getByTestId('practice-line')).toContainText('Practice run:', { timeout: 25000 });
+    // We do: the finished run's graph shows, black and red.
+    await expect(page.getByTestId('results-graph')).toBeVisible();
+    await expect(page.getByTestId('results-graph').getByTestId('graph-sung')).toHaveAttribute('d', /^M/);
+    expect(await noSideScroll(page)).toBe(true);
     await page.getByRole('button', { name: 'Next' }).click();
+    await expect(page.getByTestId('results-graph')).toHaveCount(0);
 
     // You do: graph above the piano, black and red present, Stop visible.
     await page.getByRole('button', { name: 'Start', exact: true }).click();

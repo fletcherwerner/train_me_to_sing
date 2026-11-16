@@ -97,8 +97,9 @@ function LessonRun({
   const phrases = lesson.exercise.phrases;
   // null = whole song. Only I do and We do use a phrase; You do and Results use the whole song.
   const [phraseIdx, setPhraseIdx] = useState<number | null>(null);
-  // Frames of the run in progress (filled live) and of the last You do attempt. In memory only, never saved.
+  // Frames of the run in progress (filled live) and of the last We do and You do attempts. In memory only, never saved.
   const [liveFrames, setLiveFrames] = useState<PitchFrame[] | null>(null);
+  const [weDoFrames, setWeDoFrames] = useState<PitchFrame[] | null>(null);
   const [youDoFrames, setYouDoFrames] = useState<PitchFrame[] | null>(null);
   const [resultPhrase, setResultPhrase] = useState<number | null>(null);
   const activePhraseIdx = step === 'iDo' || step === 'weDo' ? phraseIdx : null;
@@ -181,6 +182,7 @@ function LessonRun({
     const thisStep = step;
     setNotice(null);
     if (thisStep === 'youDo') setYouDoFrames(null);
+    if (thisStep === 'weDo') setWeDoFrames(null);
     setResultPhrase(activePhraseIdx);
     dispatch({ type: 'RUN' });
     await unlockAudio();
@@ -205,6 +207,7 @@ function LessonRun({
     setHandle(null);
     setLiveFrames(null);
     if (thisStep === 'youDo') setYouDoFrames(rec ? rec.frames : null);
+    if (thisStep === 'weDo') setWeDoFrames(rec ? rec.frames : null);
     const result = rec ? evaluateAttempt(ex, rec.frames, tol, lesson.passScore) : undefined;
     dispatch({ type: 'RUN_ENDED', result });
     if (thisStep === 'youDo' && !result) setNotice('We could not hear the microphone for that run. Press Try again.');
@@ -412,6 +415,7 @@ function LessonRun({
       {weDoLine ? (
         <p data-testid="practice-line">{weDoLine}</p>
       ) : null}
+      {weDoLine && weDoFrames && !running ? <ResultsGraph exercise={ex} range={range} frames={weDoFrames} /> : null}
       <p className="lesson-controls">
         {running ? (
           <button onClick={stop}>Stop</button>
