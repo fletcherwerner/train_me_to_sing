@@ -18,3 +18,4 @@ Maintained by the orchestrator. Status is one of: `Not started`, `In progress`, 
 | S02 | Spike: scrolling pitch graph | Approved | 1 | APPROVED / APPROVED | 2026-11-16 |
 | E11 | MIDI import | Approved | 1 | APPROVED / APPROVED | 2026-11-16 |
 | E12 | Capacitor iOS wrapper | Approved | 3 | APPROVED / APPROVED | 2026-11-16 |
+| E13 | Hardening and polish: audio recovery, run-screen layout, UI leftovers | Not started | 0 | — | — |
