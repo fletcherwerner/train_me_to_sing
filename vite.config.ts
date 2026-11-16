@@ -1,15 +1,26 @@
 /// <reference types="vitest/config" />
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
+import { profilesMiddleware } from './scripts/profilesApi';
 import react from '@vitejs/plugin-react';
 import basicSsl from '@vitejs/plugin-basic-ssl';
 import { VitePWA } from 'vite-plugin-pwa';
 
 const THEME = '#1f3a5f';
 
+/** Dev-only file API for local profiles. `vite build` and `vite preview` do not include it. */
+const profilesApi: Plugin = {
+  name: 'tmts-profiles-api',
+  apply: 'serve',
+  configureServer(server) {
+    server.middlewares.use(profilesMiddleware());
+  },
+};
+
 export default defineConfig(({ isPreview }) => ({
   base: './',
   plugins: [
     react(),
+    profilesApi,
     // Preview runs plain http on localhost (a secure context): a self-signed cert blocks service worker registration.
     ...(isPreview ? [] : [basicSsl()]),
     VitePWA({
@@ -40,7 +51,7 @@ export default defineConfig(({ isPreview }) => ({
   test: {
     environment: 'jsdom',
     globals: true,
-    include: ['src/**/*.test.{ts,tsx}'],
+    include: ['src/**/*.test.{ts,tsx}', 'scripts/**/*.test.ts'],
     setupFiles: ['./src/test-setup.ts'],
   },
 }));
