@@ -1,0 +1,32 @@
+import { chromium } from 'playwright';
+import { appUrl } from '../../../../harness/lib/app-url.mjs';
+const out = 'comms/S02/turn-01/screenshots';
+const base = await appUrl();
+const seed = { version:1, range:{lowMidi:45,highMidi:64,assessedAt:'2025-01-01T00:00:00.000Z'}, settings:{latencyOffsetMs:0}, progress:{}, importedLessons:[] };
+const browser = await chromium.launch({ args:['--ignore-certificate-errors'] });
+for (const [name,w,h] of [['laptop',1280,800],['phone',393,852]]) for (const sim of ['perfect','octaveDown']) {
+  const ctx = await browser.newContext({ viewport:{width:w,height:h}, ignoreHTTPSErrors:true });
+  const page = await ctx.newPage();
+  await page.addInitScript(s=>localStorage.setItem('tmts.v1',JSON.stringify(s)), seed);
+  await page.goto(`${base}/#/lesson/s1-05?sim=${sim}`);
+  const shot = async n => page.screenshot({ path:`${out}/${name}-${sim}-${n}.png`, fullPage:false });
+  await page.getByRole('button',{name:'Start',exact:true}).click();
+  await page.waitForTimeout(800);
+  await page.getByRole('button',{name:'Play',exact:true}).click().catch(()=>{});
+  await page.waitForTimeout(1500); await shot('1-ido-countin');
+  await page.waitForTimeout(3000); await shot('2-ido-run');
+  await page.getByRole('button',{name:'Repeat'}).waitFor({timeout:25000});
+  await page.getByRole('button',{name:'Next'}).click();
+  await page.getByRole('button',{name:'Sing along'}).click();
+  await page.waitForTimeout(6000); await shot('3-wedo');
+  await page.getByTestId('practice-line').filter({hasText:'Practice run:'}).waitFor({timeout:25000});
+  await page.getByRole('button',{name:'Next'}).click();
+  await page.getByRole('button',{name:'Start',exact:true}).click();
+  await page.waitForTimeout(7000); await shot('4-youdo');
+  await page.getByTestId('results-verdict').waitFor({timeout:40000});
+  await page.waitForTimeout(500); await shot('5-results');
+  await page.screenshot({ path:`${out}/${name}-${sim}-5-results-full.png`, fullPage:true });
+  console.log(name, sim, await page.evaluate(()=>[document.documentElement.scrollWidth,document.documentElement.clientWidth]));
+  await ctx.close();
+}
+await browser.close();
