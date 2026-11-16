@@ -13,7 +13,7 @@ Maintained by the orchestrator. Status is one of: `Not started`, `In progress`, 
 | E07 | Lesson catalog, tracker, Stage 1 lessons | Approved | 1 | APPROVED / APPROVED | 2026-11-15 |
 | E08 | Stage 2 scales, tighter tolerances, latency calibration | Approved | 2 | APPROVED / APPROVED | 2026-11-15 |
 | E09 | Stage 3 songs with lyrics | Approved | 2 | APPROVED / APPROVED | 2026-11-15 |
-| E10 | PWA install, hosting, export/import | In progress | 1 | APPROVED / APPROVED | 2026-11-16 |
+| E10 | PWA install, hosting, export/import | Approved | 1 | APPROVED / APPROVED | 2026-11-16 |
 | S01 | Spike: local profiles | Not started | 0 | — | — |
 | S02 | Spike: scrolling pitch graph | Not started | 0 | — | — |
 | E11 | MIDI import | Not started | 0 | — | — |

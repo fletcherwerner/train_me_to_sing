@@ -192,3 +192,46 @@ Scripts: `ui-scripts/flow.mjs`, `ui-scripts/miss.mjs`.
 - `comms/E09/turn-02/screenshots/phone-s3-04-youdo-ready.png`
 - `comms/E09/turn-02/screenshots/phone-s3-04-youdo-running.png`
 - `comms/E09/turn-02/screenshots/phone-s3-05-intro.png`
+
+## E10 — PWA install, hosting, export/import
+
+Approved after turn 1, 2026-11-16. Review: `comms/E10/turn-01/ui-review.md`.
+
+### Not verified by the UI reviewer
+
+The following steps need an iPhone or hosted URL, so they are left for the owner:
+- Review-script steps 1–3: hosted HTTPS URL, Add to Home Screen, full-screen standalone launch and the icon, offline launch in Airplane Mode.
+- Step 4: the AirDrop/share sheet. Only the download path was exercised, and it showed "Export downloaded."
+- Step 5: importing on the phone, and checking that the phone's calibration is unchanged. I confirmed the on-screen messages only.
+- Steps 6–7: the "Paused — tap to restart" message after locking mid-lesson, and the screen wake lock during a song.
+- The "Update ready — reload" banner, which did not appear.
+- Safe-area insets on a notched phone.
+- Dark mode on Settings.
+
+### Screens reviewed
+
+| Screen / state | Laptop | iPhone | Screenshot files |
+|----------------|--------|--------|------------------|
+| Settings (default) | OK | OK | `screenshots/settings-laptop.png`, `screenshots/settings-phone.png` |
+| Export done | OK | OK | `screenshots/export-done-laptop.png`, `screenshots/export-done-phone.png` |
+| Import invalid file | OK | OK | `screenshots/import-invalid-laptop.png`, `screenshots/import-invalid-phone.png` |
+| Import summary (Replace / Merge / Cancel) | OK | Issue | `screenshots/import-summary-laptop.png`, `screenshots/import-summary-phone.png` |
+| Import merged | OK | OK | `screenshots/import-merged-laptop.png`, `screenshots/import-merged-phone.png` |
+| Home (unchanged) | OK | OK | `screenshots/home-laptop.png`, `screenshots/home-phone.png` |
+
+The script is `ui-scripts/import.mjs`. It uses a fresh browser profile, so the summary and merged screenshots start from an empty device.
+
+### Screenshots
+
+- `comms/E10/turn-01/screenshots/export-done-laptop.png`
+- `comms/E10/turn-01/screenshots/export-done-phone.png`
+- `comms/E10/turn-01/screenshots/home-laptop.png`
+- `comms/E10/turn-01/screenshots/home-phone.png`
+- `comms/E10/turn-01/screenshots/import-invalid-laptop.png`
+- `comms/E10/turn-01/screenshots/import-invalid-phone.png`
+- `comms/E10/turn-01/screenshots/import-merged-laptop.png`
+- `comms/E10/turn-01/screenshots/import-merged-phone.png`
+- `comms/E10/turn-01/screenshots/import-summary-laptop.png`
+- `comms/E10/turn-01/screenshots/import-summary-phone.png`
+- `comms/E10/turn-01/screenshots/settings-laptop.png`
+- `comms/E10/turn-01/screenshots/settings-phone.png`
