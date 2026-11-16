@@ -12,7 +12,7 @@
     "lint": "eslint .",
     "ios:sync": "npm run build && npx cap sync ios",
     "ios:open": "npx cap open ios",
-    "icons":"node scripts/make-icons.mjs",
+    "icons": "node scripts/make-icons.mjs",
     "fixtures": "node scripts/make-midi-fixture.mjs",
     "test:harness": "node --test harness/test"
   },

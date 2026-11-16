@@ -33,6 +33,8 @@ xcodebuild -project ios/App/App.xcodeproj -scheme App -sdk iphonesimulator \
   -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
 ```
 
+The agent sandbox refuses `xcodebuild`, so the agent has not run it. Run it once and expect `** BUILD SUCCEEDED **`. The deployment target is iOS 15.0.
+
 ## What to check on the device
 
 - The mic prompt appears once; quit and relaunch, no second prompt.
