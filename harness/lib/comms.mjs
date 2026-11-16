@@ -40,6 +40,8 @@ export const pad = (n) => String(n).padStart(2, '0');
 export const commsDir = (epic) => path.join(ROOT, 'comms', epic);
 export const turnDir = (epic, n) => path.join(commsDir(epic), `turn-${pad(n)}`);
 export const rel = (p) => path.relative(ROOT, p).split(path.sep).join('/');
+/** The owner's notes file for any epic. The owner may edit it at any time, so the driver's tree checks never count it against an agent. */
+export const isOwnerNotes = (relPath) => /^comms\/[ES]\d{2}\/OWNER-NOTES\.md$/.test(relPath);
 export const read = (p) => (fs.existsSync(p) ? fs.readFileSync(p, 'utf8') : null);
 export const today = () => new Date().toISOString().slice(0, 10);
 

@@ -363,6 +363,14 @@ test('spikes (S01) are read from the epic table and status file in table order, 
   }
 });
 
+test('owner notes are recognised for epics and spikes, and nothing else is', () => {
+  assert.ok(lib.isOwnerNotes('comms/E10/OWNER-NOTES.md'));
+  assert.ok(lib.isOwnerNotes('comms/S01/OWNER-NOTES.md'));
+  assert.ok(!lib.isOwnerNotes('comms/E10/turn-01/OWNER-NOTES.md'));
+  assert.ok(!lib.isOwnerNotes('src/OWNER-NOTES.md'));
+  assert.ok(!lib.isOwnerNotes('comms/STATUS.md'));
+});
+
 test('a spike turn with spike finding ids validates', () => {
   const S = 'S01';
   const ui = review('ui').replaceAll(E, S);
