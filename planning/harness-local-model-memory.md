@@ -127,13 +127,14 @@ the folder if missing). Print the log path at start.
 
 ```
 # Terminal A: stop the old model server with Ctrl-C first
-/Users/fletcherwerner/dev/train_me_to_sing/harness/local/start-qwen.sh
+cd <path-to-this-repo>
+harness/local/start-qwen.sh
 
 # Terminal B
 /Volumes/ExternalSSD/models/start-proxy.sh
 
 # Terminal C
-cd /Users/fletcherwerner/dev/train_me_to_sing
+cd <path-to-this-repo>
 caffeinate -i node harness/run-epics.mjs all --local
 ```
 
