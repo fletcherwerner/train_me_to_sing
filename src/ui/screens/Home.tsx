@@ -60,10 +60,16 @@ export function Home() {
             Your range: <strong>{midiToName(range.lowMidi)} – {midiToName(range.highMidi)}</strong>
           </p>
         </div>
-        <Link to={{ pathname: '/settings', search }} className="nav-link home__settings">
-          <span aria-hidden="true">⚙</span>{' '}
-          Settings
-        </Link>
+        <nav className="home__links" aria-label="Tools">
+          <Link to={{ pathname: '/settings', search }} className="nav-link home__settings">
+            <span aria-hidden="true">⚙</span>{' '}
+            Settings
+          </Link>
+          <Link to={{ pathname: '/mic-check', search }} className="nav-link" data-testid="home-mic-check">
+            <span aria-hidden="true">🎤</span>{' '}
+            Mic check
+          </Link>
+        </nav>
       </header>
 
       {next ? (

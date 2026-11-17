@@ -212,9 +212,14 @@ export function Settings() {
 
       <h2>Check your microphone</h2>
       <p>
+        <Link to={{ pathname: '/mic-check', search }} className="nav-link">
+          Mic check
+        </Link>{' '}
+        shows whether we can hear you and which note you sang.{' '}
         <Link to={{ pathname: '/dev/tuner', search }} className="nav-link">
           Open the tuner
-        </Link>
+        </Link>{' '}
+        for the exact pitch in cents.
       </p>
       {import.meta.env.DEV ? (
         <ul className="settings__dev-links" data-testid="dev-links">

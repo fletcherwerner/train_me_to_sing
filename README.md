@@ -238,6 +238,7 @@ Every epic ends with something you can open and review. "Depends on" means those
 | E11 | [MIDI import](planning/epics/E11-midi-import.md) | Import a MIDI file and sing it as a lesson | E09 |
 | E12 | [Capacitor iOS wrapper](planning/epics/E12-capacitor-ios.md) | A real iOS app installed from Xcode | E10 |
 | E13 | [Hardening and polish: audio recovery, run-screen layout, UI leftovers](planning/epics/E13-hardening-polish.md) | Screens that recover when sound or the mic stops; a lesson run that fits the window; one look across screens | E12 |
+| S03 | [Spike: mic check](planning/epics/S03-mic-check.md) | A Mic check screen: a loudness bar, the note you are singing, and the notes it caught | E13 |
 
 ### How each epic file is laid out
 
