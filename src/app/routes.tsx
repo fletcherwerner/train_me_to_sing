@@ -1,4 +1,4 @@
-import { Route, Routes, Navigate, useLocation } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom';
 import { Home } from '../ui/screens/Home';
 import { RangeSetup } from '../ui/screens/RangeSetup';
 import { Settings } from '../ui/screens/Settings';
@@ -10,22 +10,13 @@ import { MicCheck } from '../ui/screens/MicCheck';
 import { TunerDev } from '../ui/screens/dev/TunerDev';
 import { ExerciseDev } from '../ui/screens/dev/ExerciseDev';
 import { AttemptDev } from '../ui/screens/dev/AttemptDev';
-import { useAppStore } from '../storage/store';
 
 export function AppRoutes() {
-  const range = useAppStore((s) => s.range);
-  const { search } = useLocation();
-
-  // Redirect to range setup if no range is set
-  const hasRange = range != null;
-
   return (
     <Routes>
       <Route path="/range" element={<RangeSetup />} />
-      <Route
-        path="/"
-        element={hasRange ? <Home /> : <Navigate to={{ pathname: '/range', search }} replace />}
-      />
+      {/* Home always opens first: from there the student finds their range or loads a profile in Settings. */}
+      <Route path="/" element={<Home />} />
       <Route path="/settings" element={<Settings />} />
       <Route path="/settings/calibrate" element={<Calibrate />} />
       <Route path="/lesson/:lessonId" element={<Lesson />} />

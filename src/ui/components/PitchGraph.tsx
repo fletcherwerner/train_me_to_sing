@@ -8,13 +8,13 @@ import {
   labelledMidis,
   midiToY,
   pxPerSec,
-  resultsPitchBounds,
   sungSegments,
+  splitByBounds,
   targetSegments,
   type GraphFrame,
   type PitchBounds,
 } from '../../core/exercise/pitchGraph';
-import type { ResolvedExercise, StudentRange } from '../../core/exercise/types';
+import type { ResolvedExercise, ResolvedNote, StudentRange } from '../../core/exercise/types';
 import { isBlackKey, midiToName } from '../../core/music/notes';
 import './PitchGraph.css';
 
@@ -56,10 +56,22 @@ const GridRows = memo(function GridRows({ bounds, width, height }: { bounds: Pit
   return <g>{rows}</g>;
 });
 
-function AxisLabels({ bounds, range, height, x = 2 }: { bounds: PitchBounds; range: StudentRange; height: number; x?: number }) {
+function AxisLabels({
+  bounds,
+  range,
+  notes,
+  height,
+  x = 2,
+}: {
+  bounds: PitchBounds;
+  range: StudentRange;
+  notes: ResolvedNote[];
+  height: number;
+  x?: number;
+}) {
   return (
     <g>
-      {labelledMidis(bounds, range).map((m) => (
+      {labelledMidis(bounds, range, notes).map((m) => (
         <text key={m} className="pitch-graph__label" x={x} y={midiToY(m, bounds, height) + 3}>
           {midiToName(m)}
         </text>
@@ -68,16 +80,25 @@ function AxisLabels({ bounds, range, height, x = 2 }: { bounds: PitchBounds; ran
   );
 }
 
-function pathFor(frames: GraphFrame[], bounds: PitchBounds, height: number, pps: number): string {
+/** SVG paths for the sung line: `d` inside the axis, `off` pinned to the edge where the voice is off the axis. */
+function pathFor(frames: GraphFrame[], bounds: PitchBounds, height: number, pps: number): { d: string; off: string } {
   let d = '';
+  let off = '';
   for (const seg of sungSegments(frames)) {
-    seg.forEach((p, i) => {
-      d += `${i === 0 ? 'M' : 'L'}${(p.tSec * pps).toFixed(1)} ${clampedMidiToY(p.midi, bounds, height).toFixed(1)} `;
-    });
-    // A single frame is a point: draw a tiny dash so it still shows.
-    if (seg.length === 1) d += `l1 0 `;
+    for (const run of splitByBounds(seg, bounds)) {
+      let part = '';
+      run.points.forEach((p, i) => {
+        // Keep the edge line a little inside the box so all of its width shows.
+        const y = Math.min(height - 2, Math.max(2, clampedMidiToY(p.midi, bounds, height)));
+        part += `${i === 0 ? 'M' : 'L'}${(p.tSec * pps).toFixed(1)} ${y.toFixed(1)} `;
+      });
+      // A single frame is a point: draw a tiny dash so it still shows.
+      if (run.points.length === 1) part += `l1 0 `;
+      if (run.inside) d += part;
+      else off += part;
+    }
   }
-  return d;
+  return { d, off };
 }
 
 /** "target" (thick black) and "you" (thin red) samples. Drawn, so it does not rely on colour. */
@@ -131,6 +152,7 @@ export function PitchGraph({ exercise, range, startSec, frames, showSung, clock 
   const segs = useMemo(() => targetSegments(exercise.notes), [exercise.notes]);
   const scrollRef = useRef<SVGGElement>(null);
   const sungRef = useRef<SVGPathElement>(null);
+  const offRef = useRef<SVGPathElement>(null);
   const upRef = useRef<SVGTextElement>(null);
   const downRef = useRef<SVGTextElement>(null);
 
@@ -141,13 +163,14 @@ export function PitchGraph({ exercise, range, startSec, frames, showSung, clock 
       let up = false;
       let down = false;
       let d = '';
+      let off = '';
       if (showSung && frames && startSec !== null) {
         const lo = nowSec - GRAPH_NOW_FRACTION * GRAPH_WINDOW_SEC - 0.5;
         const hi = nowSec + (1 - GRAPH_NOW_FRACTION) * GRAPH_WINDOW_SEC;
         let from = frames.length;
         while (from > 0 && frames[from - 1].tSec >= lo) from--;
         const visible = frames.slice(from).filter((f) => f.tSec <= hi);
-        d = pathFor(visible, bounds, h, pps);
+        ({ d, off } = pathFor(visible, bounds, h, pps));
         const last = visible[visible.length - 1];
         if (last && last.midi !== null && nowSec - last.tSec < 0.15) {
           up = last.midi > bounds.highMidi;
@@ -155,6 +178,7 @@ export function PitchGraph({ exercise, range, startSec, frames, showSung, clock 
         }
       }
       sungRef.current?.setAttribute('d', d);
+      offRef.current?.setAttribute('d', off);
       upRef.current?.setAttribute('visibility', up ? 'visible' : 'hidden');
       downRef.current?.setAttribute('visibility', down ? 'visible' : 'hidden');
     };
@@ -194,9 +218,10 @@ export function PitchGraph({ exercise, range, startSec, frames, showSung, clock 
               />
             );
           })}
+          <path ref={offRef} className="pitch-graph__sung pitch-graph__sung--off" data-testid="graph-sung-off" d="" />
           <path ref={sungRef} className="pitch-graph__sung" data-testid="graph-sung" d="" />
         </g>
-        <AxisLabels bounds={bounds} range={range} height={h} />
+        <AxisLabels bounds={bounds} range={range} notes={exercise.notes} height={h} />
         <text ref={upRef} className="pitch-graph__marker" x={nowX} y={12} textAnchor="middle" visibility="hidden">
           ▲
         </text>
@@ -217,21 +242,18 @@ export interface ResultsGraphProps {
 /** The whole You do attempt as one static graph. Scrolls sideways inside its own box past 30 s. */
 export function ResultsGraph({ exercise, range, frames }: ResultsGraphProps) {
   const [boxRef, { w, h }] = useBoxSize();
-  const bounds = useMemo(
-    () => resultsPitchBounds(range, exercise.notes, frames),
-    [range, exercise.notes, frames],
-  );
+  const bounds = useMemo(() => graphPitchBounds(range, exercise.notes), [range, exercise.notes]);
   const segs = useMemo(() => targetSegments(exercise.notes), [exercise.notes]);
   const span = Math.max(exercise.totalSec, 0.5) + 0.25;
   const viewW = Math.max(40, w - LABEL_W);
   const pps = viewW / Math.min(span, RESULTS_WINDOW_SEC);
   const contentW = span * pps;
-  const d = useMemo(() => pathFor(frames, bounds, h, pps), [frames, bounds, h, pps]);
+  const { d, off } = useMemo(() => pathFor(frames, bounds, h, pps), [frames, bounds, h, pps]);
 
   return (
     <div className="pitch-graph pitch-graph--results" ref={boxRef} data-testid="results-graph" aria-hidden="true">
       <svg className="pitch-graph__labels" width={LABEL_W} height={h}>
-        <AxisLabels bounds={bounds} range={range} height={h} />
+        <AxisLabels bounds={bounds} range={range} notes={exercise.notes} height={h} />
       </svg>
       <div className="pitch-graph__scroll" data-testid="results-graph-scroll" style={{ width: viewW }}>
         <svg width={contentW} height={h} viewBox={`0 0 ${contentW} ${h}`}>
@@ -250,6 +272,7 @@ export function ResultsGraph({ exercise, range, frames }: ResultsGraphProps) {
               />
             );
           })}
+          <path className="pitch-graph__sung pitch-graph__sung--off" data-testid="graph-sung-off" d={off} />
           <path className="pitch-graph__sung" data-testid="graph-sung" d={d} />
         </svg>
       </div>

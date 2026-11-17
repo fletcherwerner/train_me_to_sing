@@ -27,12 +27,11 @@ export function Home() {
   void importedRaw; // subscribe so the list refreshes when songs are added or removed
   const profileName = useProfileStatus((s) => s.activeName);
   const { search } = useLocation();
-  if (!range) return null;
-
-  const all = getAllLessons().map((lesson) => ({ lesson, fitResult: fit(lesson.exercise, range) }));
+  // Without a range nothing can be fitted yet: every lesson waits for the range test (or a loaded profile).
+  const all = getAllLessons().map((lesson) => ({ lesson, fitResult: range ? fit(lesson.exercise, range) : null }));
   const lessons = all.filter((l) => l.lesson.source !== 'imported');
   const mySongs = all.filter((l) => l.lesson.source === 'imported');
-  const next = lessons.find((l) => l.fitResult.ok && !progress[l.lesson.id]?.passed);
+  const next = lessons.find((l) => l.fitResult?.ok && !progress[l.lesson.id]?.passed);
   const stages = [...new Set(lessons.map((l) => l.lesson.stage))];
 
   const status = (lesson: Lesson) => {
@@ -57,7 +56,13 @@ export function Home() {
             </p>
           ) : null}
           <p data-testid="home-range">
-            Your range: <strong>{midiToName(range.lowMidi)} – {midiToName(range.highMidi)}</strong>
+            {range ? (
+              <>
+                Your range: <strong>{midiToName(range.lowMidi)} – {midiToName(range.highMidi)}</strong>
+              </>
+            ) : (
+              <>Your range: not set yet</>
+            )}
           </p>
         </div>
         <nav className="home__links" aria-label="Tools">
@@ -71,6 +76,22 @@ export function Home() {
           </Link>
         </nav>
       </header>
+
+      {!range ? (
+        <section className="home__continue" data-testid="setup-card">
+          <h2>Get started</h2>
+          <p>Find your vocal range so every lesson fits your voice. It takes about a minute.</p>
+          <Link to={{ pathname: '/range', search }} className="btn btn--primary home__continue-link">
+            Find my range
+          </Link>
+          <p className="home__setup-alt">
+            Already have a profile?{' '}
+            <Link to={{ pathname: '/settings', search }} className="nav-link">
+              Load it in Settings
+            </Link>
+          </p>
+        </section>
+      ) : null}
 
       {next ? (
         <section className="home__continue" data-testid="continue-card">
@@ -113,7 +134,11 @@ export function Home() {
                       <span className="home__row-title">{lesson.title}</span>
                       <span className="home__row-notes">{noteCount} notes</span>
                     </span>
-                    {fitResult.ok ? (
+                    {fitResult == null ? (
+                      <span className="home__status home__status--locked" data-testid={`status-${lesson.id}`}>
+                        Find your range first
+                      </span>
+                    ) : fitResult.ok ? (
                       <span className={`home__status home__status--${st.kind}`} data-testid={`status-${lesson.id}`}>
                         <span aria-hidden="true">{st.icon} </span>
                         {st.text}
@@ -127,7 +152,7 @@ export function Home() {
                 );
                 return (
                   <li key={lesson.id}>
-                    {fitResult.ok ? (
+                    {fitResult?.ok ? (
                       <Link
                         className="home__row"
                         data-testid={`lesson-${lesson.id}`}
@@ -160,7 +185,11 @@ export function Home() {
                     <span className="home__row-title">{lesson.title}</span>
                     <span className="home__row-notes">{lesson.exercise.notes.length} notes</span>
                   </span>
-                  {fitResult.ok ? (
+                  {fitResult == null ? (
+                    <span className="home__status home__status--locked" data-testid={`status-${lesson.id}`}>
+                      Find your range first
+                    </span>
+                  ) : fitResult.ok ? (
                     <span className={`home__status home__status--${st.kind}`} data-testid={`status-${lesson.id}`}>
                       <span aria-hidden="true">{st.icon} </span>
                       {st.text}
@@ -175,7 +204,7 @@ export function Home() {
               return (
                 <li key={lesson.id} className="home__mysongs-item">
                   <div className="home__mysongs-row">
-                    {fitResult.ok ? (
+                    {fitResult?.ok ? (
                       <Link className="home__row" data-testid={`lesson-${lesson.id}`} to={{ pathname: `/lesson/${lesson.id}`, search }}>
                         {body}
                       </Link>

@@ -70,7 +70,9 @@ export function Lesson({ onAttemptComplete }: LessonProps) {
   const { lessonId } = useParams();
   const lesson = lessonId ? getLesson(lessonId) : undefined;
   const range = useAppStore((s) => s.range);
-  if (!range) return <Navigate to="/range" replace />;
+  const { search } = useLocation();
+  // No range yet: back to Home, which offers the range test or loading a profile.
+  if (!range) return <Navigate to={{ pathname: '/', search }} replace />;
   if (!lesson) {
     return (
       <main className="dev-page lesson-page">

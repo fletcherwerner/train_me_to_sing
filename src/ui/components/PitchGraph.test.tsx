@@ -4,7 +4,7 @@ import { PitchGraph, ResultsGraph } from './PitchGraph';
 import { fit } from '../../core/exercise/fit';
 import { parseNotation } from '../../core/exercise/notation';
 import { slicePhrase } from '../../core/exercise/phrases';
-import { midiToY, resultsPitchBounds } from '../../core/exercise/pitchGraph';
+import { graphPitchBounds, midiToY } from '../../core/exercise/pitchGraph';
 import { simPitchAt, type SimBehaviour } from '../../audio/pitch/simSinger';
 
 const range = { lowMidi: 48, highMidi: 67 };
@@ -77,7 +77,7 @@ describe('ResultsGraph', () => {
     const frames = framesFor('perfect');
     render(<ResultsGraph exercise={ex} range={range} frames={frames} />);
     const d = screen.getByTestId('graph-sung').getAttribute('d')!;
-    const bounds = resultsPitchBounds(range, ex.notes, frames);
+    const bounds = graphPitchBounds(range, ex.notes);
     const ys = yValues(d);
     const pts = frames.filter((f) => f.midi !== null);
     expect(ys.length).toBeGreaterThan(10);
@@ -89,15 +89,17 @@ describe('ResultsGraph', () => {
     });
   });
 
-  it('sim=octaveDown: red is 12 semitones below and not pinned to the edge', () => {
+  it('sim=octaveDown: the axis stays narrow and the octave-low voice is a dashed line on the bottom edge', () => {
     const frames = framesFor('octaveDown');
     render(<ResultsGraph exercise={ex} range={range} frames={frames} />);
-    const bounds = resultsPitchBounds(range, ex.notes, frames);
-    const ys = yValues(screen.getByTestId('graph-sung').getAttribute('d')!);
-    const rowPx = 220 / (bounds.highMidi - bounds.lowMidi);
-    expect(ys[0] - midiToY(ex.notes[0].midi, bounds, 220)).toBeCloseTo(12 * rowPx, 0);
-    expect(Math.max(...ys)).toBeLessThan(220);
-    expect(Math.min(...ys)).toBeGreaterThan(0);
+    const bounds = graphPitchBounds(range, ex.notes);
+    const lo = Math.min(...ex.notes.map((n) => n.midi));
+    const hi = Math.max(...ex.notes.map((n) => n.midi));
+    expect(bounds).toEqual({ lowMidi: lo - 3, highMidi: hi + 3 });
+    expect(screen.getByTestId('graph-sung').getAttribute('d')).toBe('');
+    const offYs = yValues(screen.getByTestId('graph-sung-off').getAttribute('d')!);
+    expect(offYs.length).toBeGreaterThan(10);
+    offYs.forEach((y) => expect(y).toBeCloseTo(218, 0)); // 2 px inside the bottom edge
   });
 
   it('has black target lines for every note and is aria-hidden', () => {

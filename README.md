@@ -239,6 +239,8 @@ Every epic ends with something you can open and review. "Depends on" means those
 | E12 | [Capacitor iOS wrapper](planning/epics/E12-capacitor-ios.md) | A real iOS app installed from Xcode | E10 |
 | E13 | [Hardening and polish: audio recovery, run-screen layout, UI leftovers](planning/epics/E13-hardening-polish.md) | Screens that recover when sound or the mic stops; a lesson run that fits the window; one look across screens | E12 |
 | S03 | [Spike: mic check](planning/epics/S03-mic-check.md) | A Mic check screen: a loudness bar, the note you are singing, and the notes it caught | E13 |
+| S04 | [Spike: narrower pitch axis on the graph](planning/epics/S04-graph-pitch-axis.md) | The pitch graph spans only the exercise notes plus 3 semitones, so sharp and flat are easy to see | S03 |
+| S05 | [Spike: open on Home, not the range test](planning/epics/S05-home-first.md) | The app opens on Home; find your range or load a profile from there | S04 |
 
 ### How each epic file is laid out
 

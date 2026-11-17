@@ -49,10 +49,11 @@ test('sim=octaveDown: Not yet with the octave tip', async ({ page }) => {
   await expect(page.getByTestId('instruction')).toContainText('Your turn');
 });
 
-test('no range redirects to range setup', async ({ page }) => {
+test('a lesson link with no range goes to Home', async ({ page }) => {
   await page.goto('/');
   await page.evaluate(() => {
     location.hash = '#/lesson/s1-05';
   });
-  await expect(page).toHaveURL(/#\/range/);
+  await expect(page.getByTestId('setup-card')).toBeVisible();
+  await expect(page).not.toHaveURL(/lesson/);
 });

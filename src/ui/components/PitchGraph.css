@@ -34,3 +34,4 @@
 .pitch-graph--results { display: flex; }
 .pitch-graph--results .pitch-graph__labels { flex: none; background: #fafafa; }
 .pitch-graph__scroll { overflow-x: auto; overflow-y: hidden; flex: none; max-width: 100%; }
+.pitch-graph__sung--off { stroke-dasharray: 4 4; opacity: 0.85; }

@@ -4,7 +4,7 @@ import {
   graphPitchBounds,
   labelledMidis,
   midiToY,
-  resultsPitchBounds,
+  splitByBounds,
   sungSegments,
   targetSegments,
   timeToX,
@@ -19,14 +19,20 @@ const note = (index: number, midi: number, startSec: number, durationSec = 1): R
 });
 
 describe('graphPitchBounds', () => {
-  it('is the range plus the margin when notes are inside', () => {
-    expect(graphPitchBounds({ lowMidi: 48, highMidi: 60 }, [note(0, 50, 0)])).toEqual({ lowMidi: 46, highMidi: 62 });
+  it('is the lowest and highest target note plus 3 semitones, ignoring the wider range', () => {
+    expect(graphPitchBounds({ lowMidi: 40, highMidi: 70 }, [note(0, 55, 0), note(1, 60, 1)])).toEqual({
+      lowMidi: 52,
+      highMidi: 63,
+    });
   });
-  it('widens to notes outside the range', () => {
+  it('covers notes outside the saved range', () => {
     expect(graphPitchBounds({ lowMidi: 48, highMidi: 60 }, [note(0, 44, 0), note(1, 65, 1)], 1)).toEqual({
       lowMidi: 43,
       highMidi: 66,
     });
+  });
+  it('falls back to the range when there are no notes', () => {
+    expect(graphPitchBounds({ lowMidi: 48, highMidi: 60 }, [])).toEqual({ lowMidi: 45, highMidi: 63 });
   });
 });
 
@@ -65,22 +71,36 @@ describe('segments', () => {
   });
 });
 
-describe('resultsPitchBounds', () => {
-  const range = { lowMidi: 48, highMidi: 60 };
-  it('includes an octave-low line and caps at C2-C6', () => {
-    const notes = [note(0, 50, 0)];
-    const low = resultsPitchBounds(range, notes, [{ tSec: 0, midi: 38 }]);
-    expect(low.lowMidi).toBeLessThanOrEqual(37);
-    const extreme = resultsPitchBounds(range, notes, [
-      { tSec: 0, midi: 10 },
-      { tSec: 1, midi: 120 },
+describe('splitByBounds', () => {
+  const bounds = { lowMidi: 50, highMidi: 60 };
+  it('keeps a line that stays inside as one run', () => {
+    expect(splitByBounds([{ tSec: 0, midi: 55 }, { tSec: 0.1, midi: 56 }], bounds)).toEqual([
+      { inside: true, points: [{ tSec: 0, midi: 55 }, { tSec: 0.1, midi: 56 }] },
     ]);
-    expect(extreme).toEqual({ lowMidi: 36, highMidi: 84 });
+  });
+  it('splits where the voice leaves and re-enters the axis, joining the pieces', () => {
+    const runs = splitByBounds(
+      [
+        { tSec: 0, midi: 55 },
+        { tSec: 0.1, midi: 43 },
+        { tSec: 0.2, midi: 43 },
+        { tSec: 0.3, midi: 55 },
+      ],
+      bounds,
+    );
+    expect(runs.map((r) => r.inside)).toEqual([true, false, true]);
+    expect(runs[1].points.map((p) => p.tSec)).toEqual([0, 0.1, 0.2]);
+    expect(runs[2].points.map((p) => p.tSec)).toEqual([0.2, 0.3]);
   });
 });
 
 describe('labelledMidis', () => {
   it('labels every C and the range ends', () => {
     expect(labelledMidis({ lowMidi: 45, highMidi: 66 }, { lowMidi: 47, highMidi: 64 })).toEqual([47, 48, 60, 64]);
+  });
+  it('also labels the lowest and highest target notes', () => {
+    expect(labelledMidis({ lowMidi: 50, highMidi: 59 }, { lowMidi: 40, highMidi: 70 }, [note(0, 53, 0), note(1, 56, 1)])).toEqual([
+      53, 56,
+    ]);
   });
 });

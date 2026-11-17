@@ -25,42 +25,23 @@ export interface SungPoint {
 /** Live graph: seconds shown, and where the "now" line sits (fraction from the left). */
 export const GRAPH_WINDOW_SEC = 8;
 export const GRAPH_NOW_FRACTION = 0.3;
-/** Results graph pitch axis is never wider than this. */
-export const RESULTS_MIN_MIDI = 36; // C2
-export const RESULTS_MAX_MIDI = 84; // C6
+/** Semitones shown above the highest and below the lowest target note. */
+export const GRAPH_MARGIN = 3;
 
-/** Lowest and highest MIDI shown: the saved range widened to every target note, plus a margin. */
-export function graphPitchBounds(range: StudentRange, notes: ResolvedNote[], margin = 2): PitchBounds {
-  let lo = range.lowMidi;
-  let hi = range.highMidi;
+/**
+ * Lowest and highest MIDI shown: the exercise's lowest and highest target
+ * notes plus `margin` semitones. Kept narrow on purpose, so a few cents sharp
+ * or flat is visible. With no notes, the student's range is used instead.
+ */
+export function graphPitchBounds(range: StudentRange, notes: ResolvedNote[], margin = GRAPH_MARGIN): PitchBounds {
+  if (notes.length === 0) return { lowMidi: range.lowMidi - margin, highMidi: range.highMidi + margin };
+  let lo = Infinity;
+  let hi = -Infinity;
   for (const n of notes) {
     if (n.midi < lo) lo = n.midi;
     if (n.midi > hi) hi = n.midi;
   }
   return { lowMidi: lo - margin, highMidi: hi + margin };
-}
-
-/** Results axis: the live bounds widened to all sung pitch, capped at C2–C6. */
-export function resultsPitchBounds(
-  range: StudentRange,
-  notes: ResolvedNote[],
-  frames: GraphFrame[],
-  margin = 2,
-): PitchBounds {
-  const b = graphPitchBounds(range, notes, margin);
-  let lo = b.lowMidi;
-  let hi = b.highMidi;
-  for (const f of frames) {
-    if (f.midi === null) continue;
-    const lowEdge = Math.floor(f.midi) - 1;
-    const highEdge = Math.ceil(f.midi) + 1;
-    if (lowEdge < lo) lo = lowEdge;
-    if (highEdge > hi) hi = highEdge;
-  }
-  // The cap never removes a target note's own row.
-  lo = Math.max(lo, Math.min(RESULTS_MIN_MIDI, b.lowMidi));
-  hi = Math.min(hi, Math.max(RESULTS_MAX_MIDI, b.highMidi));
-  return { lowMidi: lo, highMidi: hi };
 }
 
 /** Pixels per second for a window of `windowSec` across `widthPx`. */
@@ -121,13 +102,34 @@ export function sungSegments(frames: GraphFrame[], maxGapSec = 0.1): SungPoint[]
   return out;
 }
 
-/** Semitone rows to label: every C, plus the range low and high. */
-export function labelledMidis(bounds: PitchBounds, range: StudentRange): number[] {
+/** Semitone rows to label: every C, the range low and high, and the lowest and highest target notes. */
+export function labelledMidis(bounds: PitchBounds, range: StudentRange, notes: ResolvedNote[] = []): number[] {
   const set = new Set<number>();
+  if (notes.length) {
+    set.add(Math.min(...notes.map((n) => n.midi)));
+    set.add(Math.max(...notes.map((n) => n.midi)));
+  }
   for (let m = Math.ceil(bounds.lowMidi); m <= bounds.highMidi; m++) {
     if (((m % 12) + 12) % 12 === 0) set.add(m);
   }
   set.add(range.lowMidi);
   set.add(range.highMidi);
   return [...set].filter((m) => m >= bounds.lowMidi && m <= bounds.highMidi).sort((a, b) => a - b);
+}
+
+/**
+ * Split one sung polyline into runs that are inside the axis or off it.
+ * Each run after the first starts with the previous run's last point, so the
+ * pieces join up when drawn.
+ */
+export function splitByBounds(points: SungPoint[], bounds: PitchBounds): { inside: boolean; points: SungPoint[] }[] {
+  const out: { inside: boolean; points: SungPoint[] }[] = [];
+  const isIn = (p: SungPoint) => p.midi >= bounds.lowMidi && p.midi <= bounds.highMidi;
+  for (const p of points) {
+    const inside = isIn(p);
+    const cur = out[out.length - 1];
+    if (cur && cur.inside === inside) cur.points.push(p);
+    else out.push({ inside, points: cur ? [cur.points[cur.points.length - 1], p] : [p] });
+  }
+  return out;
 }
