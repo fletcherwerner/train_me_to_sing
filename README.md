@@ -241,6 +241,9 @@ Every epic ends with something you can open and review. "Depends on" means those
 | S03 | [Spike: mic check](planning/epics/S03-mic-check.md) | A Mic check screen: a loudness bar, the note you are singing, and the notes it caught | E13 |
 | S04 | [Spike: narrower pitch axis on the graph](planning/epics/S04-graph-pitch-axis.md) | The pitch graph spans only the exercise notes plus 3 semitones, so sharp and flat are easy to see | S03 |
 | S05 | [Spike: open on Home, not the range test](planning/epics/S05-home-first.md) | The app opens on Home; find your range or load a profile from there | S04 |
+| S06 | [Spike: ignore the piano leaking into the microphone](planning/epics/S06-speaker-bleed.md) | Without headphones, staying silent in We do no longer scores the piano's notes; a notice suggests headphones | S05 |
+| E14 | [Beginner path: new Stage 1, feedback levels, echo yourself](planning/epics/E14-beginner-path.md) | A rebuilt Stage 1 in four units; Learn, Practise and Prove levels; match your own recorded voice | S06 |
+| E15 | [Daily practice: session, spaced mastery, review, onset coaching](planning/epics/E15-daily-practice.md) | A 12-15 minute Today's practice; lessons mastered over two days in two keys; reviews; coaching on sliding into notes | E14 |
 
 ### How each epic file is laid out
 
