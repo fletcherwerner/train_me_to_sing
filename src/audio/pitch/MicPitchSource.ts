@@ -134,5 +134,5 @@ export function createMicPitchSource(): PitchSource {
     return () => lostListeners.delete(cb);
   }
 
-  return { start, stop, subscribe, onLost };
+  return { start, stop, subscribe, onLost, getStream: () => stream };
 }

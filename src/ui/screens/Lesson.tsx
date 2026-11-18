@@ -10,19 +10,31 @@ import {
   SOUND_STOPPED_MSG,
 } from '../audioMessages';
 import { playExercise, playPreviewNote, type PlaybackHandle } from '../../audio/exercisePlayer';
-import { createPitchSource, recordFrames, registerSimExercise, clearSimExercise } from '../../audio/pitch';
+import {
+  createPitchSource,
+  recordFrames,
+  registerSimExercise,
+  clearSimExercise,
+  isSimulated,
+  wantsRandomKey,
+} from '../../audio/pitch';
 import type { PitchSource } from '../../audio/pitch/PitchSource';
+import { decodeTake, startTakeRecording, synthTake, type TakeRecording } from '../../audio/takeRecorder';
 import { getLesson } from '../../content/registry';
 import type { Lesson as LessonData } from '../../content/types';
-import { displayRange, fit } from '../../core/exercise/fit';
+import { displayRange, fit, pickTonic } from '../../core/exercise/fit';
+import type { ResolvedExercise } from '../../core/exercise/types';
 import { phraseFor, slicePhrase } from '../../core/exercise/phrases';
+import { qualifiesForEcho } from '../../core/scoring/bestTake';
+import { createSession, reduce, type Level } from '../../core/session/sessionMachine';
+import { MatchRun } from './MatchRun';
+import { LessonHeader } from '../components/LessonHeader';
 import { midiToName } from '../../core/music/notes';
 import { applyGate, bleedGate, measureBleed } from '../../core/scoring/bleed';
 import { evaluateAttempt } from '../../core/scoring/evaluate';
 import { getTolerance } from '../../core/scoring/tolerance';
 import { pickTip } from '../../core/scoring/tips';
 import type { AttemptResult } from '../../core/scoring/types';
-import { INITIAL_SESSION, reduce } from '../../core/session/sessionMachine';
 import { PianoKeyboard } from '../components/PianoKeyboard';
 import { CentsMeter } from '../components/CentsMeter';
 import { SequenceStrip } from '../components/SequenceStrip';
@@ -53,20 +65,6 @@ const STEP_LABELS: { step: 'iDo' | 'weDo' | 'youDo'; label: string }[] = [
   { step: 'youDo', label: 'You do' },
 ];
 
-/** Home at the left, title centred, on one row. Home keeps the query string (?sim=...). */
-function LessonHeader({ title }: { title: string }) {
-  const { search } = useLocation();
-  return (
-    <header className="page-header lesson-header">
-      <Link className="nav-link" to={{ pathname: '/', search }}>
-        Home
-      </Link>
-      <h1 className="lesson-title">{title}</h1>
-      <span />
-    </header>
-  );
-}
-
 export function Lesson({ onAttemptComplete }: LessonProps) {
   const { lessonId } = useParams();
   const lesson = lessonId ? getLesson(lessonId) : undefined;
@@ -82,7 +80,24 @@ export function Lesson({ onAttemptComplete }: LessonProps) {
       </main>
     );
   }
+  if (lesson.kind === 'match') {
+    return <MatchRun key={lesson.id} lesson={lesson} range={range} onAttemptComplete={onAttemptComplete} />;
+  }
   return <LessonRun key={lesson.id} lesson={lesson} range={range} onAttemptComplete={onAttemptComplete} />;
+}
+
+const LEVEL_NAMES: Record<Level, string> = { learn: 'Learn', practise: 'Practise', prove: 'Prove' };
+const LEVEL_HELP: Record<Level, string> = {
+  learn: 'Full help: the live graph, the piano and the cents meter.',
+  practise: 'Less help: the piano shows the targets, but not your voice. The graph comes after.',
+  prove: 'No live help. Sing it from memory; your score comes after.',
+};
+
+/** An echo take: the student's own voice, and the exercise (key) it was sung against. */
+interface EchoTake {
+  ex: ResolvedExercise;
+  buffer: AudioBuffer;
+  from: 'weDo' | 'youDo';
 }
 
 function LessonRun({
@@ -98,7 +113,25 @@ function LessonRun({
   const latencyMs = useAppStore((s) => s.settings.latencyOffsetMs);
   const calibrated = useAppStore((s) => s.settings.calibratedAt !== undefined);
   const recordAttempt = useAppStore((s) => s.recordAttempt);
-  const [session, dispatch] = useReducer(reduce, INITIAL_SESSION);
+  const [session, dispatch] = useReducer(reduce, undefined, () =>
+    createSession(lesson.levels, useAppStore.getState().progress[lesson.id]?.level ?? 'learn'),
+  );
+  const level = session.level;
+  const randomKey = wantsRandomKey();
+  // Practise and Prove sing in a new key each attempt (not in ?sim= runs, unless &key=random).
+  const keyed = lesson.levels && level !== 'learn' && randomKey;
+  const [tonic, setTonic] = useState<number | null>(() =>
+    session.levels && session.level !== 'learn' && randomKey ? pickTonic(lesson.exercise, range, Math.random) : null,
+  );
+  const [echo, setEcho] = useState<EchoTake | null>(null);
+  const echoRef = useRef<EchoTake | null>(null);
+  const [echoing, setEchoing] = useState(false);
+  const [echoResult, setEchoResult] = useState<AttemptResult | null>(null);
+  const echoPendingRef = useRef(false);
+  const runEchoRef = useRef<() => void>(() => undefined);
+  const recordingRef = useRef<TakeRecording | null>(null);
+  // The exercise the last You do ran against, so Results still match after the key changes.
+  const [resultEx, setResultEx] = useState<ResolvedExercise | null>(null);
   const [handle, setHandle] = useState<PlaybackHandle | null>(null);
   const [source, setSource] = useState<PitchSource | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -115,7 +148,10 @@ function LessonRun({
   const [bleedRms, setBleedRms] = useState<number | null>(null);
 
   const tol = getTolerance(lesson.toleranceId);
-  const fitted = useMemo(() => fit(lesson.exercise, range), [lesson, range]);
+  const fitted = useMemo(
+    () => fit(lesson.exercise, range, keyed && tonic !== null ? { tonicMidi: tonic } : undefined),
+    [lesson, range, keyed, tonic],
+  );
   const exercise = fitted.ok ? fitted.exercise : null;
   const { step, activity } = session;
   const running = activity === 'running';
@@ -130,8 +166,13 @@ function LessonRun({
   const [resultPhrase, setResultPhrase] = useState<number | null>(null);
   const activePhraseIdx = step === 'iDo' || step === 'weDo' ? phraseIdx : null;
   const playEx = useMemo(
-    () => (exercise && phrases && activePhraseIdx !== null ? slicePhrase(exercise, phrases[activePhraseIdx]) : exercise),
-    [exercise, activePhraseIdx, phrases],
+    () =>
+      echoing && echo && step === 'weDo'
+        ? echo.ex
+        : exercise && phrases && activePhraseIdx !== null
+          ? slicePhrase(exercise, phrases[activePhraseIdx])
+          : exercise,
+    [exercise, activePhraseIdx, phrases, echoing, echo, step],
   );
   const live = useLiveAttempt(
     graded ? source : null,
@@ -172,10 +213,19 @@ function LessonRun({
       runRef.current++;
       handleRef.current?.stop();
       sourceRef.current?.stop();
+      recordingRef.current?.discard(); // takes live in memory only and are dropped on leaving the lesson
       clearSimExercise();
     },
     [],
   );
+
+  // "Echo yourself" from the results screen: go to We do, then start the echo run once it is showing.
+  useEffect(() => {
+    if (echoPendingRef.current && session.step === 'weDo' && session.activity === 'idle') {
+      echoPendingRef.current = false;
+      runEchoRef.current();
+    }
+  }, [session.step, session.activity]);
 
   if (!fitted.ok) {
     return (
@@ -251,15 +301,32 @@ function LessonRun({
     }
   };
 
-  const run = async () => {
+  /** Picks the key for the next Practise or Prove attempt, never the one just used when another fits. */
+  const rollTonic = (avoid: number) => {
+    if (!randomKey) return;
+    setTonic(pickTonic(lesson.exercise, range, Math.random, avoid));
+  };
+
+  const run = async (mode: 'normal' | 'echo' = 'normal') => {
     if (step !== 'iDo' && step !== 'weDo' && step !== 'youDo') return;
     if (running) return;
+    const isEcho = mode === 'echo' && echo !== null && step === 'weDo';
+    if (mode === 'echo' && !isEcho) return;
     const myRun = ++runRef.current;
     const thisStep = step;
+    const runEx = isEcho && echo ? echo.ex : (playEx ?? fullEx);
+    const echoBuffer = isEcho && echo ? echo.buffer : undefined;
+    const priorWeDo = session.weDoResult;
+    const runLevel = level;
     setNotice(null);
     setSoundFailed(false);
-    if (thisStep === 'youDo') setYouDoFrames(null);
-    if (thisStep === 'weDo') setWeDoFrames(null);
+    setEchoing(isEcho);
+    if (isEcho) setEchoResult(null);
+    if (thisStep === 'youDo') {
+      setYouDoFrames(null);
+      setResultEx(runEx);
+    }
+    if (thisStep === 'weDo' && !isEcho) setWeDoFrames(null);
     setResultPhrase(activePhraseIdx);
     dispatch({ type: 'RUN' });
     const audioOk = await ensureAudioRunning();
@@ -270,16 +337,24 @@ function LessonRun({
       setNotice(SOUND_PAUSED_MSG);
       return;
     }
-    const h = playExercise(ex, {
-      playMelody: thisStep !== 'youDo',
+    const h = playExercise(runEx, {
+      playMelody: thisStep !== 'youDo' && !isEcho,
       metronome: true,
       playStartNote: thisStep === 'youDo',
+      melodyBuffer: echoBuffer,
     });
     handleRef.current = h;
     setHandle(h);
     let rec: ReturnType<typeof recordFrames> | null = null;
+    // Echo yourself: also record the voice of a We do or You do run (not of the echo run itself).
+    const wantsTake = lesson.echo && !isEcho && thisStep !== 'iDo';
+    recordingRef.current?.discard();
+    recordingRef.current = null;
+    const stream = sourceRef.current?.getStream?.() ?? null;
+    if (wantsTake && stream && !isSimulated()) recordingRef.current = startTakeRecording(stream);
+    const takeRec = recordingRef.current;
     if (sourceRef.current) {
-      registerSimExercise(ex, h.startSec, thisStep !== 'youDo', thisStep !== 'iDo');
+      registerSimExercise(runEx, h.startSec, thisStep !== 'youDo', thisStep !== 'iDo');
       // We do: gate frames as they arrive so the live red line does not follow the piano.
       const gate = thisStep === 'weDo' ? bleedGate(bleedRms) : null;
       rec = recordFrames(
@@ -287,7 +362,7 @@ function LessonRun({
         h.startSec,
         h.endSec,
         latencyMs / 1000,
-        gate === null ? undefined : (f) => applyGate([f], ex.notes, gate)[0],
+        gate === null ? undefined : (f) => applyGate([f], runEx.notes, gate)[0],
       );
       setLiveFrames(rec.frames);
     }
@@ -304,33 +379,88 @@ function LessonRun({
       setNotice(SOUND_STOPPED_MSG);
       return;
     }
-    if (thisStep === 'iDo' && rec) setBleedRms(measureBleed(rec.frames, ex.notes));
+    if (thisStep === 'iDo' && rec) setBleedRms(measureBleed(rec.frames, runEx.notes));
     const frames = rec
       ? thisStep === 'weDo'
-        ? applyGate(rec.frames, ex.notes, bleedGate(bleedRms))
+        ? applyGate(rec.frames, runEx.notes, bleedGate(bleedRms))
         : rec.frames
       : null;
     if (thisStep === 'youDo') setYouDoFrames(frames);
-    if (thisStep === 'weDo') setWeDoFrames(frames);
-    const result = thisStep !== 'iDo' && frames ? evaluateAttempt(ex, frames, tol, lesson.passScore) : undefined;
+    if (thisStep === 'weDo' && !isEcho) setWeDoFrames(frames);
+    const result = thisStep !== 'iDo' && frames ? evaluateAttempt(runEx, frames, tol, lesson.passScore) : undefined;
+    if (isEcho) {
+      // The echo run is scored and shown like We do, but never saved and it leaves the We do result alone.
+      setEchoResult(result ?? null);
+      dispatch({ type: 'RUN_ENDED', result: priorWeDo ?? undefined });
+      return;
+    }
     dispatch({ type: 'RUN_ENDED', result });
+    if (wantsTake) void keepTake(takeRec, result, runEx, h.startSec, thisStep as 'weDo' | 'youDo');
     if (thisStep === 'youDo' && !result) setNotice('We could not hear the microphone for that run. Press Try again.');
     if (thisStep === 'youDo' && result) {
       dispatch({ type: 'SHOW_RESULTS' });
-      recordAttempt(lesson.id, result);
+      recordAttempt(lesson.id, result, lesson.levels ? runLevel : undefined);
       onAttemptComplete?.(result);
+      // The next Practise or Prove attempt gets a new key.
+      if (lesson.levels && runLevel !== 'learn') rollTonic(runEx.tonicMidi);
     }
   };
+
+  /** Keeps this run's voice for "Echo yourself" if the run was clean. Hides the button on any failure. */
+  const keepTake = async (
+    takeRec: TakeRecording | null,
+    result: AttemptResult | undefined,
+    runEx: ResolvedExercise,
+    startSec: number,
+    from: 'weDo' | 'youDo',
+  ) => {
+    const recorded = takeRec ? await takeRec.stop() : null;
+    if (recordingRef.current === takeRec) recordingRef.current = null;
+    if (!result || !qualifiesForEcho(result)) return;
+    // A You do take (no piano underneath) replaces anything; a We do take only fills an empty slot or an older We do take.
+    if (from === 'weDo' && echoRef.current?.from === 'youDo') return;
+    let buffer: AudioBuffer | null = null;
+    if (isSimulated()) buffer = synthTake(runEx);
+    else if (recorded) {
+      // Trimmed to the notes' window, so the buffer's time 0 is the exercise start.
+      buffer = await decodeTake(recorded, startSec, startSec + runEx.totalSec);
+    }
+    if (!buffer) return;
+    echoRef.current = { ex: runEx, buffer, from };
+    setEcho(echoRef.current);
+  };
+  runEchoRef.current = () => void run('echo');
 
   const stop = () => {
     runRef.current++;
     handleRef.current?.stop();
     handleRef.current = null;
+    recordingRef.current?.discard();
+    recordingRef.current = null;
     setHandle(null);
     setLiveFrames(null);
+    setEchoing(false);
     dispatch({ type: 'STOP' });
   };
   stopRef.current = stop;
+
+  const advance = () => {
+    dispatch({ type: 'ADVANCE' });
+    setEchoResult(null);
+    rollTonic(fullEx.tonicMidi);
+  };
+  const stepDown = () => {
+    dispatch({ type: 'STEP_DOWN' });
+    setEchoResult(null);
+    rollTonic(fullEx.tonicMidi);
+  };
+  const requestEchoFromResults = () => {
+    echoPendingRef.current = true;
+    dispatch({ type: 'BACK_TO', step: 'weDo' });
+  };
+  // Help shown while singing: only You do at Practise and Prove is reduced; I do and We do are always the full help.
+  const helpLevel: Level = session.levels && step === 'youDo' ? level : 'learn';
+  const startNote = fullEx.notes[0]?.midi ?? null;
 
   const disp = displayRange(range);
   const hasStrip = step === 'weDo' || step === 'youDo';
@@ -375,12 +505,25 @@ function LessonRun({
     if (!r) return null;
     const hits = r.notes.filter((n) => n.hit).length;
     const misses = r.notes.filter((n) => !n.hit);
+    const rex = resultEx ?? ex;
+    const nextLevel: Level | null = session.levels && level !== 'prove' ? (level === 'learn' ? 'practise' : 'prove') : null;
+    const levelPassed = r.passed && nextLevel !== null;
     return (
       <main className="dev-page lesson-page" data-testid="results">
         {header}
+        {session.levels ? (
+          <p className="lesson-level" data-testid="level-label">
+            Level: {LEVEL_NAMES[level]}
+          </p>
+        ) : null}
         <h2 className="lesson-verdict" data-testid="results-verdict">
-          {r.passed ? 'Passed' : 'Not yet'}
+          {r.passed ? (levelPassed ? 'Level passed' : 'Passed') : 'Not yet'}
         </h2>
+        {session.levels && r.passed ? (
+          <p data-testid="results-level">
+            {nextLevel ? `${LEVEL_NAMES[nextLevel]} is unlocked.` : 'You passed this lesson without any live help.'}
+          </p>
+        ) : null}
         <p className="lesson-score" data-testid="results-score">
           {hits} of {r.notes.length} notes ({Math.round(r.score * 100)}%)
         </p>
@@ -389,6 +532,11 @@ function LessonRun({
           <strong>Tip:</strong> {pickTip(r)}
         </p>
         <p className="lesson-actions" data-testid="results-actions">
+          {levelPassed && nextLevel ? (
+            <button className="btn btn--primary" data-testid="advance-level" onClick={() => advance()}>
+              Go to {LEVEL_NAMES[nextLevel]}
+            </button>
+          ) : null}
           <button
             className={r.passed ? 'btn' : 'btn btn--primary'}
             onClick={() => dispatch({ type: 'BACK_TO', step: 'youDo' })}
@@ -398,19 +546,29 @@ function LessonRun({
           <button className="btn" onClick={() => dispatch({ type: 'BACK_TO', step: 'iDo' })}>
             Hear it again
           </button>
+          {session.levels && level !== 'learn' ? (
+            <button className="btn" data-testid="step-down" onClick={() => stepDown()}>
+              {level === 'prove' ? 'Practise with help' : 'Learn with help'}
+            </button>
+          ) : null}
+          {echo ? (
+            <button className="btn" data-testid="echo-button" onClick={requestEchoFromResults}>
+              Echo yourself
+            </button>
+          ) : null}
         </p>
         {youDoFrames ? (
           <>
             <GraphLegend />
-            <ResultsGraph exercise={ex} range={range} frames={youDoFrames} />
+            <ResultsGraph exercise={rex} range={range} frames={youDoFrames} />
           </>
         ) : null}
         <SequenceStrip
           expanded
-          notes={ex.notes}
+          notes={rex.notes}
           currentIndex={null}
           results={r.notes.map((n) => n.hit)}
-          onChipPress={(i) => playPreviewNote(ex.notes[i].midi)}
+          onChipPress={(i) => playPreviewNote(rex.notes[i].midi)}
         />
         {phrases && misses.length > 0 ? (
           <ul className="lesson-misses lesson-misses--lines" data-testid="missed-by-phrase">
@@ -461,8 +619,25 @@ function LessonRun({
           </li>
         ))}
       </ol>
+      {session.levels ? (
+        <>
+          <p className="lesson-level" data-testid="level-label">
+            Level: {LEVEL_NAMES[level]}
+          </p>
+          <p className="lesson-level-help" data-testid="level-help">
+            {LEVEL_HELP[level]}
+          </p>
+          <p className="lesson-start-note" data-testid="start-note">
+            Starting on {startNote === null ? '—' : midiToName(startNote)}
+          </p>
+        </>
+      ) : null}
       <p className="lesson-instruction" data-testid="instruction">
-        {INSTRUCTIONS[step]}
+        {step === 'youDo' && session.levels && level === 'prove'
+          ? running
+            ? 'Sing it from memory.'
+            : 'Your turn. Start on the lit note, then sing from memory.'
+          : INSTRUCTIONS[step]}
       </p>
       {step === 'weDo' && bleedGate(bleedRms) > 0.02 ? (
         <p className="tuner-error" role="alert" data-testid="bleed-notice">
@@ -495,32 +670,49 @@ function LessonRun({
         </p>
       ) : null}
       {hasLyrics ? <NowSinging notes={ex.notes} currentIndex={running ? live.currentNoteIndex : null} /> : null}
-      <PitchGraph
-        exercise={ex}
-        range={range}
-        startSec={handle?.startSec ?? null}
-        frames={liveFrames}
-        showSung={step !== 'iDo'}
-      />
-      <GraphLegend showYou={step !== 'iDo'} />
+      {helpLevel !== 'prove' ? (
+        <>
+          <PitchGraph
+            exercise={ex}
+            range={range}
+            startSec={handle?.startSec ?? null}
+            frames={liveFrames}
+            showSung={step !== 'iDo' && helpLevel === 'learn'}
+          />
+          <GraphLegend showYou={step !== 'iDo' && helpLevel === 'learn'} />
+        </>
+      ) : null}
       <PianoKeyboard
         lowMidi={disp.lowMidi}
         highMidi={disp.highMidi}
-        targetMidi={live.targetMidi}
-        sungMidi={live.sungMidi}
+        // Prove shows only the starting note, and only before the count-in. Practise shows targets, never the sung key.
+        targetMidi={
+          helpLevel === 'prove'
+            ? running
+              ? null
+              : startNote
+            : helpLevel === 'practise'
+              ? (live.targetMidi ?? (running ? null : startNote))
+              : live.targetMidi
+        }
+        sungMidi={helpLevel === 'learn' ? live.sungMidi : null}
         matchCents={tol.cents}
         rangeMarkers={{ lowMidi: range.lowMidi, highMidi: range.highMidi }}
       />
-      <p className="lesson-notes" data-testid="note-labels">
-        Target: {live.targetMidi === null ? '—' : midiToName(live.targetMidi)}
-        {graded ? <> · Sung: {live.sungMidi === null ? '—' : midiToName(live.sungMidi)}</> : null}
-      </p>
-      {step !== 'iDo' ? <CentsMeter cents={live.cents} toleranceCents={tol.cents} /> : null}
-      <SequenceStrip
-        notes={ex.notes}
-        currentIndex={live.currentNoteIndex}
-        results={hasStrip && !running ? strip : undefined}
-      />
+      {helpLevel !== 'prove' ? (
+        <p className="lesson-notes" data-testid="note-labels">
+          Target: {live.targetMidi === null ? '—' : midiToName(live.targetMidi)}
+          {graded && helpLevel === 'learn' ? <> · Sung: {live.sungMidi === null ? '—' : midiToName(live.sungMidi)}</> : null}
+        </p>
+      ) : null}
+      {step !== 'iDo' && helpLevel === 'learn' ? <CentsMeter cents={live.cents} toleranceCents={tol.cents} /> : null}
+      {helpLevel !== 'prove' ? (
+        <SequenceStrip
+          notes={ex.notes}
+          currentIndex={live.currentNoteIndex}
+          results={hasStrip && !running ? strip : undefined}
+        />
+      ) : null}
       {notice ? (
         <p className="tuner-error" role="alert">
           {notice}
@@ -528,6 +720,11 @@ function LessonRun({
       ) : null}
       {weDoLine ? (
         <p data-testid="practice-line">{weDoLine}</p>
+      ) : null}
+      {step === 'weDo' && echoResult ? (
+        <p data-testid="echo-line">
+          Echo run: {echoResult.notes.filter((n) => n.hit).length} of {echoResult.notes.length} notes.
+        </p>
       ) : null}
       {weDoLine && weDoFrames && !running ? (
         <>
@@ -547,7 +744,7 @@ function LessonRun({
                 Reconnect microphone
               </button>
             ) : (
-              <button className="btn btn--primary" onClick={run} data-testid="run-button">
+              <button className="btn btn--primary" onClick={() => void run()} data-testid="run-button">
                 {soundFailed
                   ? 'Try again'
                   : step === 'iDo'
@@ -576,6 +773,11 @@ function LessonRun({
                 <button className="btn" onClick={() => dispatch({ type: 'BACK_TO', step: 'iDo' })}>
                   Back to I do
                 </button>
+                {echo ? (
+                  <button className="btn" data-testid="echo-button" onClick={() => void run('echo')}>
+                    Echo yourself
+                  </button>
+                ) : null}
               </>
             ) : null}
             {step === 'youDo' ? (
@@ -586,6 +788,11 @@ function LessonRun({
                 <button className="btn" onClick={() => dispatch({ type: 'BACK_TO', step: 'weDo' })}>
                   Back
                 </button>
+                {session.levels && level !== 'learn' ? (
+                  <button className="btn" data-testid="step-down" onClick={() => stepDown()}>
+                    {level === 'prove' ? 'Practise with help' : 'Learn with help'}
+                  </button>
+                ) : null}
               </>
             ) : null}
           </>

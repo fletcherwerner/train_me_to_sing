@@ -36,5 +36,5 @@ test('home screen renders offline after the first visit', async ({ page, context
   await context.setOffline(true);
   await page.reload();
   await expect(page.getByTestId('stage-1-count')).toBeVisible();
-  await expect(page.getByTestId('lesson-s1-01')).toBeVisible();
+  await expect(page.getByTestId('lesson-s1a-01')).toBeVisible();
 });

@@ -69,7 +69,7 @@ test.describe('lesson recovery', () => {
 
   test('sound stops mid You do: message, no Results, nothing saved', async ({ page }) => {
     await seed(page);
-    await page.goto('/#/lesson/s1-05?sim=perfect');
+    await page.goto('/#/lesson/s1b-04?sim=perfect');
     await toYouDo(page);
     await btn(page, 'Next').click();
     await btn(page, 'Start').click();
@@ -80,14 +80,14 @@ test.describe('lesson recovery', () => {
     await expect(page.getByTestId('results')).toHaveCount(0);
     await expect(btn(page, 'Try again')).toBeVisible();
     const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('tmts.v1')!).progress);
-    expect(saved['s1-05']).toBeUndefined();
+    expect(saved['s1b-04']).toBeUndefined();
     await page.getByRole('link', { name: 'Home' }).click();
-    await expect(page.getByTestId('status-s1-05')).toContainText('Not started');
+    await expect(page.getByTestId('status-s1b-04')).toContainText('Not started');
   });
 
   test('mic lost in We do: message, Reconnect, then the practice run completes', async ({ page }) => {
     await seed(page);
-    await page.goto('/#/lesson/s1-05?sim=perfect');
+    await page.goto('/#/lesson/s1b-04?sim=perfect');
     await toYouDo(page);
     await btn(page, 'Sing along').click();
     await expect(btn(page, 'Stop')).toBeVisible();
@@ -103,7 +103,7 @@ test.describe('lesson recovery', () => {
 
   test('sound paused before a run: the run button reports it and recovers', async ({ page }) => {
     await seed(page);
-    await page.goto('/#/lesson/s1-05?sim=perfect');
+    await page.goto('/#/lesson/s1b-04?sim=perfect');
     await btn(page, 'Start').click();
     await expect(btn(page, 'Play')).toBeVisible();
     await hook(page, 'suspendAudio');
@@ -193,7 +193,7 @@ async function checkFits(page: Page, running: boolean, graded: boolean) {
   await page.setViewportSize({ width: 1280, height: 800 });
 }
 
-for (const id of ['s1-05', 's3-01', 's3-04']) {
+for (const id of ['s1b-04', 's3-01', 's3-04']) {
   test(`run fits the window: ${id}`, async ({ page }) => {
     test.setTimeout(300_000);
     await seed(page);
@@ -226,7 +226,7 @@ for (const id of ['s1-05', 's3-01', 's3-04']) {
 test('legend: I do shows only "target"; You do and results show both', async ({ page }) => {
   test.setTimeout(180_000);
   await seed(page);
-  await page.goto('/#/lesson/s1-05?sim=perfect');
+  await page.goto('/#/lesson/s1b-04?sim=perfect');
   await btn(page, 'Start').click();
   await expect(page.getByTestId('legend-target')).toHaveText('target');
   await expect(page.getByTestId('legend-you')).toHaveCount(0);
@@ -325,8 +325,8 @@ test('import prompt is boxed, in view; Merge is primary and Replace is danger', 
   await page.goto('/#/settings');
   const incoming = stored({
     progress: {
-      's1-01': { passed: true, bestScore: 1, attempts: 2, lastAttemptAt: '2025-02-02' },
-      's1-02': { passed: false, bestScore: 0.5, attempts: 1, lastAttemptAt: '2025-02-02' },
+      's1b-01': { passed: true, bestScore: 1, attempts: 2, lastAttemptAt: '2025-02-02' },
+      's1b-02': { passed: false, bestScore: 0.5, attempts: 1, lastAttemptAt: '2025-02-02' },
     },
   });
   await page.getByTestId('import-file').setInputFiles({
@@ -354,6 +354,6 @@ test('production build: Settings shows "Open the tuner" but not the other develo
 
 test('Home keeps ?sim= from the lesson screen', async ({ page }) => {
   await seed(page);
-  await page.goto('/#/lesson/s1-05?sim=perfect');
+  await page.goto('/#/lesson/s1b-04?sim=perfect');
   await expect(page.getByRole('link', { name: 'Home' })).toHaveAttribute('href', /sim=perfect/);
 });

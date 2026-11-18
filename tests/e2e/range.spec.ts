@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 test('first launch opens Home; the range wizard completes and persists', async ({ page }) => {
   await page.goto('/#/?sim=range:45,64');
   await expect(page.getByTestId('home-range')).toHaveText('Your range: not set yet');
-  await expect(page.getByTestId('status-s1-01')).toHaveText('Find your range first');
+  await expect(page.getByTestId('status-s1a-01')).toHaveText('Find your range first');
   await expect(page.getByRole('link', { name: 'Load it in Settings' })).toBeVisible();
   await page.getByRole('link', { name: 'Find my range' }).click();
   await expect(page.getByRole('heading', { name: 'Vocal Range Assessment' })).toBeVisible();

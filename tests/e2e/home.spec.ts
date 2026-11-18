@@ -35,34 +35,34 @@ async function doLesson(page: Page) {
 test('home lists lessons; perfect run shows passed 100% and persists', async ({ page }) => {
   await seed(page);
   await page.goto('/#/?sim=perfect');
-  await expect(page.getByTestId('stage-1-count')).toHaveText('0 of 8 passed');
-  await expect(page.getByTestId('continue-card')).toContainText('One note, three times');
-  await page.getByTestId('lesson-s1-01').click();
+  await expect(page.getByTestId('stage-2-count')).toHaveText('0 of 8 passed');
+  await expect(page.getByTestId('continue-card')).toContainText('Find one note');
+  await page.getByTestId('lesson-s2-01').click();
   await doLesson(page);
   await expect(page.getByTestId('results-verdict')).toHaveText('Passed');
   await page.getByRole('link', { name: 'Home' }).first().click();
-  await expect(page.getByTestId('status-s1-01')).toContainText('Passed');
-  await expect(page.getByTestId('status-s1-01')).toContainText('100%');
-  await expect(page.getByTestId('stage-1-count')).toHaveText('1 of 8 passed');
+  await expect(page.getByTestId('status-s2-01')).toContainText('Passed');
+  await expect(page.getByTestId('status-s2-01')).toContainText('100%');
+  await expect(page.getByTestId('stage-2-count')).toHaveText('1 of 8 passed');
   await page.reload();
-  await expect(page.getByTestId('status-s1-01')).toContainText('100%');
+  await expect(page.getByTestId('status-s2-01')).toContainText('100%');
 });
 
 test('silent run shows Best 0%', async ({ page }) => {
   await seed(page);
   await page.goto('/#/?sim=silent');
-  await page.getByTestId('lesson-s1-01').click();
+  await page.getByTestId('lesson-s2-01').click();
   await doLesson(page);
   await page.getByRole('link', { name: 'Home' }).first().click();
-  await expect(page.getByTestId('status-s1-01')).toContainText('Best 0%');
+  await expect(page.getByTestId('status-s2-01')).toContainText('Best 0%');
 });
 
 test('small range disables lessons that do not fit', async ({ page }) => {
   await seed(page, 50, 53);
   await page.goto('/#/');
-  await expect(page.getByTestId('lesson-s1-03')).toHaveAttribute('aria-disabled', 'true');
-  await expect(page.getByTestId('status-s1-03')).toContainText("Doesn't fit: needs 4 semitones; your range is 3");
-  await expect(page.getByTestId('lesson-s1-01')).toHaveAttribute('href', /lesson\/s1-01/);
+  await expect(page.getByTestId('lesson-s1b-06')).toHaveAttribute('aria-disabled', 'true');
+  await expect(page.getByTestId('status-s1b-06')).toContainText("Doesn't fit: needs 7 semitones; your range is 3");
+  await expect(page.getByTestId('lesson-s1a-01')).toHaveAttribute('href', /lesson\/s1a-01/);
 });
 
 test('unknown lesson shows not found; settings reset keeps range', async ({ page }) => {
@@ -71,7 +71,7 @@ test('unknown lesson shows not found; settings reset keeps range', async ({ page
   await expect(page.getByText('Lesson not found')).toBeVisible();
   await page.evaluate(() => {
     const d = JSON.parse(localStorage.getItem('tmts.v1')!);
-    d.progress['s1-01'] = { passed: true, bestScore: 1, attempts: 1, lastAttemptAt: 'x' };
+    d.progress['s1b-01'] = { passed: true, bestScore: 1, attempts: 1, lastAttemptAt: 'x' };
     localStorage.setItem('tmts.v1', JSON.stringify(d));
   });
   await page.goto('/#/settings');

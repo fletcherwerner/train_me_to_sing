@@ -1,6 +1,6 @@
 import type { ResolvedExercise } from '../core/exercise/types';
 import { buildTimeline, LEAD_IN_CLICKS } from '../core/exercise/timeline';
-import { now } from './audioEngine';
+import { getAudioContext, now } from './audioEngine';
 import { scheduleClick, stopClicks } from './metronome';
 import { createTonePlayer, type TonePlayer } from './tonePlayer';
 
@@ -10,6 +10,8 @@ export interface PlaybackOptions {
   playMelody: boolean; // false in "You do"
   metronome: boolean;
   playStartNote: boolean; // play the first note for 1 beat before the lead-in
+  /** Echo yourself: the student's own recording plays at the exercise start, in place of the piano melody. */
+  melodyBuffer?: AudioBuffer;
 }
 
 export interface PlaybackHandle {
@@ -45,6 +47,7 @@ export function playExercise(ex: ResolvedExercise, opts: PlaybackOptions): Playb
   if (opts.playMelody) {
     for (const n of ex.notes) player.playNote(n.midi, tl.startSec + n.startSec, n.durationSec);
   }
+  const stopBuffer = opts.melodyBuffer ? scheduleBuffer(opts.melodyBuffer, tl.startSec) : null;
 
   let resolveDone!: () => void;
   const done = new Promise<void>((r) => {
@@ -69,6 +72,7 @@ export function playExercise(ex: ResolvedExercise, opts: PlaybackOptions): Playb
       finished = true;
       window.clearTimeout(timer);
       player.stopAll();
+      stopBuffer?.();
       stopClicks();
       if (current === handle) current = null;
       resolveDone();
@@ -77,4 +81,46 @@ export function playExercise(ex: ResolvedExercise, opts: PlaybackOptions): Playb
   };
   current = handle;
   return handle;
+}
+
+export interface ClipHandle {
+  /** Audio-clock time the clip ends. */
+  endSec: number;
+  stop(): void;
+}
+
+/** Plays one piano note from now for `durationSec`, for the match lessons. Stoppable. */
+export function playNoteClip(midi: number, durationSec: number): ClipHandle {
+  tonePlayer ??= createTonePlayer();
+  const player = tonePlayer;
+  const t = now() + 0.05;
+  player.playNote(midi, t, durationSec);
+  return { endSec: t + durationSec, stop: () => player.stopAll() };
+}
+
+/** Plays a recording (the student's own voice) from now. Stoppable. */
+export function playBufferClip(buffer: AudioBuffer): ClipHandle {
+  const t = now() + 0.05;
+  const stop = scheduleBuffer(buffer, t);
+  return { endSec: t + buffer.duration, stop };
+}
+
+/** Schedules an AudioBuffer on the audio clock. Returns a function that stops it. */
+function scheduleBuffer(buffer: AudioBuffer, atSec: number): () => void {
+  const ctx = getAudioContext();
+  const src = ctx.createBufferSource();
+  src.buffer = buffer;
+  const gain = ctx.createGain();
+  gain.gain.value = 1;
+  src.connect(gain);
+  gain.connect(ctx.destination);
+  src.onended = () => gain.disconnect();
+  src.start(atSec);
+  return () => {
+    try {
+      src.stop();
+    } catch {
+      /* already stopped */
+    }
+  };
 }

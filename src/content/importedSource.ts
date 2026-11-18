@@ -29,7 +29,7 @@ export const importedSource: LessonSource = {
     const out: Lesson[] = [];
     for (const raw of useAppStore.getState().importedLessons) {
       const p = lessonSchema.safeParse(raw);
-      if (p.success) out.push(p.data as Lesson);
+      if (p.success) out.push({ ...(p.data as Lesson), kind: 'melody', levels: false, echo: false });
     }
     return out;
   },
@@ -47,5 +47,8 @@ export function makeImportedLesson(template: ExerciseTemplate, title: string, or
     toleranceId: 't3',
     passScore: 0.8,
     source: 'imported',
+    kind: 'melody',
+    levels: false,
+    echo: false,
   };
 }

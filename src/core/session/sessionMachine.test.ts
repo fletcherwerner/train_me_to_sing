@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { INITIAL_SESSION, reduce, type SessionEvent, type SessionState } from './sessionMachine';
+import { createSession, INITIAL_SESSION, reduce, type SessionEvent, type SessionState } from './sessionMachine';
 import type { AttemptResult } from '../scoring/types';
 
 const result = (score: number): AttemptResult => ({ notes: [], score, passed: score >= 0.8 });
@@ -54,6 +54,65 @@ describe('sessionMachine', () => {
     );
     expect(run(s, { type: 'BACK_TO', step: 'youDo' })).toMatchObject({ step: 'youDo', activity: 'idle' });
     expect(run(s, { type: 'BACK_TO', step: 'iDo' }).step).toBe('iDo');
+  });
+
+  describe('feedback levels', () => {
+    const doYouDo = (s: SessionState, score: number) =>
+      run(s, { type: 'RUN' }, { type: 'RUN_ENDED', result: result(score) }, { type: 'SHOW_RESULTS' });
+    const atYouDo = (level: 'learn' | 'practise' | 'prove') => {
+      let s = run(createSession(true, level), { type: 'BEGIN' });
+      if (s.step === 'iDo') s = { ...s, step: 'youDo' };
+      return s;
+    };
+
+    it('starts Learn at I do, and Practise and Prove at You do', () => {
+      expect(run(createSession(true), { type: 'BEGIN' })).toMatchObject({ level: 'learn', step: 'iDo' });
+      expect(run(createSession(true, 'practise'), { type: 'BEGIN' })).toMatchObject({ level: 'practise', step: 'youDo' });
+      expect(run(createSession(true, 'prove'), { type: 'BEGIN' })).toMatchObject({ level: 'prove', step: 'youDo' });
+    });
+
+    it('Learn -> Practise -> Prove unlock on passes', () => {
+      let s = doYouDo(atYouDo('learn'), 1);
+      s = run(s, { type: 'ADVANCE' });
+      expect(s).toMatchObject({ level: 'practise', step: 'youDo', youDoResult: null, activity: 'idle' });
+      s = run(doYouDo(s, 0.9), { type: 'ADVANCE' });
+      expect(s).toMatchObject({ level: 'prove', step: 'youDo' });
+    });
+
+    it('a failed attempt stays at the level', () => {
+      for (const level of ['learn', 'practise', 'prove'] as const) {
+        const failed = doYouDo(atYouDo(level), 0.2);
+        expect(reduce(failed, { type: 'ADVANCE' })).toBe(failed);
+        expect(failed.level).toBe(level);
+      }
+    });
+
+    it('a pass at Prove does not advance further', () => {
+      const s = doYouDo(atYouDo('prove'), 1);
+      expect(reduce(s, { type: 'ADVANCE' })).toBe(s);
+    });
+
+    it('steps down on request, to Learn at I do', () => {
+      const prove = atYouDo('prove');
+      const practise = run(prove, { type: 'STEP_DOWN' });
+      expect(practise).toMatchObject({ level: 'practise', step: 'youDo' });
+      expect(run(practise, { type: 'STEP_DOWN' })).toMatchObject({ level: 'learn', step: 'iDo' });
+      expect(reduce(run(practise, { type: 'STEP_DOWN' }), { type: 'STEP_DOWN' }).level).toBe('learn');
+    });
+
+    it('does not change level while a run is in progress', () => {
+      const running = run(atYouDo('prove'), { type: 'RUN' });
+      expect(reduce(running, { type: 'STEP_DOWN' })).toBe(running);
+    });
+
+    it('levels off: ADVANCE and STEP_DOWN do nothing and the flow is unchanged', () => {
+      const s = doYouDo({ ...INITIAL_SESSION, step: 'youDo' }, 1);
+      expect(s.levels).toBe(false);
+      expect(reduce(s, { type: 'ADVANCE' })).toBe(s);
+      expect(reduce(s, { type: 'STEP_DOWN' })).toBe(s);
+      expect(createSession(false, 'prove')).toMatchObject({ levels: false, level: 'learn' });
+      expect(run(createSession(false), { type: 'BEGIN' }).step).toBe('iDo');
+    });
   });
 
   it('invalid events return the state unchanged', () => {

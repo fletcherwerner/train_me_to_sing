@@ -37,7 +37,7 @@ test('profiles: Ana and Ben keep separate ranges and progress, saved to files', 
   await expect(page.getByTestId('home-profile')).toContainText('Ana');
 
   // 2. Pass a lesson with sim=perfect.
-  await go(page, '#/lesson/s1-01?sim=perfect');
+  await go(page, '#/lesson/s2-01?sim=perfect');
   await page.getByRole('button', { name: 'Start', exact: true }).click();
   await page.getByRole('button', { name: 'Play', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Repeat' })).toBeVisible({ timeout: 25000 });
@@ -53,21 +53,21 @@ test('profiles: Ana and Ben keep separate ranges and progress, saved to files', 
   await createProfile(page, 'Ben');
   await setRange(page);
   await expect(page.getByTestId('home-profile')).toContainText('Ben');
-  await expect(page.getByTestId('stage-1-count')).toHaveText('0 of 8 passed');
+  await expect(page.getByTestId('stage-2-count')).toHaveText('0 of 8 passed');
 
   // 4. Load Ana: range and passed lesson are back.
   await page.getByTestId('home-profile').click();
   await page.getByTestId('profile-ana').click();
   await expect(page.getByTestId('home-profile')).toContainText('Ana');
   await expect(page.getByTestId('home-range')).toContainText('A2 – E4');
-  await expect(page.getByTestId('stage-1-count')).toHaveText('1 of 8 passed');
-  await expect(page.getByTestId('status-s1-01')).toContainText('Passed');
+  await expect(page.getByTestId('stage-2-count')).toHaveText('1 of 8 passed');
+  await expect(page.getByTestId('status-s2-01')).toContainText('Passed');
 
   // 5. ana.json holds the passed lesson.
   const anaFile = path.join(E2E_PROFILES_DIR, 'ana.json');
   await expect.poll(() => existsSync(anaFile)).toBe(true);
   const ana = JSON.parse(readFileSync(anaFile, 'utf8'));
-  expect(ana.data.progress['s1-01'].passed).toBe(true);
+  expect(ana.data.progress['s2-01'].passed).toBe(true);
   expect(ana.data.range.lowMidi).toBe(45);
   const ben = JSON.parse(readFileSync(path.join(E2E_PROFILES_DIR, 'ben.json'), 'utf8'));
   expect(ben.data.progress).toEqual({});

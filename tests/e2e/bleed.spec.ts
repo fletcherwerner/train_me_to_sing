@@ -18,7 +18,7 @@ test.setTimeout(90_000);
 
 async function iDoThenWeDo(page: Page, sim: string) {
   await seed(page);
-  await page.goto(`/#/lesson/s1-05?sim=${sim}`);
+  await page.goto(`/#/lesson/s1b-04?sim=${sim}`);
   await page.getByRole('button', { name: 'Start', exact: true }).click();
   await page.getByRole('button', { name: 'Play', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Repeat' })).toBeVisible({ timeout: 25000 });
@@ -34,7 +34,7 @@ async function iDoThenWeDo(page: Page, sim: string) {
 
 test('sim=bleed: piano only counts for nothing and the notice shows', async ({ page }) => {
   await iDoThenWeDo(page, 'bleed');
-  await expect(page.getByTestId('practice-line')).toContainText('0 of 5 notes');
+  await expect(page.getByTestId('practice-line')).toContainText('0 of 3 notes');
   await expect(page.getByTestId('bleed-notice')).toBeVisible();
   const d = await page.getByTestId('graph-sung').last().getAttribute('d');
   // At most one stray dot (the simulator looks one frame ahead of a note edge); no line following the piano.
@@ -42,12 +42,12 @@ test('sim=bleed: piano only counts for nothing and the notice shows', async ({ p
 
 test('sim=bleedSing: a singer over the piano is scored', async ({ page }) => {
   await iDoThenWeDo(page, 'bleedSing');
-  await expect(page.getByTestId('practice-line')).toContainText('5 of 5 notes');
+  await expect(page.getByTestId('practice-line')).toContainText('3 of 3 notes');
   await expect(page.getByTestId('bleed-notice')).toBeVisible();
 });
 
 test('sim=perfect: unchanged and no notice', async ({ page }) => {
   await iDoThenWeDo(page, 'perfect');
-  await expect(page.getByTestId('practice-line')).toContainText('5 of 5 notes');
+  await expect(page.getByTestId('practice-line')).toContainText('3 of 3 notes');
   await expect(page.getByTestId('bleed-notice')).toHaveCount(0);
 });
