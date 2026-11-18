@@ -455,6 +455,27 @@ The sideways-scroll check passed on every screen at phone size.
 - `comms/E14/turn-02/screenshots/match3-silent-results-laptop.png`
 - `comms/E14/turn-02/screenshots/match3-silent-results-phone.png`
 
+## E15 — Daily practice: session, spaced mastery, review, onset coaching
+
+Approved after turn 3, 2026-11-18. Review: `comms/E15/turn-03/ui-review.md`.
+
+### Not verified by the UI reviewer
+
+- Audio of the glides and the lead-in clicks.
+- The real microphone and the iPhone itself.
+- New-pattern, review and results states, export and import, dark mode.
+
+### Screens reviewed
+
+| Screen / state | Laptop | iPhone | Screenshot files |
+|----------------|--------|--------|------------------|
+| Warm-up running | OK | OK (fits 852 px) | `screenshots/laptop-glide-run.png`, `screenshots/phone-glide-run.png` |
+
+### Screenshots
+
+- `comms/E15/turn-03/screenshots/laptop-glide-run.png`
+- `comms/E15/turn-03/screenshots/phone-glide-run.png`
+
 ## S01 — Spike: local profiles
 
 Approved after turn 1, 2026-11-16. Review: `comms/S01/turn-01/ui-review.md`.
