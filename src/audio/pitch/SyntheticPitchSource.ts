@@ -2,9 +2,12 @@ import { now, setLoseMicHook } from '../audioEngine';
 import type { PitchFrame, PitchSource } from './PitchSource';
 
 export type SynthBehaviour = (tSec: number) => number | null;
+/** Optional per-frame input level; default 0.1. */
+export type SynthRms = (tSec: number) => number;
 
 export function createSyntheticPitchSource(
   behaviour: SynthBehaviour,
+  rmsAt?: SynthRms,
 ): PitchSource & { loseForTest(): void } {
   const listeners = new Set<(f: PitchFrame) => void>();
   const lostListeners = new Set<() => void>();
@@ -27,7 +30,7 @@ export function createSyntheticPitchSource(
       tSec: t,
       midi,
       clarity: 1,
-      rms: 0.1,
+      rms: rmsAt ? rmsAt(t + elapsed) : 0.1,
     };
     for (const cb of listeners) cb(frame);
     animFrameId = requestAnimationFrame(tick);
