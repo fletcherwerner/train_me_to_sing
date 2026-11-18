@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ResolvedExercise } from '../../core/exercise/types';
 import type { ToleranceProfile } from '../../core/scoring/types';
 import type { PlaybackHandle } from '../../audio/exercisePlayer';
@@ -20,20 +20,31 @@ export function useLiveAttempt(
   handle: PlaybackHandle | null,
   exercise: ResolvedExercise | null,
   tolerance: ToleranceProfile,
+  /** When set, frames quieter than this count as no voice while a note is playing (piano bleed). */
+  gateRms: number | null = null,
 ): LiveAttempt {
   const position = usePlaybackPosition(handle, exercise, true);
   const [sungMidi, setSungMidi] = useState<number | null>(null);
   const active = handle !== null && position.phase !== 'done';
+
+  const idx = active ? position.currentNoteIndex : null;
+  const idxRef = useRef<number | null>(null);
+  idxRef.current = idx;
+  const gateRef = useRef<number | null>(gateRms);
+  gateRef.current = gateRms;
 
   useEffect(() => {
     if (!source || !active) {
       setSungMidi(null);
       return;
     }
-    return source.subscribe((f) => setSungMidi((prev) => (prev === f.midi ? prev : f.midi)));
+    return source.subscribe((f) => {
+      const g = gateRef.current;
+      const midi = g !== null && idxRef.current !== null && f.rms < g ? null : f.midi;
+      setSungMidi((prev) => (prev === midi ? prev : midi));
+    });
   }, [source, active]);
 
-  const idx = active ? position.currentNoteIndex : null;
   const targetMidi = exercise && idx !== null ? exercise.notes[idx].midi : null;
   const shown = active ? sungMidi : null;
   const cents = shown !== null && targetMidi !== null ? centsBetween(shown, targetMidi) : null;

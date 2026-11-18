@@ -17,6 +17,7 @@ import type { Lesson as LessonData } from '../../content/types';
 import { displayRange, fit } from '../../core/exercise/fit';
 import { phraseFor, slicePhrase } from '../../core/exercise/phrases';
 import { midiToName } from '../../core/music/notes';
+import { applyGate, bleedGate, measureBleed } from '../../core/scoring/bleed';
 import { evaluateAttempt } from '../../core/scoring/evaluate';
 import { getTolerance } from '../../core/scoring/tolerance';
 import { pickTip } from '../../core/scoring/tips';
@@ -110,6 +111,8 @@ function LessonRun({
   const handleRef = useRef<PlaybackHandle | null>(null);
   const sourceRef = useRef<PitchSource | null>(null);
   const runRef = useRef(0);
+  /** Piano level at the microphone, measured in the last I do play of this visit. null = not measured. */
+  const [bleedRms, setBleedRms] = useState<number | null>(null);
 
   const tol = getTolerance(lesson.toleranceId);
   const fitted = useMemo(() => fit(lesson.exercise, range), [lesson, range]);
@@ -130,7 +133,13 @@ function LessonRun({
     () => (exercise && phrases && activePhraseIdx !== null ? slicePhrase(exercise, phrases[activePhraseIdx]) : exercise),
     [exercise, activePhraseIdx, phrases],
   );
-  const live = useLiveAttempt(graded ? source : null, handle, playEx, tol);
+  const live = useLiveAttempt(
+    graded ? source : null,
+    handle,
+    playEx,
+    tol,
+    step === 'weDo' ? bleedGate(bleedRms) : null,
+  );
 
   useWakeLock(running);
 
@@ -269,9 +278,17 @@ function LessonRun({
     handleRef.current = h;
     setHandle(h);
     let rec: ReturnType<typeof recordFrames> | null = null;
-    if (thisStep !== 'iDo' && sourceRef.current) {
-      registerSimExercise(ex, h.startSec);
-      rec = recordFrames(sourceRef.current, h.startSec, h.endSec, latencyMs / 1000);
+    if (sourceRef.current) {
+      registerSimExercise(ex, h.startSec, thisStep !== 'youDo', thisStep !== 'iDo');
+      // We do: gate frames as they arrive so the live red line does not follow the piano.
+      const gate = thisStep === 'weDo' ? bleedGate(bleedRms) : null;
+      rec = recordFrames(
+        sourceRef.current,
+        h.startSec,
+        h.endSec,
+        latencyMs / 1000,
+        gate === null ? undefined : (f) => applyGate([f], ex.notes, gate)[0],
+      );
       setLiveFrames(rec.frames);
     }
     await h.done;
@@ -287,9 +304,15 @@ function LessonRun({
       setNotice(SOUND_STOPPED_MSG);
       return;
     }
-    if (thisStep === 'youDo') setYouDoFrames(rec ? rec.frames : null);
-    if (thisStep === 'weDo') setWeDoFrames(rec ? rec.frames : null);
-    const result = rec ? evaluateAttempt(ex, rec.frames, tol, lesson.passScore) : undefined;
+    if (thisStep === 'iDo' && rec) setBleedRms(measureBleed(rec.frames, ex.notes));
+    const frames = rec
+      ? thisStep === 'weDo'
+        ? applyGate(rec.frames, ex.notes, bleedGate(bleedRms))
+        : rec.frames
+      : null;
+    if (thisStep === 'youDo') setYouDoFrames(frames);
+    if (thisStep === 'weDo') setWeDoFrames(frames);
+    const result = thisStep !== 'iDo' && frames ? evaluateAttempt(ex, frames, tol, lesson.passScore) : undefined;
     dispatch({ type: 'RUN_ENDED', result });
     if (thisStep === 'youDo' && !result) setNotice('We could not hear the microphone for that run. Press Try again.');
     if (thisStep === 'youDo' && result) {
@@ -441,6 +464,11 @@ function LessonRun({
       <p className="lesson-instruction" data-testid="instruction">
         {INSTRUCTIONS[step]}
       </p>
+      {step === 'weDo' && bleedGate(bleedRms) > 0.02 ? (
+        <p className="tuner-error" role="alert" data-testid="bleed-notice">
+          The microphone can hear the piano. Use headphones, or sing louder than the piano.
+        </p>
+      ) : null}
       <BeatIndicator
         beatsPerBar={ex.beatsPerBar}
         beatInBar={live.position.beatInBar}

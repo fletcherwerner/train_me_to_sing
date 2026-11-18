@@ -575,3 +575,41 @@ Approved after turn 1, 2026-11-18. Review: `comms/S05/turn-01/ui-review.md`.
 - `comms/S05/turn-01/screenshots/home-phone.png`
 - `comms/S05/turn-01/screenshots/lesson-x-laptop.png`
 - `comms/S05/turn-01/screenshots/lesson-x-phone.png`
+
+## S06 — Spike: ignore the piano leaking into the microphone
+
+Approved after turn 2, 2026-11-18. Review: `comms/S06/turn-02/ui-review.md`.
+
+### Not verified by the UI reviewer
+
+Review script steps with real speakers and a microphone are left for the owner. These are whether the gate level suits the owner's laptop, whether quiet singing still counts, and the no-notice behaviour with headphones. I used only the simulator.
+
+### Screens reviewed
+
+| Screen / state | Laptop | iPhone | Screenshot files |
+|----------------|--------|--------|------------------|
+| We do running, sim=bleed | OK | OK | `screenshots/laptop-bleed-wedo-running.png`, `screenshots/iphone-bleed-wedo-running.png` |
+| We do running, sim=perfect | OK | OK | `screenshots/laptop-perfect-wedo-running.png`, `screenshots/iphone-perfect-wedo-running.png` |
+| We do finished, sim=bleed | OK | Minor | `screenshots/laptop-bleed-wedo-done.png`, `screenshots/iphone-bleed-wedo-done.png` |
+| We do ready, sim=bleed (notice) | OK | OK | `screenshots/laptop-bleed-wedo-ready.png`, `screenshots/iphone-bleed-wedo-ready.png` |
+
+### Screenshots
+
+- `comms/S06/turn-02/screenshots/iphone-bleed-wedo-done.png`
+- `comms/S06/turn-02/screenshots/iphone-bleed-wedo-ready.png`
+- `comms/S06/turn-02/screenshots/iphone-bleed-wedo-running.png`
+- `comms/S06/turn-02/screenshots/iphone-bleedSing-wedo-done.png`
+- `comms/S06/turn-02/screenshots/iphone-bleedSing-wedo-ready.png`
+- `comms/S06/turn-02/screenshots/iphone-bleedSing-wedo-running.png`
+- `comms/S06/turn-02/screenshots/iphone-perfect-wedo-done.png`
+- `comms/S06/turn-02/screenshots/iphone-perfect-wedo-ready.png`
+- `comms/S06/turn-02/screenshots/iphone-perfect-wedo-running.png`
+- `comms/S06/turn-02/screenshots/laptop-bleed-wedo-done.png`
+- `comms/S06/turn-02/screenshots/laptop-bleed-wedo-ready.png`
+- `comms/S06/turn-02/screenshots/laptop-bleed-wedo-running.png`
+- `comms/S06/turn-02/screenshots/laptop-bleedSing-wedo-done.png`
+- `comms/S06/turn-02/screenshots/laptop-bleedSing-wedo-ready.png`
+- `comms/S06/turn-02/screenshots/laptop-bleedSing-wedo-running.png`
+- `comms/S06/turn-02/screenshots/laptop-perfect-wedo-done.png`
+- `comms/S06/turn-02/screenshots/laptop-perfect-wedo-ready.png`
+- `comms/S06/turn-02/screenshots/laptop-perfect-wedo-running.png`

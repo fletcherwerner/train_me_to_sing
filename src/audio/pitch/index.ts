@@ -1,7 +1,7 @@
 import { createMicPitchSource } from './MicPitchSource';
 import { constantPitch, createSyntheticPitchSource } from './SyntheticPitchSource';
 import type { PitchSource } from './PitchSource';
-import { isSimBehaviour, simBehaviour } from './simSinger';
+import { isSimBehaviour, simBehaviour, simRms } from './simSinger';
 
 export { registerSimExercise, clearSimExercise } from './simSinger';
 export { recordFrames } from './frameRecorder';
@@ -37,7 +37,7 @@ export function createPitchSource(): PitchSource {
   }
 
   if (isSimBehaviour(sim)) {
-    return createSyntheticPitchSource(simBehaviour(sim));
+    return createSyntheticPitchSource(simBehaviour(sim), simRms(sim));
   }
 
   if (sim?.startsWith('range:')) {
