@@ -18,7 +18,7 @@ Fixed the blocking laptop finding by capping the warm-up piano at 150 px tall (`
 |---------|--------|
 | `npm run lint` | pass |
 | `npm test` | pass (440 of 440) |
-| `npm run test:e2e` | 79 of 80 on the full run. `stage1.spec.ts` "echo yourself … (phone)" failed once. It passed on a rerun of that file (5 of 5). It looks like a timing flake in a test this turn did not touch. |
+| `npm run test:e2e` | fail (79 of 80 on the full run). `stage1.spec.ts` "echo yourself … (phone)" failed once. It passed on a rerun of that file (5 of 5). It looks like a timing flake in a test this turn did not touch. |
 | `npm run build` | pass |
 
 ## Response to findings
