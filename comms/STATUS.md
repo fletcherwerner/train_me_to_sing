@@ -23,5 +23,5 @@ Maintained by the orchestrator. Status is one of: `Not started`, `In progress`, 
 | S04 | Spike: narrower pitch axis on the graph | Approved | 1 | APPROVED / APPROVED | 2026-11-18 |
 | S05 | Spike: open on Home, not the range test | Approved | 1 | APPROVED / APPROVED | 2026-11-18 |
 | S06 | Spike: ignore the piano leaking into the microphone | Approved | 2 | APPROVED / APPROVED | 2026-11-18 |
-| E14 | Beginner path: new Stage 1, feedback levels, echo yourself | Not started | 0 | — | — |
+| E14 | Beginner path: new Stage 1, feedback levels, echo yourself | In progress | 0 | — | 2026-11-18 |
 | E15 | Daily practice: session, spaced mastery, review, onset coaching | Not started | 0 | — | — |
