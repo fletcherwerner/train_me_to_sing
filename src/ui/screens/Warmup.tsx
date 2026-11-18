@@ -130,13 +130,15 @@ export function Warmup({ range, onDone }: { range: StudentRange; onDone: () => v
       />
       <PitchGraph exercise={ex} range={range} startSec={handle?.startSec ?? null} frames={frames} showSung />
       <GraphLegend />
-      <PianoKeyboard
-        lowMidi={disp.lowMidi}
-        highMidi={disp.highMidi}
-        targetMidi={live.targetMidi}
-        sungMidi={live.sungMidi}
-        rangeMarkers={{ lowMidi: range.lowMidi, highMidi: range.highMidi }}
-      />
+      <div className="warmup-piano">
+        <PianoKeyboard
+          lowMidi={disp.lowMidi}
+          highMidi={disp.highMidi}
+          targetMidi={live.targetMidi}
+          sungMidi={live.sungMidi}
+          rangeMarkers={{ lowMidi: range.lowMidi, highMidi: range.highMidi }}
+        />
+      </div>
       <p className="lesson-notes" data-testid="warmup-note-labels">
         Target: {live.targetMidi === null ? '—' : midiToName(live.targetMidi)} · Sung:{' '}
         {live.sungMidi === null ? '—' : midiToName(live.sungMidi)}

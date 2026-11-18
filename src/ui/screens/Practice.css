@@ -16,5 +16,6 @@
 .practice-bar__actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .practice-note { margin: 8px 12px; padding: 8px 12px; border: 2px solid currentColor; border-radius: 10px; }
 .practice-part { padding: 0 12px 12px; }
+.warmup-piano .piano { max-height: 150px; }
 .practice-footer { margin: 16px 12px; }
 .practice-wrapup ul { padding-left: 20px; }
