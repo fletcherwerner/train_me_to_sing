@@ -24,6 +24,11 @@ async function iDoThenWeDo(page: Page, sim: string) {
   await expect(page.getByRole('button', { name: 'Repeat' })).toBeVisible({ timeout: 25000 });
   await page.getByRole('button', { name: 'Next' }).click();
   await page.getByRole('button', { name: 'Sing along' }).click();
+  if (sim === 'bleed') {
+    // Live readout must not follow the piano while it plays.
+    await page.waitForTimeout(3000);
+    await expect(page.getByTestId('note-labels')).toContainText('Sung: —');
+  }
   await expect(page.getByTestId('practice-line')).toContainText('Practice run:', { timeout: 25000 });
 }
 

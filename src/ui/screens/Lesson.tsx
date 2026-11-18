@@ -133,7 +133,13 @@ function LessonRun({
     () => (exercise && phrases && activePhraseIdx !== null ? slicePhrase(exercise, phrases[activePhraseIdx]) : exercise),
     [exercise, activePhraseIdx, phrases],
   );
-  const live = useLiveAttempt(graded ? source : null, handle, playEx, tol);
+  const live = useLiveAttempt(
+    graded ? source : null,
+    handle,
+    playEx,
+    tol,
+    step === 'weDo' ? bleedGate(bleedRms) : null,
+  );
 
   useWakeLock(running);
 
