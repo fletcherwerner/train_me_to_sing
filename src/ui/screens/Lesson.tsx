@@ -633,7 +633,11 @@ function LessonRun({
         </>
       ) : null}
       <p className="lesson-instruction" data-testid="instruction">
-        {INSTRUCTIONS[step]}
+        {step === 'youDo' && session.levels && level === 'prove'
+          ? running
+            ? 'Sing it from memory.'
+            : 'Your turn. Start on the lit note, then sing from memory.'
+          : INSTRUCTIONS[step]}
       </p>
       {step === 'weDo' && bleedGate(bleedRms) > 0.02 ? (
         <p className="tuner-error" role="alert" data-testid="bleed-notice">

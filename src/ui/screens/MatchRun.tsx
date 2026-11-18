@@ -417,7 +417,7 @@ export function MatchRun({
         <p>Pass mark: {Math.round(lesson.passScore * 100)}%</p>
         <p className="lesson-tip" data-testid="results-tip">
           <strong>Tip:</strong>{' '}
-          {firstMiss ? describeMatchMiss(firstMiss.reason) : 'Nice work. Try again with a slightly different note.'}
+          {firstMiss ? describeMatchMiss(firstMiss.reason) : 'Every note matched. Move on to the next lesson, or try again to match faster.'}
         </p>
         <ol className="lesson-misses" data-testid="match-results">
           {outcomes.map((o, i) => (
