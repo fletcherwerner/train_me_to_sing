@@ -37,7 +37,8 @@ test('sim=perfect: Stage 3 listed; We do Line 1 only; complete s3-01', async ({ 
   await expect(page.getByTestId('results-verdict')).toHaveText('Passed', { timeout: 60000 });
   await expect(page.getByTestId('results-score')).toContainText('17 of 17');
   await page.getByRole('link', { name: 'Home' }).first().click();
-  await expect(page.getByTestId('stage-3-count')).toHaveText('1 of 5 passed');
+  await expect(page.getByTestId('stage-3-count')).toHaveText('0 of 5 passed');
+  await expect(page.getByTestId('status-s3-01')).toContainText('Passed once');
 });
 
 test('sim=silent: results group misses by line', async ({ page }) => {

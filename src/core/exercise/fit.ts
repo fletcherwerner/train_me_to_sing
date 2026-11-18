@@ -10,8 +10,14 @@ export interface FitOptions {
 }
 
 function offsetSpan(template: ExerciseTemplate): { minOff: number; maxOff: number } {
-  const offsets = template.notes.map((n) => n.offset);
+  const offsets = template.notes.flatMap((n) => (n.glideToOffset !== undefined ? [n.offset, n.glideToOffset] : [n.offset]));
   return { minOff: Math.min(...offsets), maxOff: Math.max(...offsets) };
+}
+
+/** How many different tonics keep every note inside the range. */
+export function tonicCount(template: ExerciseTemplate, range: StudentRange): number {
+  const { minOff, maxOff } = offsetSpan(template);
+  return Math.max(0, range.highMidi - maxOff - (range.lowMidi - minOff) + 1);
 }
 
 /**
@@ -22,7 +28,7 @@ export function pickTonic(
   template: ExerciseTemplate,
   range: StudentRange,
   rng: () => number,
-  avoid?: number | null,
+  avoid?: number | number[] | null,
 ): number | null {
   const { minOff, maxOff } = offsetSpan(template);
   const lo = range.lowMidi - minOff;
@@ -30,14 +36,15 @@ export function pickTonic(
   if (hi < lo) return null;
   const all: number[] = [];
   for (let t = lo; t <= hi; t++) all.push(t);
-  const choices = avoid != null && all.length > 1 ? all.filter((t) => t !== avoid) : all;
+  const avoided = avoid == null ? [] : Array.isArray(avoid) ? avoid : [avoid];
+  const kept = all.filter((t) => !avoided.includes(t));
+  // When every key is avoided, a key that was used is better than none.
+  const choices = kept.length > 0 ? kept : all;
   return choices[Math.min(choices.length - 1, Math.floor(rng() * choices.length))];
 }
 
 export function fit(template: ExerciseTemplate, range: StudentRange, opts?: FitOptions): FitResult {
-  const offsets = template.notes.map((n) => n.offset);
-  const minOff = Math.min(...offsets);
-  const maxOff = Math.max(...offsets);
+  const { minOff, maxOff } = offsetSpan(template);
   const span = maxOff - minOff;
   const size = range.highMidi - range.lowMidi;
   if (span > size) {
@@ -55,6 +62,7 @@ export function fit(template: ExerciseTemplate, range: StudentRange, opts?: FitO
     startSec: n.startBeat * secPerBeat,
     durationSec: n.durationBeats * secPerBeat,
     ...(n.lyric !== undefined ? { lyric: n.lyric } : {}),
+    ...(n.glideToOffset !== undefined ? { glideToMidi: tonicMidi + n.glideToOffset } : {}),
   }));
   const totalSec = notes.reduce((m, n) => Math.max(m, n.startSec + n.durationSec), 0);
   return {

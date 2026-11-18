@@ -1,13 +1,24 @@
 import { z } from 'zod';
-import { storedDataSchema, type StoredData } from './schema';
+import { migrateProgress, storedDataBaseSchema, type ProgressMap, type StoredData } from './schema';
 
-/** The part of StoredData a profile carries. The latency offset belongs to the device. */
-export const profileDataSchema = z.object({
-  range: storedDataSchema.shape.range,
-  progress: storedDataSchema.shape.progress,
-  importedLessons: storedDataSchema.shape.importedLessons,
-});
-export type ProfileData = z.infer<typeof profileDataSchema>;
+/**
+ * The part of StoredData a profile carries. The latency offset belongs to the device.
+ * Progress written before version 2 (no proofs) is migrated when read.
+ */
+export const profileDataSchema = z
+  .object({
+    range: storedDataBaseSchema.shape.range,
+    progress: storedDataBaseSchema.shape.progress,
+    importedLessons: storedDataBaseSchema.shape.importedLessons,
+  })
+  .transform(
+    (d): ProfileData => ({ range: d.range, progress: migrateProgress(d.progress), importedLessons: d.importedLessons }),
+  );
+export interface ProfileData {
+  range: StoredData['range'];
+  progress: ProgressMap;
+  importedLessons: unknown[];
+}
 
 export const PROFILE_ID_PATTERN = /^[a-z0-9-]{1,40}$/;
 export const MAX_NAME_LENGTH = 40;

@@ -33,7 +33,8 @@ test('sim=perfect: complete s2-03; home shows Stage 2 1 of 8 passed', async ({ p
   await page.getByRole('button', { name: 'Start', exact: true }).click();
   await expect(page.getByTestId('results-verdict')).toHaveText('Passed', { timeout: 40000 });
   await page.getByRole('link', { name: 'Home' }).first().click();
-  await expect(page.getByTestId('stage-2-count')).toHaveText('1 of 8 passed');
+  await expect(page.getByTestId('stage-2-count')).toHaveText('0 of 8 passed');
+  await expect(page.getByTestId('status-s2-03')).toContainText('Passed once');
 });
 
 test('settings slider stores the offset; calibrate screen is reachable', async ({ page }) => {

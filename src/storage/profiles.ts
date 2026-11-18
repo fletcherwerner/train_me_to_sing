@@ -135,7 +135,7 @@ export function createProfileSync(opts: SyncOptions = {}): ProfileSync {
   const apply = (data: ProfileData) => {
     applying = true;
     try {
-      const incoming: StoredData = { version: 1, settings: { latencyOffsetMs: 0 }, ...data };
+      const incoming: StoredData = { version: 2, settings: { latencyOffsetMs: 0 }, ...data };
       // importProgress applies replaceData, which keeps the device's latency offset.
       store.getState().importProgress(incoming, 'replace');
     } finally {

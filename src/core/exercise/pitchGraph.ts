@@ -15,6 +15,8 @@ export interface Segment {
   startSec: number;
   endSec: number;
   midi: number;
+  /** Pitch at `endSec`. Differs from `midi` for a glide, which is drawn as a sloped line. */
+  endMidi: number;
 }
 
 export interface SungPoint {
@@ -38,8 +40,10 @@ export function graphPitchBounds(range: StudentRange, notes: ResolvedNote[], mar
   let lo = Infinity;
   let hi = -Infinity;
   for (const n of notes) {
-    if (n.midi < lo) lo = n.midi;
-    if (n.midi > hi) hi = n.midi;
+    for (const m of n.glideToMidi !== undefined ? [n.midi, n.glideToMidi] : [n.midi]) {
+      if (m < lo) lo = m;
+      if (m > hi) hi = m;
+    }
   }
   return { lowMidi: lo - margin, highMidi: hi + margin };
 }
@@ -73,7 +77,12 @@ export function clampedMidiToY(midi: number, bounds: PitchBounds, heightPx: numb
 }
 
 export function targetSegments(notes: ResolvedNote[]): Segment[] {
-  return notes.map((n) => ({ startSec: n.startSec, endSec: n.startSec + n.durationSec, midi: n.midi }));
+  return notes.map((n) => ({
+    startSec: n.startSec,
+    endSec: n.startSec + n.durationSec,
+    midi: n.midi,
+    endMidi: n.glideToMidi ?? n.midi,
+  }));
 }
 
 /**

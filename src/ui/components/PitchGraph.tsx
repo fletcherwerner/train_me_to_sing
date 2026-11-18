@@ -205,16 +205,16 @@ export function PitchGraph({ exercise, range, startSec, frames, showSung, clock 
         <line className="pitch-graph__now" x1={nowX} x2={nowX} y1={0} y2={h} />
         <g ref={scrollRef}>
           {segs.map((s, i) => {
-            const y = midiToY(s.midi, bounds, h);
             return (
               <line
                 key={i}
                 className="pitch-graph__target"
                 data-testid="graph-target"
+                data-glide={s.endMidi !== s.midi ? 'true' : undefined}
                 x1={s.startSec * pps}
                 x2={s.endSec * pps}
-                y1={y}
-                y2={y}
+                y1={midiToY(s.midi, bounds, h)}
+                y2={midiToY(s.endMidi, bounds, h)}
               />
             );
           })}
@@ -259,16 +259,16 @@ export function ResultsGraph({ exercise, range, frames }: ResultsGraphProps) {
         <svg width={contentW} height={h} viewBox={`0 0 ${contentW} ${h}`}>
           <GridRows bounds={bounds} width={contentW} height={h} />
           {segs.map((s, i) => {
-            const y = midiToY(s.midi, bounds, h);
             return (
               <line
                 key={i}
                 className="pitch-graph__target"
                 data-testid="graph-target"
+                data-glide={s.endMidi !== s.midi ? 'true' : undefined}
                 x1={s.startSec * pps}
                 x2={s.endSec * pps}
-                y1={y}
-                y2={y}
+                y1={midiToY(s.midi, bounds, h)}
+                y2={midiToY(s.endMidi, bounds, h)}
               />
             );
           })}

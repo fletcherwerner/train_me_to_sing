@@ -1,4 +1,5 @@
 import type { ResolvedExercise } from '../exercise/types';
+import { isScooped } from './onsets';
 import type { AttemptResult, MissReason, NoteResult, ToleranceProfile } from './types';
 
 /** Structural frame type so core does not import from audio. PitchFrame satisfies it. */
@@ -18,11 +19,17 @@ function median(xs: number[]): number {
   return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
 }
 
+export interface EvaluateOptions {
+  /** A note the voice slid into counts as a miss ('scooped'). Otherwise it still counts and is flagged. */
+  scoopIsMiss?: boolean;
+}
+
 export function evaluateAttempt(
   ex: ResolvedExercise,
   frames: ScoredFrame[],
   tol: ToleranceProfile,
   passScore: number,
+  opts: EvaluateOptions = {},
 ): AttemptResult {
   const sorted = [...frames].sort((a, b) => a.tSec - b.tSec);
   const tolSemi = tol.cents / 100;
@@ -89,6 +96,10 @@ export function evaluateAttempt(
       onsetErrorMs = (onset - s) * 1000;
       if (onsetErrorMs < -tol.timingMs) return miss('early', medianCents, heldFraction, onsetErrorMs);
       if (onsetErrorMs > tol.timingMs) return miss('late', medianCents, heldFraction, onsetErrorMs);
+    }
+    if (isScooped(sorted, s, e, n.midi, tolSemi)) {
+      if (opts.scoopIsMiss) return miss('scooped', medianCents, heldFraction, onsetErrorMs);
+      return { ...base, hit: true, medianCents, heldFraction, onsetErrorMs, scooped: true };
     }
     return { ...base, hit: true, medianCents, heldFraction, onsetErrorMs };
   });

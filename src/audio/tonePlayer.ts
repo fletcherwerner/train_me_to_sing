@@ -2,8 +2,8 @@ import { midiToFreq } from '../core/music/notes';
 import { getAudioContext } from './audioEngine';
 
 export interface TonePlayer {
-  /** startSec is on the audio clock. */
-  playNote(midi: number, startSec: number, durationSec: number): void;
+  /** startSec is on the audio clock. With `glideToMidi` the pitch slides linearly to it over the duration. */
+  playNote(midi: number, startSec: number, durationSec: number, glideToMidi?: number): void;
   stopAll(): void;
 }
 
@@ -20,7 +20,7 @@ export function createTonePlayer(): TonePlayer {
   const active = new Set<ActiveNote>();
 
   return {
-    playNote(midi, startSec, durationSec) {
+    playNote(midi, startSec, durationSec, glideToMidi) {
       const ctx = getAudioContext();
       const freq = midiToFreq(midi);
       const end = startSec + durationSec;
@@ -45,6 +45,14 @@ export function createTonePlayer(): TonePlayer {
       sineGain.gain.value = 0.3;
       sine.connect(sineGain);
       sineGain.connect(env);
+
+      if (glideToMidi !== undefined) {
+        const endFreq = midiToFreq(glideToMidi);
+        tri.frequency.setValueAtTime(freq, startSec);
+        tri.frequency.linearRampToValueAtTime(endFreq, end);
+        sine.frequency.setValueAtTime(freq * 2, startSec);
+        sine.frequency.linearRampToValueAtTime(endFreq * 2, end);
+      }
 
       const note: ActiveNote = { oscs: [tri, sine], nodes: [env, sineGain] };
       active.add(note);

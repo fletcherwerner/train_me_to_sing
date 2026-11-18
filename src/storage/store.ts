@@ -2,17 +2,30 @@ import { create } from 'zustand';
 import { dropLegacyProgress, loadData, saveData, type StoredData } from './schema';
 import { flagStage1Rebuilt } from './notices';
 import { maxLevel, unlockedBy } from './level';
+import { todayString } from './today';
+import { addProof, isMastered } from '../core/progress/mastery';
+import { afterReview, initialReview, isDue } from '../core/progress/review';
 import type { Level } from '../core/session/sessionMachine';
 import { mergeData, replaceData } from './exportImport';
 import type { AttemptResult } from '../core/scoring/types';
 import type { Lesson } from '../content/types';
+
+/** Extra facts about an attempt, for lessons that are mastered over two days and two keys. */
+export interface AttemptContext {
+  /** The lesson uses the mastery rule (Stage 1 units B–D and built-in Stages 2–3). */
+  mastery: boolean;
+  /** The key (tonic MIDI) the attempt was sung in. */
+  tonicMidi?: number;
+  /** Only one key fits the student's range, so one key is enough. */
+  singleKey?: boolean;
+}
 
 interface AppStore extends StoredData {
   /** True when the last write to storage failed. */
   saveFailed: boolean;
   setRange: (range: StoredData['range']) => void;
   /** `level` is given for lessons with feedback levels: the level the attempt was made at. */
-  recordAttempt: (lessonId: string, result: AttemptResult, level?: Level) => void;
+  recordAttempt: (lessonId: string, result: AttemptResult, level?: Level, ctx?: AttemptContext) => void;
   resetProgress: () => void;
   addImportedLesson: (lesson: Lesson) => void;
   /** Removes an imported lesson and its progress. */
@@ -38,11 +51,25 @@ export const useAppStore = create<AppStore>((set, get) => {
     ...loadData(),
     saveFailed: false,
     setRange: (range) => commit({ range }),
-    recordAttempt: (lessonId, result, level) => {
+    recordAttempt: (lessonId, result, level, ctx) => {
       const progress = get().progress;
       const old = progress[lessonId];
-      // Lessons with levels: only a pass at Prove passes the lesson; a pass below it unlocks the next level.
-      const passed = level ? (old?.passed ?? false) || (result.passed && level === 'prove') : (old?.passed ?? false) || result.passed;
+      const today = todayString();
+      let proofs = old?.proofs ?? [];
+      let review = old?.review ?? null;
+      let passed: boolean;
+      if (ctx?.mastery) {
+        // Mastery lessons: a pass at Prove (or any pass, where there are no levels) is a proof. Mastered = two days, two keys.
+        const isProve = level === undefined || level === 'prove';
+        const wasMastered = old?.passed ?? false;
+        if (result.passed && isProve) proofs = addProof(proofs, { date: today, tonicMidi: ctx.tonicMidi ?? -1, score: result.score });
+        passed = wasMastered || isMastered({ proofs }, ctx.singleKey ?? false);
+        if (wasMastered && review && isProve && isDue(review, today)) review = afterReview(review, result.passed, today);
+        else if (!wasMastered && passed) review = initialReview(today);
+      } else {
+        // Lessons with levels: only a pass at Prove passes the lesson; a pass below it unlocks the next level.
+        passed = level ? (old?.passed ?? false) || (result.passed && level === 'prove') : (old?.passed ?? false) || result.passed;
+      }
       const unlocked = level ? maxLevel(old?.level, result.passed ? unlockedBy(level) : level) : undefined;
       commit({
         progress: {
@@ -53,6 +80,8 @@ export const useAppStore = create<AppStore>((set, get) => {
             passed,
             lastAttemptAt: new Date().toISOString(),
             ...(unlocked ? { level: unlocked } : {}),
+            proofs,
+            review,
           },
         },
       });

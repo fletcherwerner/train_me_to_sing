@@ -11,6 +11,7 @@ export const SIM_BEHAVIOURS = [
   'silent',
   'bleed',
   'bleedSing',
+  'scoop',
 ] as const;
 export type SimBehaviour = (typeof SIM_BEHAVIOURS)[number];
 
@@ -37,7 +38,18 @@ export function simPitchAt(ex: ResolvedExercise, behaviour: SimBehaviour, rel: n
   const t = behaviour === 'late300' ? rel - 0.3 : rel;
   const note = ex.notes.find((n) => t >= n.startSec && t < n.startSec + n.durationSec);
   if (!note) return null;
+  if (note.glideToMidi !== undefined) {
+    // A glide: the singer follows the line.
+    return note.midi + ((note.glideToMidi - note.midi) * (t - note.startSec)) / note.durationSec;
+  }
   switch (behaviour) {
+    case 'scoop': {
+      // Each note starts a semitone below and reaches the target after 120 ms. A short breath ends the note,
+      // so the next one is a fresh start.
+      const rel = t - note.startSec;
+      if (rel > note.durationSec - 0.05) return null;
+      return rel < 0.12 ? note.midi - 1 + rel / 0.12 : note.midi;
+    }
     case 'flat40':
       return note.midi - 0.4;
     case 'flat70':
