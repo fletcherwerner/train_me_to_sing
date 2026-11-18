@@ -516,3 +516,36 @@ Approved after turn 1, 2026-11-18. Review: `comms/S03/turn-01/ui-review.md`.
 - `comms/S03/turn-01/screenshots/stopped-laptop.png`
 - `comms/S03/turn-01/screenshots/stopped-phone-dark.png`
 - `comms/S03/turn-01/screenshots/stopped-phone.png`
+
+## S04 — Spike: narrower pitch axis on the graph
+
+Approved after turn 1, 2026-11-18. Review: `comms/S04/turn-01/ui-review.md`.
+
+### Not verified by the UI reviewer
+
+- Singing with a real microphone: sharp by a small amount, and the octave-low step in the review script. I used the simulated singer only.
+- Dark mode was not captured. S04 changes no colours.
+- A phone screenshot with the live dashed line caught mid-note. The octaveDown live frame was captured before the first note, so only the results graph shows the dashed line.
+
+### Screens reviewed
+
+| Screen / state | Laptop | iPhone | Screenshot files |
+|----------------|--------|--------|------------------|
+| You do, live graph (octaveDown, flat40, perfect) | OK | OK | `screenshots/laptop-octaveDown-live.png`, `screenshots/phone-flat40-live.png`, `screenshots/*-perfect-live.png` |
+| Results, passed (perfect, flat40) | OK | OK | `screenshots/laptop-perfect-results.png`, `screenshots/laptop-flat40-results.png`, `screenshots/phone-*-results.png` |
+| Results, wrong octave (octaveDown) | OK | OK | `screenshots/phone-octaveDown-results.png`, `screenshots/laptop-octaveDown-results.png` |
+
+### Screenshots
+
+- `comms/S04/turn-01/screenshots/laptop-flat40-live.png`
+- `comms/S04/turn-01/screenshots/laptop-flat40-results.png`
+- `comms/S04/turn-01/screenshots/laptop-octaveDown-live.png`
+- `comms/S04/turn-01/screenshots/laptop-octaveDown-results.png`
+- `comms/S04/turn-01/screenshots/laptop-perfect-live.png`
+- `comms/S04/turn-01/screenshots/laptop-perfect-results.png`
+- `comms/S04/turn-01/screenshots/phone-flat40-live.png`
+- `comms/S04/turn-01/screenshots/phone-flat40-results.png`
+- `comms/S04/turn-01/screenshots/phone-octaveDown-live.png`
+- `comms/S04/turn-01/screenshots/phone-octaveDown-results.png`
+- `comms/S04/turn-01/screenshots/phone-perfect-live.png`
+- `comms/S04/turn-01/screenshots/phone-perfect-results.png`
