@@ -478,3 +478,41 @@ Approved after turn 1, 2026-11-16. Review: `comms/S02/turn-01/ui-review.md`.
 - `comms/S02/turn-01/screenshots/phone-perfect-4-youdo.png`
 - `comms/S02/turn-01/screenshots/phone-perfect-5-results-full.png`
 - `comms/S02/turn-01/screenshots/phone-perfect-5-results.png`
+
+## S03 — Spike: mic check
+
+Approved after turn 1, 2026-11-18. Review: `comms/S03/turn-01/ui-review.md`.
+
+### Not verified by the UI reviewer
+
+- Review-script steps 1 to 7 need a real microphone, so none were run live. The simulator showed the "We can hear you." state only.
+- The amber "Too quiet" and "No sound yet" states and the real mic-denied message were not captured.
+- The mic-disconnected message (step 7) was not captured.
+- The iPhone home-screen app with wired headphones was not tested.
+
+### Screens reviewed
+
+| Screen / state | Laptop | iPhone | Screenshot files |
+|----------------|--------|--------|------------------|
+| Idle (light, dark) | OK | OK | `screenshots/idle-laptop.png`, `idle-phone.png`, `idle-*-dark.png` |
+| Running, sim C4 (light, dark) | OK | OK | `screenshots/running-laptop.png`, `running-phone.png`, `running-*-dark.png` |
+| Stopped, C4 still listed (light, dark) | OK | OK | `screenshots/stopped-phone-dark.png`, `stopped-laptop.png`, `stopped-phone.png` |
+| Start error (no mic in headless browser) | OK | OK | `screenshots/error-phone.png` |
+| Home with Mic check link | OK | OK | `screenshots/home-phone.png` |
+
+### Screenshots
+
+- `comms/S03/turn-01/screenshots/error-phone.png`
+- `comms/S03/turn-01/screenshots/home-phone.png`
+- `comms/S03/turn-01/screenshots/idle-laptop-dark.png`
+- `comms/S03/turn-01/screenshots/idle-laptop.png`
+- `comms/S03/turn-01/screenshots/idle-phone-dark.png`
+- `comms/S03/turn-01/screenshots/idle-phone.png`
+- `comms/S03/turn-01/screenshots/running-laptop-dark.png`
+- `comms/S03/turn-01/screenshots/running-laptop.png`
+- `comms/S03/turn-01/screenshots/running-phone-dark.png`
+- `comms/S03/turn-01/screenshots/running-phone.png`
+- `comms/S03/turn-01/screenshots/stopped-laptop-dark.png`
+- `comms/S03/turn-01/screenshots/stopped-laptop.png`
+- `comms/S03/turn-01/screenshots/stopped-phone-dark.png`
+- `comms/S03/turn-01/screenshots/stopped-phone.png`
