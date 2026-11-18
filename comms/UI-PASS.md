@@ -549,3 +549,29 @@ Approved after turn 1, 2026-11-18. Review: `comms/S04/turn-01/ui-review.md`.
 - `comms/S04/turn-01/screenshots/phone-octaveDown-results.png`
 - `comms/S04/turn-01/screenshots/phone-perfect-live.png`
 - `comms/S04/turn-01/screenshots/phone-perfect-results.png`
+
+## S05 — Spike: open on Home, not the range test
+
+Approved after turn 1, 2026-11-18. Review: `comms/S05/turn-01/ui-review.md`.
+
+### Not verified by the UI reviewer
+
+- Review script step 2 (loading a saved profile in Settings, then Home with range and progress). I did not click through it.
+- Review script step 3 (completing the range test needs a microphone).
+- Review script step 1 (reset in Settings) was checked only as a fresh load. I did not exercise the reset button.
+- Real iPhone rendering. I used a 393×852 emulation.
+
+### Screens reviewed
+
+| Screen / state | Laptop | iPhone | Screenshot files |
+|----------------|--------|--------|------------------|
+| Home, no range | OK | OK | `screenshots/home-laptop.png`, `screenshots/home-phone.png` |
+| Lesson link, no range (redirects to Home) | OK | OK | `screenshots/lesson-x-laptop.png`, `screenshots/lesson-x-phone.png` |
+| Home, no range, dark mode | OK | OK | `screenshots/dark/home-laptop-dark.png`, `screenshots/dark/home-phone-dark.png` |
+
+### Screenshots
+
+- `comms/S05/turn-01/screenshots/home-laptop.png`
+- `comms/S05/turn-01/screenshots/home-phone.png`
+- `comms/S05/turn-01/screenshots/lesson-x-laptop.png`
+- `comms/S05/turn-01/screenshots/lesson-x-phone.png`
