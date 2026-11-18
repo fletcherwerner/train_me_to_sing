@@ -1,0 +1,21 @@
+.practice-bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--bg, Canvas);
+  color: inherit;
+  border-bottom: 2px solid currentColor;
+}
+.practice-bar__where { font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
+.practice-bar__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.practice-note { margin: 8px 12px; padding: 8px 12px; border: 2px solid currentColor; border-radius: 10px; }
+.practice-part { padding: 0 12px 12px; }
+.warmup-piano .piano { max-height: 150px; }
+.practice-footer { margin: 16px 12px; }
+.practice-wrapup ul { padding-left: 20px; }

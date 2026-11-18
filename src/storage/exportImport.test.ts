@@ -3,7 +3,7 @@ import { exportData, exportFileName, mergeData, parseImport, replaceData, summar
 import type { StoredData } from './schema';
 
 const base = (over: Partial<StoredData> = {}): StoredData => ({
-  version: 1,
+  version: 2,
   range: { lowMidi: 40, highMidi: 60, assessedAt: '2025-01-01T00:00:00.000Z' },
   settings: { latencyOffsetMs: 0 },
   progress: {},
@@ -16,6 +16,8 @@ const p = (passed: boolean, bestScore: number, attempts: number, lastAttemptAt: 
   bestScore,
   attempts,
   lastAttemptAt,
+  proofs: [],
+  review: null,
 });
 
 describe('mergeData', () => {
@@ -93,7 +95,7 @@ describe('export / import', () => {
     expect(parseImport('not json {').ok).toBe(false);
     expect(parseImport('{"hello":1}').ok).toBe(false);
     expect(parseImport('[]').ok).toBe(false);
-    expect(parseImport(JSON.stringify({ ...base(), version: 2 })).ok).toBe(false);
+    expect(parseImport(JSON.stringify({ ...base(), version: 3 })).ok).toBe(false);
     expect(parseImport(JSON.stringify({ ...base(), progress: { a: { passed: 'yes' } } })).ok).toBe(false);
   });
 

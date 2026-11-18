@@ -5,7 +5,7 @@ export interface ToleranceProfile {
   timingMs: number; // max onset error
 }
 
-export type MissReason = 'silent' | 'wrong-octave' | 'wrong-note' | 'wavered' | 'early' | 'late';
+export type MissReason = 'silent' | 'wrong-octave' | 'wrong-note' | 'wavered' | 'early' | 'late' | 'scooped';
 
 export interface NoteResult {
   index: number;
@@ -15,6 +15,8 @@ export interface NoteResult {
   medianCents: number | null;
   heldFraction: number;
   onsetErrorMs: number | null;
+  /** The voice slid into this note from at least 70 cents away. A tip, or a miss ('scooped') where the lesson says so. */
+  scooped?: boolean;
 }
 
 export interface AttemptResult {

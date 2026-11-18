@@ -1,11 +1,14 @@
 import type { AttemptResult, MissReason } from './types';
 
-const PRIORITY: MissReason[] = ['silent', 'wrong-octave', 'wrong-note', 'wavered', 'late', 'early'];
+const PRIORITY: MissReason[] = ['silent', 'wrong-octave', 'wrong-note', 'wavered', 'late', 'early', 'scooped'];
+
+export const SCOOP_TIP = 'You slid into this note. Try to start right on it.';
 
 /** One tip, chosen from the most common miss reason (ties go to the earlier in PRIORITY). */
 export function pickTip(result: AttemptResult): string {
   const misses = result.notes.filter((n) => !n.hit && n.reason);
   if (misses.length === 0) {
+    if (result.notes.some((n) => n.scooped)) return SCOOP_TIP;
     return 'Nice work. Try again and see if you can keep every note steady.';
   }
   const counts = new Map<MissReason, number>();
@@ -36,6 +39,8 @@ export function pickTip(result: AttemptResult): string {
     case 'early':
     case 'late':
       return 'Start each note on the click.';
+    case 'scooped':
+      return SCOOP_TIP;
     case 'silent':
       return "We couldn't hear you. Check the mic and sing a little louder.";
   }

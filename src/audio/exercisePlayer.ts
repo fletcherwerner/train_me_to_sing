@@ -45,7 +45,7 @@ export function playExercise(ex: ResolvedExercise, opts: PlaybackOptions): Playb
   for (const c of tl.leadInClicks) scheduleClick(c.tSec, c.accent);
   for (const c of tl.exerciseClicks) scheduleClick(c.tSec, c.accent);
   if (opts.playMelody) {
-    for (const n of ex.notes) player.playNote(n.midi, tl.startSec + n.startSec, n.durationSec);
+    for (const n of ex.notes) player.playNote(n.midi, tl.startSec + n.startSec, n.durationSec, n.glideToMidi);
   }
   const stopBuffer = opts.melodyBuffer ? scheduleBuffer(opts.melodyBuffer, tl.startSec) : null;
 

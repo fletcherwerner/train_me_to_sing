@@ -94,7 +94,9 @@ for (const size of SIZES) {
       await expect(page.getByTestId('unit-A-count')).toHaveText('0 of 3 passed');
       await expect(page.getByTestId('unit-B-count')).toHaveText('1 of 7 passed');
       await expect(page.getByTestId('stage-1-count')).toHaveText('1 of 19 passed');
-      await expect(page.getByTestId('stage-2-count')).toHaveText('1 of 8 passed');
+      // A v1 Stage 2 pass becomes one proof of unknown key: it needs one more passing day.
+      await expect(page.getByTestId('stage-2-count')).toHaveText('0 of 8 passed');
+      await expect(page.getByTestId('status-s2-01')).toContainText('Passed once');
       await expect(page.getByTestId('status-s1b-01')).toContainText('Passed');
       await expect(page.getByTestId('status-s1b-02')).toContainText('Practise');
       await expect(page.getByTestId('status-s1b-03')).toContainText('Learn');
@@ -167,8 +169,9 @@ test.describe('s1b-04 feedback levels', () => {
       await expect(page.getByTestId('results-level')).toContainText('without any live help');
 
       await page.getByRole('link', { name: 'Home' }).first().click();
-      await expect(page.getByTestId('status-s1b-04')).toContainText('Passed');
-      await expect(page.getByTestId('unit-B-count')).toHaveText('1 of 7 passed');
+      await expect(page.getByTestId('status-s1b-04')).toContainText('Passed once');
+      await expect(page.getByTestId('status-s1b-04')).toContainText('come back tomorrow in a new key');
+      await expect(page.getByTestId('unit-B-count')).toHaveText('0 of 7 passed');
     });
   }
 

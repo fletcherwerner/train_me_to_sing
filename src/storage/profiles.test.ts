@@ -43,7 +43,7 @@ function fakeApi() {
 }
 
 const range = (lowMidi: number) => ({ lowMidi, highMidi: lowMidi + 20, assessedAt: 'x' });
-const passed = { passed: true, bestScore: 1, attempts: 1, lastAttemptAt: 'x' };
+const passed = { passed: true, bestScore: 1, attempts: 1, lastAttemptAt: 'x', proofs: [], review: null };
 
 beforeEach(() => {
   vi.useFakeTimers();

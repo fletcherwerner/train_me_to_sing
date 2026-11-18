@@ -57,7 +57,7 @@ describe('imported lessons', () => {
     s.addImportedLesson(l);
     expect(getLesson(l.id)?.title).toBe('Scale');
     expect(getAllLessons().some((x) => x.source === 'imported')).toBe(true);
-    useAppStore.setState({ progress: { [l.id]: { passed: true, bestScore: 1, attempts: 1, lastAttemptAt: 'x' }, 's1b-01': { passed: true, bestScore: 1, attempts: 1, lastAttemptAt: 'x' } } });
+    useAppStore.setState({ progress: { [l.id]: { passed: true, bestScore: 1, attempts: 1, lastAttemptAt: 'x', proofs: [], review: null }, 's1b-01': { passed: true, bestScore: 1, attempts: 1, lastAttemptAt: 'x', proofs: [], review: null } } });
     useAppStore.getState().removeImportedLesson(l.id);
     expect(getLesson(l.id)).toBeUndefined();
     expect(Object.keys(useAppStore.getState().progress)).toEqual(['s1b-01']);

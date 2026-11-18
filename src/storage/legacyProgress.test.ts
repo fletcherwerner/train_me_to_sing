@@ -5,9 +5,9 @@ import { dismissStage1Notice, useNotices } from './notices';
 import { useAppStore } from './store';
 import type { AttemptResult } from '../core/scoring/types';
 
-const prog = (passed = true) => ({ passed, bestScore: 1, attempts: 1, lastAttemptAt: '2025-01-01' });
+const prog = (passed = true) => ({ passed, bestScore: 1, attempts: 1, lastAttemptAt: '2025-01-01', proofs: [], review: null });
 const data = (progress: StoredData['progress']): StoredData => ({
-  version: 1,
+  version: 2,
   range: { lowMidi: 45, highMidi: 64, assessedAt: '2025-01-01' },
   settings: { latencyOffsetMs: 0 },
   progress,

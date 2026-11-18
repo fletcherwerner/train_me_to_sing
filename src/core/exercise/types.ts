@@ -3,6 +3,8 @@ export interface TemplateNote {
   startBeat: number; // 0-based, quarter note = 1 beat
   durationBeats: number;
   lyric?: string;
+  /** Warm-up glides: the pitch moves linearly from `offset` to this offset over the duration. Never scored. */
+  glideToOffset?: number;
 }
 
 export interface Phrase {
@@ -31,6 +33,8 @@ export interface ResolvedNote {
   startSec: number; // relative to exercise start
   durationSec: number;
   lyric?: string;
+  /** Glide end pitch (MIDI), when the note slides. */
+  glideToMidi?: number;
 }
 
 export interface ResolvedExercise {

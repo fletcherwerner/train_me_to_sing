@@ -41,9 +41,9 @@ test('home lists lessons; perfect run shows passed 100% and persists', async ({ 
   await doLesson(page);
   await expect(page.getByTestId('results-verdict')).toHaveText('Passed');
   await page.getByRole('link', { name: 'Home' }).first().click();
-  await expect(page.getByTestId('status-s2-01')).toContainText('Passed');
+  await expect(page.getByTestId('status-s2-01')).toContainText('Passed once');
   await expect(page.getByTestId('status-s2-01')).toContainText('100%');
-  await expect(page.getByTestId('stage-2-count')).toHaveText('1 of 8 passed');
+  await expect(page.getByTestId('stage-2-count')).toHaveText('0 of 8 passed');
   await page.reload();
   await expect(page.getByTestId('status-s2-01')).toContainText('100%');
 });

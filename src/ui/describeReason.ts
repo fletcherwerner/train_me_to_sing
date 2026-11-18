@@ -12,6 +12,8 @@ export function describeReason(r: NoteResult): string {
     }
     case 'wavered':
       return 'Drifted off the note';
+    case 'scooped':
+      return 'You slid into this note. Try to start right on it.';
     case 'early':
       return 'Came in early';
     case 'late':

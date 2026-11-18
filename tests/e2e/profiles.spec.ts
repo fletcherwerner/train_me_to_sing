@@ -60,14 +60,15 @@ test('profiles: Ana and Ben keep separate ranges and progress, saved to files', 
   await page.getByTestId('profile-ana').click();
   await expect(page.getByTestId('home-profile')).toContainText('Ana');
   await expect(page.getByTestId('home-range')).toContainText('A2 – E4');
-  await expect(page.getByTestId('stage-2-count')).toHaveText('1 of 8 passed');
-  await expect(page.getByTestId('status-s2-01')).toContainText('Passed');
+  // One pass is "Passed once": mastery needs a second day in a new key (E15).
+  await expect(page.getByTestId('stage-2-count')).toHaveText('0 of 8 passed');
+  await expect(page.getByTestId('status-s2-01')).toContainText('Passed once');
 
   // 5. ana.json holds the passed lesson.
   const anaFile = path.join(E2E_PROFILES_DIR, 'ana.json');
   await expect.poll(() => existsSync(anaFile)).toBe(true);
   const ana = JSON.parse(readFileSync(anaFile, 'utf8'));
-  expect(ana.data.progress['s2-01'].passed).toBe(true);
+  expect(ana.data.progress['s2-01'].proofs).toHaveLength(1);
   expect(ana.data.range.lowMidi).toBe(45);
   const ben = JSON.parse(readFileSync(path.join(E2E_PROFILES_DIR, 'ben.json'), 'utf8'));
   expect(ben.data.progress).toEqual({});

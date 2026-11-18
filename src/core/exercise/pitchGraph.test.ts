@@ -58,7 +58,7 @@ describe('mapping', () => {
 
 describe('segments', () => {
   it('one target segment per note', () => {
-    expect(targetSegments([note(0, 60, 1, 2)])).toEqual([{ startSec: 1, endSec: 3, midi: 60 }]);
+    expect(targetSegments([note(0, 60, 1, 2)])).toEqual([{ startSec: 1, endSec: 3, midi: 60, endMidi: 60 }]);
   });
   it('splits sung frames on null and on time gaps', () => {
     const f = (tSec: number, midi: number | null) => ({ tSec, midi });

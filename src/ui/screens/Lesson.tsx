@@ -22,11 +22,13 @@ import type { PitchSource } from '../../audio/pitch/PitchSource';
 import { decodeTake, startTakeRecording, synthTake, type TakeRecording } from '../../audio/takeRecorder';
 import { getLesson } from '../../content/registry';
 import type { Lesson as LessonData } from '../../content/types';
-import { displayRange, fit, pickTonic } from '../../core/exercise/fit';
+import { displayRange, fit, pickTonic, tonicCount } from '../../core/exercise/fit';
 import type { ResolvedExercise } from '../../core/exercise/types';
 import { phraseFor, slicePhrase } from '../../core/exercise/phrases';
 import { qualifiesForEcho } from '../../core/scoring/bestTake';
-import { createSession, reduce, type Level } from '../../core/session/sessionMachine';
+import { createSession, LEVELS, reduce, type Level } from '../../core/session/sessionMachine';
+import { scoopCountsAsMiss, usesMastery } from '../../content/mastery';
+import { proofTonics } from '../../core/progress/mastery';
 import { MatchRun } from './MatchRun';
 import { LessonHeader } from '../components/LessonHeader';
 import { midiToName } from '../../core/music/notes';
@@ -100,29 +102,47 @@ interface EchoTake {
   from: 'weDo' | 'youDo';
 }
 
-function LessonRun({
+export function LessonRun({
   lesson,
   range,
   onAttemptComplete,
+  forceLevel,
 }: {
   lesson: LessonData;
   range: { lowMidi: number; highMidi: number };
   onAttemptComplete?: (result: AttemptResult) => void;
+  /** Start at this level instead of the one the student has reached (reviews start at Prove). */
+  forceLevel?: Level;
 }) {
   const { search } = useLocation();
   const latencyMs = useAppStore((s) => s.settings.latencyOffsetMs);
   const calibrated = useAppStore((s) => s.settings.calibratedAt !== undefined);
   const recordAttempt = useAppStore((s) => s.recordAttempt);
   const [session, dispatch] = useReducer(reduce, undefined, () =>
-    createSession(lesson.levels, useAppStore.getState().progress[lesson.id]?.level ?? 'learn'),
+    createSession(lesson.levels, forceLevel ?? useAppStore.getState().progress[lesson.id]?.level ?? 'learn'),
   );
   const level = session.level;
   const randomKey = wantsRandomKey();
-  // Practise and Prove sing in a new key each attempt (not in ?sim= runs, unless &key=random).
-  const keyed = lesson.levels && level !== 'learn' && randomKey;
-  const [tonic, setTonic] = useState<number | null>(() =>
-    session.levels && session.level !== 'learn' && randomKey ? pickTonic(lesson.exercise, range, Math.random) : null,
-  );
+  const mastery = usesMastery(lesson);
+  const singleKey = tonicCount(lesson.exercise, range) <= 1;
+  // Keys the student has already passed in. The next proof is in a different one when the range allows.
+  const usedKeys = () => proofTonics(useAppStore.getState().progress[lesson.id]);
+  /**
+   * The key for the next attempt, or null for the centred key. Practise and Prove sing in a new key each attempt
+   * (not in ?sim= runs, which stay centred for stable tests, unless &key=random). Any mastery lesson avoids the
+   * keys it was already passed in, in ?sim= runs too, so a second proof can be in a new key.
+   */
+  const chooseTonic = (lvl: Level, justUsed?: number): number | null => {
+    const avoid = [...usedKeys(), ...(justUsed !== undefined ? [justUsed] : [])];
+    const varies = lesson.levels ? lvl !== 'learn' : false;
+    if (varies && randomKey) return pickTonic(lesson.exercise, range, Math.random, avoid);
+    if (mastery && usedKeys().length > 0 && (varies || !lesson.levels)) {
+      return pickTonic(lesson.exercise, range, randomKey ? Math.random : () => 0, avoid);
+    }
+    return null;
+  };
+  const [tonic, setTonic] = useState<number | null>(() => chooseTonic(session.level));
+  const keyed = tonic !== null;
   const [echo, setEcho] = useState<EchoTake | null>(null);
   const echoRef = useRef<EchoTake | null>(null);
   const [echoing, setEchoing] = useState(false);
@@ -302,9 +322,8 @@ function LessonRun({
   };
 
   /** Picks the key for the next Practise or Prove attempt, never the one just used when another fits. */
-  const rollTonic = (avoid: number) => {
-    if (!randomKey) return;
-    setTonic(pickTonic(lesson.exercise, range, Math.random, avoid));
+  const rollTonic = (avoid: number, lvl: Level = level) => {
+    setTonic(chooseTonic(lvl, avoid));
   };
 
   const run = async (mode: 'normal' | 'echo' = 'normal') => {
@@ -387,7 +406,10 @@ function LessonRun({
       : null;
     if (thisStep === 'youDo') setYouDoFrames(frames);
     if (thisStep === 'weDo' && !isEcho) setWeDoFrames(frames);
-    const result = thisStep !== 'iDo' && frames ? evaluateAttempt(runEx, frames, tol, lesson.passScore) : undefined;
+    const result = thisStep !== 'iDo' && frames ? evaluateAttempt(runEx, frames, tol, lesson.passScore, {
+            scoopIsMiss: thisStep === 'youDo' && scoopCountsAsMiss(lesson, runLevel),
+          })
+        : undefined;
     if (isEcho) {
       // The echo run is scored and shown like We do, but never saved and it leaves the We do result alone.
       setEchoResult(result ?? null);
@@ -399,10 +421,14 @@ function LessonRun({
     if (thisStep === 'youDo' && !result) setNotice('We could not hear the microphone for that run. Press Try again.');
     if (thisStep === 'youDo' && result) {
       dispatch({ type: 'SHOW_RESULTS' });
-      recordAttempt(lesson.id, result, lesson.levels ? runLevel : undefined);
+      recordAttempt(lesson.id, result, lesson.levels ? runLevel : undefined, {
+        mastery,
+        tonicMidi: runEx.tonicMidi,
+        singleKey,
+      });
       onAttemptComplete?.(result);
       // The next Practise or Prove attempt gets a new key.
-      if (lesson.levels && runLevel !== 'learn') rollTonic(runEx.tonicMidi);
+      if ((lesson.levels && runLevel !== 'learn') || (mastery && !lesson.levels)) rollTonic(runEx.tonicMidi, runLevel);
     }
   };
 
@@ -447,12 +473,12 @@ function LessonRun({
   const advance = () => {
     dispatch({ type: 'ADVANCE' });
     setEchoResult(null);
-    rollTonic(fullEx.tonicMidi);
+    rollTonic(fullEx.tonicMidi, LEVELS[Math.min(LEVELS.length - 1, LEVELS.indexOf(level) + 1)]);
   };
   const stepDown = () => {
     dispatch({ type: 'STEP_DOWN' });
     setEchoResult(null);
-    rollTonic(fullEx.tonicMidi);
+    rollTonic(fullEx.tonicMidi, LEVELS[Math.max(0, LEVELS.indexOf(level) - 1)]);
   };
   const requestEchoFromResults = () => {
     echoPendingRef.current = true;
@@ -477,6 +503,9 @@ function LessonRun({
         <p data-testid="lesson-goal">{lesson.goal}</p>
         <p data-testid="lesson-tolerance">{describeTolerance(tol)}</p>
         <p>Put on headphones so the piano does not get picked up by the microphone.</p>
+        {mastery && singleKey ? (
+          <p data-testid="single-key-note">Only one key fits your range, so passing on two days in one key is enough.</p>
+        ) : null}
         {lesson.stage === 2 && !calibrated && lesson.order === 1 ? (
           <p data-testid="calibrate-hint">
             Tip: timing is graded fairly only if the app knows your device&apos;s delay.{' '}
@@ -522,6 +551,15 @@ function LessonRun({
         {session.levels && r.passed ? (
           <p data-testid="results-level">
             {nextLevel ? `${LEVEL_NAMES[nextLevel]} is unlocked.` : 'You passed this lesson without any live help.'}
+          </p>
+        ) : null}
+        {mastery && r.passed && (!session.levels || level === 'prove') ? (
+          <p data-testid="results-mastery">
+            {useAppStore.getState().progress[lesson.id]?.passed
+              ? 'Mastered: passed on two days in two keys.'
+              : singleKey
+                ? 'Passed once — come back tomorrow. Only one key fits your range, so one key is enough.'
+                : 'Passed once — come back tomorrow in a new key.'}
           </p>
         ) : null}
         <p className="lesson-score" data-testid="results-score">

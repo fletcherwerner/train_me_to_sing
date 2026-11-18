@@ -2,6 +2,7 @@ import { dropLegacyProgress, storedDataSchema, type StoredData } from './schema'
 import { flagStage1Rebuilt } from './notices';
 import { maxLevel } from './level';
 import { midiToName } from '../core/music/notes';
+import { addProof, isMastered } from '../core/progress/mastery';
 
 /** The full StoredData as pretty JSON plus `exportedAt`. */
 export function exportData(data: StoredData, now: Date = new Date()): Blob {
@@ -50,15 +51,25 @@ export function mergeData(local: StoredData, incoming: StoredData): StoredData {
   const progress: StoredData['progress'] = { ...local.progress };
   for (const [id, b] of Object.entries(incoming.progress)) {
     const a = progress[id];
-    progress[id] = a
-      ? {
-          passed: a.passed || b.passed,
-          bestScore: Math.max(a.bestScore, b.bestScore),
-          attempts: a.attempts + b.attempts,
-          lastAttemptAt: a.lastAttemptAt >= b.lastAttemptAt ? a.lastAttemptAt : b.lastAttemptAt,
-          ...(a.level || b.level ? { level: maxLevel(a.level, b.level) } : {}),
-        }
-      : { ...b };
+    if (!a) {
+      progress[id] = { ...b };
+      continue;
+    }
+    // Proofs are the union; mastery is worked out again from them (or kept if either side had it).
+    let proofs = a.proofs;
+    for (const p of b.proofs) proofs = addProof(proofs, p);
+    const passed = a.passed || b.passed || isMastered({ proofs });
+    // The later review date is the one that has been through more reviews.
+    const review = a.review && b.review ? (a.review.step >= b.review.step ? a.review : b.review) : (a.review ?? b.review);
+    progress[id] = {
+      passed,
+      bestScore: Math.max(a.bestScore, b.bestScore),
+      attempts: a.attempts + b.attempts,
+      lastAttemptAt: a.lastAttemptAt >= b.lastAttemptAt ? a.lastAttemptAt : b.lastAttemptAt,
+      ...(a.level || b.level ? { level: maxLevel(a.level, b.level) } : {}),
+      proofs,
+      review,
+    };
   }
   const seen = new Set<string>();
   const importedLessons: unknown[] = [];
@@ -71,7 +82,7 @@ export function mergeData(local: StoredData, incoming: StoredData): StoredData {
     importedLessons.push(l);
   }
   return {
-    version: 1,
+    version: 2,
     range: local.range ?? incoming.range,
     settings: local.settings,
     progress,
@@ -82,7 +93,7 @@ export function mergeData(local: StoredData, incoming: StoredData): StoredData {
 /** Replace everything with `incoming`, except device-specific settings (latency offset). */
 export function replaceData(local: StoredData, incoming: StoredData): StoredData {
   return {
-    version: 1,
+    version: 2,
     range: incoming.range,
     settings: local.settings,
     progress: incoming.progress,

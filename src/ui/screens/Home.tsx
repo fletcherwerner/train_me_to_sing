@@ -1,4 +1,8 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { todayString } from '../../storage/today';
+import { usesMastery } from '../../content/mastery';
+import { isDue } from '../../core/progress/review';
+import { describePlan, planToday } from '../../core/session/practicePlan';
 import { Link, useLocation } from 'react-router-dom';
 import { useAppStore } from '../../storage/store';
 import { midiToName } from '../../core/music/notes';
@@ -49,14 +53,35 @@ export function Home() {
   const all = getAllLessons().map((lesson) => ({ lesson, fitResult: range ? fit(lesson.exercise, range) : null }));
   const lessons = all.filter((l) => l.lesson.source !== 'imported');
   const mySongs = all.filter((l) => l.lesson.source === 'imported');
-  const next = lessons.find((l) => l.fitResult?.ok && !progress[l.lesson.id]?.passed);
+  const today = todayString();
+  const plan = useMemo(
+    () =>
+      range
+        ? planToday(
+            lessons.filter((l) => l.fitResult?.ok).map((l) => l.lesson),
+            progress,
+            today,
+            Math.random,
+          )
+        : [],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [range, progress, today],
+  );
+  const titleOf = (id: string) => all.find((l) => l.lesson.id === id)?.lesson.title ?? id;
+  const pitchPart = plan.find((p) => p.kind === 'pitch');
   const stages = [...new Set(lessons.map((l) => l.lesson.stage))];
 
   const status = (lesson: Lesson) => {
     const p = progress[lesson.id];
     if (!p || p.attempts === 0) return { kind: 'new', text: 'Not started', icon: '○' };
     const pct = `${Math.round(p.bestScore * 100)}%`;
-    if (p.passed) return { kind: 'passed', text: `Passed · ${pct}`, icon: '✓' };
+    if (p.passed) {
+      const due = isDue(p.review, today) ? ' · Review due' : '';
+      return { kind: 'passed', text: `Passed · ${pct}${due}`, icon: '✓' };
+    }
+    if (usesMastery(lesson) && p.proofs.length > 0) {
+      return { kind: 'attempted', text: `Passed once · ${pct} — come back tomorrow in a new key`, icon: '◐' };
+    }
     // Lessons with levels show the level reached.
     const levelText = lesson.levels ? `${LEVEL_TEXT[p.level ?? 'learn']} · ` : '';
     return { kind: 'attempted', text: `${levelText}Best ${pct}`, icon: '◐' };
@@ -122,15 +147,18 @@ export function Home() {
         </section>
       ) : null}
 
-      {next ? (
+      {range ? (
         <section className="home__continue" data-testid="continue-card">
-          <h2>Continue</h2>
-          <p>
-            <strong>{next.lesson.title}</strong>
-          </p>
-          <p>{next.lesson.goal}</p>
-          <Link to={{ pathname: `/lesson/${next.lesson.id}`, search }} className="btn btn--primary home__continue-link">
-            Start lesson
+          <h2>Today&apos;s practice</h2>
+          <p data-testid="practice-summary">{describePlan(plan, titleOf)}</p>
+          {pitchPart ? <p>Pitch finding: {titleOf((pitchPart as { lessonId: string }).lessonId)}</p> : null}
+          <p>About 12–15 minutes.</p>
+          <Link
+            to={{ pathname: '/practice', search }}
+            className="btn btn--primary home__continue-link"
+            data-testid="start-practice"
+          >
+            Start today&apos;s practice
           </Link>
         </section>
       ) : null}
