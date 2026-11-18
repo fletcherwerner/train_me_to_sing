@@ -169,12 +169,12 @@ function PracticeRun({ range }: { range: { lowMidi: number; highMidi: number } }
           )}
         </span>
       </div>
-      {note ? (
+      {body}
+      {note && !inWrapUp ? (
         <p className="practice-note" role="status" data-testid="practice-good-session">
           {note}
         </p>
       ) : null}
-      {body}
     </div>
   );
 }

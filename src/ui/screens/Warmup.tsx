@@ -5,7 +5,9 @@ import { SOUND_PAUSED_MSG } from '../audioMessages';
 import { playExercise, type PlaybackHandle } from '../../audio/exercisePlayer';
 import { clearSimExercise, createPitchSource, recordFrames, registerSimExercise } from '../../audio/pitch';
 import type { PitchFrame, PitchSource } from '../../audio/pitch/PitchSource';
-import { fit } from '../../core/exercise/fit';
+import { midiToName } from '../../core/music/notes';
+import { PianoKeyboard } from '../components/PianoKeyboard';
+import { displayRange, fit } from '../../core/exercise/fit';
 import { warmupGlides } from '../../core/exercise/glides';
 import type { StudentRange } from '../../core/exercise/types';
 import { BeatIndicator } from '../components/BeatIndicator';
@@ -38,6 +40,7 @@ export function Warmup({ range, onDone }: { range: StudentRange; onDone: () => v
   const handleRef = useRef<PlaybackHandle | null>(null);
   const sourceRef = useRef<PitchSource | null>(null);
   const runRef = useRef(0);
+  const disp = displayRange(range);
   const ex = exercises[idx];
   const running = phase === 'running';
   useWakeLock(running);
@@ -127,6 +130,17 @@ export function Warmup({ range, onDone }: { range: StudentRange; onDone: () => v
       />
       <PitchGraph exercise={ex} range={range} startSec={handle?.startSec ?? null} frames={frames} showSung />
       <GraphLegend />
+      <PianoKeyboard
+        lowMidi={disp.lowMidi}
+        highMidi={disp.highMidi}
+        targetMidi={live.targetMidi}
+        sungMidi={live.sungMidi}
+        rangeMarkers={{ lowMidi: range.lowMidi, highMidi: range.highMidi }}
+      />
+      <p className="lesson-notes" data-testid="warmup-note-labels">
+        Target: {live.targetMidi === null ? '—' : midiToName(live.targetMidi)} · Sung:{' '}
+        {live.sungMidi === null ? '—' : midiToName(live.sungMidi)}
+      </p>
       {notice ? (
         <p className="tuner-error" role="alert">
           {notice}

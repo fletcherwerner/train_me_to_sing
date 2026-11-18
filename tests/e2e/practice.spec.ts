@@ -128,6 +128,8 @@ for (const size of SIZES) {
           y2: Number(el.getAttribute('y2')),
         }));
         expect(t.y1).not.toBe(t.y2);
+        await expect(page.getByTestId('warmup').locator('.piano-marker').first()).toBeVisible();
+        await expect(page.getByTestId('warmup-note-labels')).toBeVisible();
         expect(await noSideScroll(page)).toBe(true);
         await page.getByTestId('warmup-start').click();
         await expect(page.getByTestId('practice-stop')).toBeVisible();
