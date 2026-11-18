@@ -6,7 +6,10 @@ import { getAllLessons } from '../../content/registry';
 import { fit } from '../../core/exercise/fit';
 import type { Lesson } from '../../content/types';
 import { useProfileStatus } from '../../storage/profiles';
+import { dismissStage1Notice, STAGE1_NOTICE_TEXT, useNotices } from '../../storage/notices';
 import './Home.css';
+
+const LEVEL_TEXT = { learn: 'Learn', practise: 'Practise', prove: 'Prove' } as const;
 
 const STAGE_NAMES: Record<number, string> = {
   1: 'Stage 1 — Note matching',
@@ -17,6 +20,21 @@ const STAGE_NAMES: Record<number, string> = {
 const STRICTER_NOTE: Record<number, string> = {
   2: 'Stricter than Stage 1: tighter pitch, longer holds and tighter timing.',
 };
+
+type Item = { lesson: Lesson; fitResult: ReturnType<typeof fit> | null };
+
+/** Stage 1 is shown in its units; other stages are one group. */
+function groupsOf(items: Item[]): { key: string; unit: Lesson['unit'] | null; items: Item[] }[] {
+  const out: { key: string; unit: Lesson['unit'] | null; items: Item[] }[] = [];
+  for (const it of items) {
+    const unit = it.lesson.unit ?? null;
+    const key = unit?.id ?? 'all';
+    const last = out[out.length - 1];
+    if (last && last.key === key) last.items.push(it);
+    else out.push({ key, unit, items: [it] });
+  }
+  return out;
+}
 
 export function Home() {
   const range = useAppStore((s) => s.range);
@@ -38,10 +56,12 @@ export function Home() {
     const p = progress[lesson.id];
     if (!p || p.attempts === 0) return { kind: 'new', text: 'Not started', icon: '○' };
     const pct = `${Math.round(p.bestScore * 100)}%`;
-    return p.passed
-      ? { kind: 'passed', text: `Passed · ${pct}`, icon: '✓' }
-      : { kind: 'attempted', text: `Best ${pct}`, icon: '◐' };
+    if (p.passed) return { kind: 'passed', text: `Passed · ${pct}`, icon: '✓' };
+    // Lessons with levels show the level reached.
+    const levelText = lesson.levels ? `${LEVEL_TEXT[p.level ?? 'learn']} · ` : '';
+    return { kind: 'attempted', text: `${levelText}Best ${pct}`, icon: '◐' };
   };
+  const stage1Notice = useNotices((s) => s.stage1Rebuilt);
 
   return (
     <main className="dev-page home">
@@ -76,6 +96,15 @@ export function Home() {
           </Link>
         </nav>
       </header>
+
+      {stage1Notice ? (
+        <section className="home__continue" data-testid="stage1-notice" role="status">
+          <p>{STAGE1_NOTICE_TEXT}</p>
+          <button type="button" className="btn" onClick={dismissStage1Notice} data-testid="stage1-notice-dismiss">
+            OK
+          </button>
+        </section>
+      ) : null}
 
       {!range ? (
         <section className="home__continue" data-testid="setup-card">
@@ -124,15 +153,29 @@ export function Home() {
                 first.
               </p>
             ) : null}
+            {groupsOf(inStage).map((group) => (
+            <div key={group.key} data-testid={group.unit ? `unit-${group.unit.id}` : undefined}>
+            {group.unit ? (
+              <>
+                <h3 className="home__unit">
+                  Unit {group.unit.id} — {group.unit.title}
+                </h3>
+                <p className="home__count" data-testid={`unit-${group.unit.id}-count`}>
+                  {group.items.filter((l) => progress[l.lesson.id]?.passed).length} of {group.items.length} passed
+                </p>
+              </>
+            ) : null}
             <ul className="home__list">
-              {inStage.map(({ lesson, fitResult }) => {
-                const noteCount = lesson.exercise.notes.length;
+              {group.items.map(({ lesson, fitResult }) => {
+                const noteCount = lesson.kind === 'match' ? (lesson.matchTargets?.length ?? 0) : lesson.exercise.notes.length;
                 const st = status(lesson);
                 const body = (
                   <>
                     <span className="home__row-main">
                       <span className="home__row-title">{lesson.title}</span>
-                      <span className="home__row-notes">{noteCount} notes</span>
+                      <span className="home__row-notes">
+                        {noteCount} {lesson.kind === 'match' ? 'targets' : 'notes'}
+                      </span>
                     </span>
                     {fitResult == null ? (
                       <span className="home__status home__status--locked" data-testid={`status-${lesson.id}`}>
@@ -169,6 +212,8 @@ export function Home() {
                 );
               })}
             </ul>
+            </div>
+            ))}
           </section>
         );
       })}

@@ -25,7 +25,7 @@ test('import: invalid file is rejected; valid file merges and keeps latency', as
   const incoming = stored({
     range: { lowMidi: 40, highMidi: 60, assessedAt: 'x' },
     settings: { latencyOffsetMs: 300 },
-    progress: { 's1-01': { passed: true, bestScore: 1, attempts: 2, lastAttemptAt: '2025-02-02' } },
+    progress: { 's1b-01': { passed: true, bestScore: 1, attempts: 2, lastAttemptAt: '2025-02-02' } },
   });
   await page.getByTestId('import-file').setInputFiles({
     name: 'good.json',
@@ -36,7 +36,7 @@ test('import: invalid file is rejected; valid file merges and keeps latency', as
   await page.getByRole('button', { name: 'Merge' }).click();
 
   const data = await page.evaluate(() => JSON.parse(localStorage.getItem('tmts.v1')!));
-  expect(data.progress['s1-01'].passed).toBe(true);
+  expect(data.progress['s1b-01'].passed).toBe(true);
   expect(data.settings.latencyOffsetMs).toBe(120);
   expect(data.range.lowMidi).toBe(45);
 });

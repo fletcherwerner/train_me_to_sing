@@ -33,15 +33,16 @@ async function throughSession(page: Page) {
 
 test('sim=perfect: full lesson passes', async ({ page }) => {
   await seed(page);
-  await page.goto('/#/lesson/s1-05?sim=perfect');
+  await page.goto('/#/lesson/s1b-04?sim=perfect');
   await throughSession(page);
-  await expect(page.getByTestId('results-verdict')).toHaveText('Passed', { timeout: 30000 });
-  await expect(page.getByTestId('results-score')).toContainText('5 of 5');
+  // A pass at Learn passes the level, not the lesson (E14): Practise is unlocked.
+  await expect(page.getByTestId('results-verdict')).toHaveText('Level passed', { timeout: 30000 });
+  await expect(page.getByTestId('results-score')).toContainText('3 of 3');
 });
 
 test('sim=octaveDown: Not yet with the octave tip', async ({ page }) => {
   await seed(page);
-  await page.goto('/#/lesson/s1-05?sim=octaveDown');
+  await page.goto('/#/lesson/s1b-04?sim=octaveDown');
   await throughSession(page);
   await expect(page.getByTestId('results-verdict')).toHaveText('Not yet', { timeout: 30000 });
   await expect(page.getByTestId('results-tip')).toContainText('different octave');
@@ -52,7 +53,7 @@ test('sim=octaveDown: Not yet with the octave tip', async ({ page }) => {
 test('a lesson link with no range goes to Home', async ({ page }) => {
   await page.goto('/');
   await page.evaluate(() => {
-    location.hash = '#/lesson/s1-05';
+    location.hash = '#/lesson/s1b-04';
   });
   await expect(page.getByTestId('setup-card')).toBeVisible();
   await expect(page).not.toHaveURL(/lesson/);

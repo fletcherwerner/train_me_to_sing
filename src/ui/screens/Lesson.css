@@ -35,6 +35,9 @@
 .lesson-steps__item:not(.lesson-steps__item--current) {
   opacity: 0.65;
 }
+.lesson-level { margin: 2px 0; font-weight: 700; }
+.lesson-level-help { margin: 2px 0; font-size: 0.95rem; }
+.lesson-start-note { margin: 2px 0; font-size: 1.15rem; font-weight: 700; }
 .lesson-instruction {
   margin: 2px 0;
   font-size: 1.05rem;

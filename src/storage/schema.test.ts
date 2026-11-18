@@ -48,7 +48,7 @@ describe('storage schema', () => {
     const data: StoredData = {
       ...defaults(),
       range: { lowMidi: 45, highMidi: 64, assessedAt: '2025-01-01T00:00:00.000Z' },
-      progress: { 's1-01': { passed: true, bestScore: 0.9, attempts: 3, lastAttemptAt: '2025-01-02T00:00:00.000Z' } },
+      progress: { 's1b-01': { passed: true, bestScore: 0.9, attempts: 3, lastAttemptAt: '2025-01-02T00:00:00.000Z' } },
     };
     saveData(data);
     expect(loadData()).toEqual(data);

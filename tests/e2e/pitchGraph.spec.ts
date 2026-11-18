@@ -26,7 +26,7 @@ for (const size of [
   test(`pitch graph during You do and on results (${size.name})`, async ({ page }) => {
     await page.setViewportSize({ width: size.width, height: size.height });
     await seed(page);
-    await page.goto('/#/lesson/s1-05?sim=perfect');
+    await page.goto('/#/lesson/s1b-04?sim=perfect');
     await page.getByRole('button', { name: 'Start', exact: true }).click();
 
     // I do: black only.

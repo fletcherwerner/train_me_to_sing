@@ -1,6 +1,6 @@
 import { parseNotation } from '../core/exercise/notation';
 import type { Phrase } from '../core/exercise/types';
-import type { Lesson } from './types';
+import type { Lesson, LessonKind, LessonUnit, MatchTargetSpec } from './types';
 
 export interface MakeLessonInput {
   id: string;
@@ -14,6 +14,13 @@ export interface MakeLessonInput {
   lyrics?: string[];
   phrases?: Phrase[];
   toleranceId: string;
+  kind?: LessonKind;
+  unit?: LessonUnit;
+  levels?: boolean;
+  echo?: boolean;
+  matchTargets?: MatchTargetSpec[];
+  holdSec?: number;
+  landWithinSec?: number | null;
 }
 
 export function makeLesson(input: MakeLessonInput): Lesson {
@@ -34,5 +41,12 @@ export function makeLesson(input: MakeLessonInput): Lesson {
     toleranceId: input.toleranceId,
     passScore: 0.8,
     source: 'builtin',
+    kind: input.kind ?? 'melody',
+    ...(input.unit ? { unit: input.unit } : {}),
+    levels: input.levels ?? false,
+    echo: input.echo ?? false,
+    ...(input.matchTargets ? { matchTargets: input.matchTargets } : {}),
+    ...(input.holdSec !== undefined ? { holdSec: input.holdSec } : {}),
+    ...(input.landWithinSec !== undefined ? { landWithinSec: input.landWithinSec } : {}),
   };
 }

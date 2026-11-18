@@ -22,12 +22,25 @@ export function resetRangeSim(): void {
   rangeAccepted = false;
 }
 
-export function createPitchSource(): PitchSource {
-  // HashRouter puts query params inside the hash: /#/dev/tuner?sim=const:60
+function urlParams(): URLSearchParams {
   const hash = window.location.hash;
   const hashParams = hash.includes('?') ? hash.slice(hash.indexOf('?')) : '';
-  const params = new URLSearchParams(hashParams || window.location.search);
-  const sim = params.get('sim');
+  return new URLSearchParams(hashParams || window.location.search);
+}
+
+/** True when the URL asks for a simulated singer (`?sim=...`) instead of the microphone. */
+export function isSimulated(): boolean {
+  return urlParams().get('sim') !== null;
+}
+
+/** Simulated runs keep the centred key (stable tests) unless the URL adds `key=random`. */
+export function wantsRandomKey(): boolean {
+  return !isSimulated() || urlParams().get('key') === 'random';
+}
+
+export function createPitchSource(): PitchSource {
+  // HashRouter puts query params inside the hash: /#/dev/tuner?sim=const:60
+  const sim = urlParams().get('sim');
 
   if (sim?.startsWith('const:')) {
     const midi = parseFloat(sim.slice(6));

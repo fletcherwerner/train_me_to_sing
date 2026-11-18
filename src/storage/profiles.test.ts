@@ -107,11 +107,11 @@ describe('auto-save', () => {
     expect(useProfileStatus.getState().saveError).toBe(true);
     expect(useAppStore.getState().range?.lowMidi).toBe(40); // still kept in the browser
     api.failPuts(false);
-    useAppStore.getState().recordAttempt('s1-01', { notes: [], score: 1, passed: true });
+    useAppStore.getState().recordAttempt('s1b-01', { notes: [], score: 1, passed: true });
     await vi.advanceTimersByTimeAsync(600);
     expect(useProfileStatus.getState().saveError).toBe(false);
     expect(api.files.get('ana')!.data.range?.lowMidi).toBe(40);
-    expect(api.files.get('ana')!.data.progress['s1-01'].passed).toBe(true);
+    expect(api.files.get('ana')!.data.progress['s1b-01'].passed).toBe(true);
     sync.dispose();
   });
 });
@@ -125,7 +125,7 @@ describe('switching profiles', () => {
       name: 'ben',
       createdAt: 'c',
       updatedAt: 'u',
-      data: { range: range(50), progress: { 's1-02': passed }, importedLessons: [] },
+      data: { range: range(50), progress: { 's1b-02': passed }, importedLessons: [] },
     });
     const sync = createProfileSync({ fetchFn: api.fetchFn });
     await sync.create('ana', 'fresh');
@@ -139,7 +139,7 @@ describe('switching profiles', () => {
 
     const s = useAppStore.getState();
     expect(s.range?.lowMidi).toBe(50);
-    expect(s.progress['s1-02'].passed).toBe(true);
+    expect(s.progress['s1b-02'].passed).toBe(true);
     expect(s.settings.latencyOffsetMs).toBe(120);
     expect(useProfileStatus.getState().activeName).toBe('ben');
     expect(localStorage.getItem(ACTIVE_PROFILE_KEY)).toBe('ben');

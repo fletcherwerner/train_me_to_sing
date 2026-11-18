@@ -8,7 +8,7 @@ import { cleanName, nameToId } from '../src/storage/profileFormat';
 
 const data = (passed = false) => ({
   range: { lowMidi: 45, highMidi: 64, assessedAt: 'x' },
-  progress: passed ? { 's1-01': { passed: true, bestScore: 1, attempts: 1, lastAttemptAt: 'x' } } : {},
+  progress: passed ? { 's1b-01': { passed: true, bestScore: 1, attempts: 1, lastAttemptAt: 'x' } } : {},
   importedLessons: [],
 });
 

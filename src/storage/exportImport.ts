@@ -1,4 +1,6 @@
-import { storedDataSchema, type StoredData } from './schema';
+import { dropLegacyProgress, storedDataSchema, type StoredData } from './schema';
+import { flagStage1Rebuilt } from './notices';
+import { maxLevel } from './level';
 import { midiToName } from '../core/music/notes';
 
 /** The full StoredData as pretty JSON plus `exportedAt`. */
@@ -25,7 +27,9 @@ export function parseImport(text: string): ParseResult {
   if (!parsed.success) {
     return { ok: false, error: 'That file is not a Train Me To Sing export, so nothing was changed.' };
   }
-  return { ok: true, data: parsed.data };
+  const { progress, dropped } = dropLegacyProgress(parsed.data.progress);
+  if (dropped) flagStage1Rebuilt();
+  return { ok: true, data: { ...parsed.data, progress } };
 }
 
 /** "Range E2–C4, 9 lessons passed" */
@@ -52,6 +56,7 @@ export function mergeData(local: StoredData, incoming: StoredData): StoredData {
           bestScore: Math.max(a.bestScore, b.bestScore),
           attempts: a.attempts + b.attempts,
           lastAttemptAt: a.lastAttemptAt >= b.lastAttemptAt ? a.lastAttemptAt : b.lastAttemptAt,
+          ...(a.level || b.level ? { level: maxLevel(a.level, b.level) } : {}),
         }
       : { ...b };
   }
