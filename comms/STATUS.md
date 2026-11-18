@@ -20,7 +20,7 @@ Maintained by the orchestrator. Status is one of: `Not started`, `In progress`, 
 | E12 | Capacitor iOS wrapper | Approved | 3 | APPROVED / APPROVED | 2026-11-16 |
 | E13 | Hardening and polish: audio recovery, run-screen layout, UI leftovers | Approved | 1 | APPROVED / APPROVED | 2026-11-16 |
 | S03 | Spike: mic check | Approved | 1 | APPROVED / APPROVED | 2026-11-18 |
-| S04 | Spike: narrower pitch axis on the graph | Not started | 0 | — | — |
+| S04 | Spike: narrower pitch axis on the graph | In progress | 0 | — | 2026-11-18 |
 | S05 | Spike: open on Home, not the range test | Not started | 0 | — | — |
 | S06 | Spike: ignore the piano leaking into the microphone | Not started | 0 | — | — |
 | E14 | Beginner path: new Stage 1, feedback levels, echo yourself | Not started | 0 | — | — |
