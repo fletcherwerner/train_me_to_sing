@@ -385,6 +385,76 @@ Approved after turn 1, 2026-11-16. Review: `comms/E13/turn-01/ui-review.md`.
 - `comms/E13/turn-01/screenshots/settings-laptop.png`
 - `comms/E13/turn-01/screenshots/settings-phone.png`
 
+## E14 — Beginner path: new Stage 1, feedback levels, echo yourself
+
+Approved after turn 2, 2026-11-18. Review: `comms/E14/turn-02/ui-review.md`.
+
+### Not verified by the UI reviewer
+
+- Echo with a real recording and playback.
+- Hearing the target tone and the count-in clicks.
+- Sliding on purpose, and the "you slid" message (needs a real voice).
+- Whether the starting note changes between attempts.
+- Stage 2 and 3 lessons.
+- Everything on a real iPhone.
+
+### Screens reviewed
+
+| Screen / state | Laptop | iPhone | Screenshot files |
+|----------------|--------|--------|------------------|
+| Prove start | OK | OK | `screenshots/b04-prove-start-laptop.png`, `b04-prove-start-phone.png` |
+| Prove run | OK | OK | `screenshots/b04-prove-run-laptop.png`, `b04-prove-run-phone.png` |
+| Prove results | OK | OK | `screenshots/b04-prove-results-laptop.png`, `b04-prove-results-phone.png` |
+| Other Stage 1 screens (re-captured, unchanged) | OK | OK | `screenshots/` |
+
+The sideways-scroll check passed on every screen at phone size.
+
+### Screenshots
+
+- `comms/E14/turn-02/screenshots/b04-ido-done-laptop.png`
+- `comms/E14/turn-02/screenshots/b04-ido-done-phone.png`
+- `comms/E14/turn-02/screenshots/b04-ido-laptop.png`
+- `comms/E14/turn-02/screenshots/b04-ido-phone-dark.png`
+- `comms/E14/turn-02/screenshots/b04-ido-phone.png`
+- `comms/E14/turn-02/screenshots/b04-intro-laptop.png`
+- `comms/E14/turn-02/screenshots/b04-intro-phone.png`
+- `comms/E14/turn-02/screenshots/b04-learn-results-laptop.png`
+- `comms/E14/turn-02/screenshots/b04-learn-results-phone.png`
+- `comms/E14/turn-02/screenshots/b04-learn-run-laptop.png`
+- `comms/E14/turn-02/screenshots/b04-learn-run-phone.png`
+- `comms/E14/turn-02/screenshots/b04-practise-results-laptop.png`
+- `comms/E14/turn-02/screenshots/b04-practise-results-phone.png`
+- `comms/E14/turn-02/screenshots/b04-practise-run-laptop.png`
+- `comms/E14/turn-02/screenshots/b04-practise-run-phone.png`
+- `comms/E14/turn-02/screenshots/b04-practise-start-laptop.png`
+- `comms/E14/turn-02/screenshots/b04-practise-start-phone.png`
+- `comms/E14/turn-02/screenshots/b04-prove-results-laptop.png`
+- `comms/E14/turn-02/screenshots/b04-prove-results-phone.png`
+- `comms/E14/turn-02/screenshots/b04-prove-run-laptop.png`
+- `comms/E14/turn-02/screenshots/b04-prove-run-phone.png`
+- `comms/E14/turn-02/screenshots/b04-prove-start-laptop.png`
+- `comms/E14/turn-02/screenshots/b04-prove-start-phone.png`
+- `comms/E14/turn-02/screenshots/b04-wedo-done-laptop.png`
+- `comms/E14/turn-02/screenshots/b04-wedo-done-phone.png`
+- `comms/E14/turn-02/screenshots/b04-wedo-laptop.png`
+- `comms/E14/turn-02/screenshots/b04-wedo-phone.png`
+- `comms/E14/turn-02/screenshots/b04-youdo-learn-laptop.png`
+- `comms/E14/turn-02/screenshots/b04-youdo-learn-phone.png`
+- `comms/E14/turn-02/screenshots/home-laptop.png`
+- `comms/E14/turn-02/screenshots/home-phone-dark.png`
+- `comms/E14/turn-02/screenshots/home-phone.png`
+- `comms/E14/turn-02/screenshots/match-intro-laptop.png`
+- `comms/E14/turn-02/screenshots/match-intro-phone-dark.png`
+- `comms/E14/turn-02/screenshots/match-intro-phone.png`
+- `comms/E14/turn-02/screenshots/match-results-laptop.png`
+- `comms/E14/turn-02/screenshots/match-results-phone.png`
+- `comms/E14/turn-02/screenshots/match-run-laptop.png`
+- `comms/E14/turn-02/screenshots/match-run-phone.png`
+- `comms/E14/turn-02/screenshots/match3-intro-laptop.png`
+- `comms/E14/turn-02/screenshots/match3-intro-phone.png`
+- `comms/E14/turn-02/screenshots/match3-silent-results-laptop.png`
+- `comms/E14/turn-02/screenshots/match3-silent-results-phone.png`
+
 ## S01 — Spike: local profiles
 
 Approved after turn 1, 2026-11-16. Review: `comms/S01/turn-01/ui-review.md`.
