@@ -498,3 +498,17 @@ test('the UI reviewer gets the no-images note only when the profile says the mod
   assert.equal(lib.uiReviewNote({}), '');
   assert.equal(lib.uiReviewNote(undefined), '');
 });
+
+test('after the owner answers, a blocked coder report is set aside so the turn is redone', () => {
+  const ep = 'S09';
+  const dir = `comms/${ep}/turn-01`;
+  write(`${dir}/coder.md`, `# ${ep} — Turn 1 — Coder Report\n\n**Status:** BLOCKED - NEEDS OWNER\n`);
+  assert.equal(lib.setAsideBlockedCoder(ep), 'coder-blocked.md');
+  assert.ok(!fs.existsSync(path.join(tmp, dir, 'coder.md')));
+  assert.ok(fs.existsSync(path.join(tmp, dir, 'coder-blocked.md')));
+  write(`${dir}/coder.md`, `# ${ep} — Turn 1 — Coder Report\n\n**Status:** BLOCKED - NEEDS OWNER\n`);
+  assert.equal(lib.setAsideBlockedCoder(ep), 'coder-blocked-2.md'); // a second blocker keeps the first
+  write(`${dir}/coder.md`, `# ${ep} — Turn 1 — Coder Report\n\n**Status:** READY FOR REVIEW\n`);
+  assert.equal(lib.setAsideBlockedCoder(ep), null); // a ready report is left alone
+  assert.equal(lib.setAsideBlockedCoder('S10'), null); // no turn folder
+});
