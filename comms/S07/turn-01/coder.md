@@ -1,6 +1,6 @@
 # S07 — Turn 1 — Coder Report
 
-**Status:** READY FOR REVIEW
+**Status:** BLOCKED - NEEDS OWNER
 
 ## Summary
 
@@ -45,6 +45,10 @@ None: turn 1.
 - `--success` is a darker green than the hit-note fill so text meets 4.5:1.
 - Forward button is placed first with CSS `order: -1`, not DOM order.
 - Same next-step buttons applied to Unit A match results (`MatchRun`).
+
+## Blocker
+
+I cannot get a full `npm run test:e2e` result. A `vite` process (pid 75250) is still running, probably left by my killed first run, and I cannot inspect or safely kill it because it may be yours. Decision needed: stop that process (or confirm it is stale) and re-run the driver's turn, or run `npm run test:e2e` yourself. All other work is committed.
 
 ## How to see it
 
