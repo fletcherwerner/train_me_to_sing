@@ -7,6 +7,12 @@
 }
 /* Home at the left, title centred, one row (E13 B1). Layout comes from .page-header in index.css. */
 .lesson-header { min-height: 48px; margin: 0 0 2px; }
+/* Narrow screens: the link on its own line, the title below it, so they never touch. */
+@media (max-width: 600px) {
+  .lesson-header { grid-template-columns: 1fr; gap: 4px; }
+  .lesson-header > span:last-child { display: none; }
+  .lesson-page .lesson-header .lesson-title { text-align: left; overflow-wrap: anywhere; }
+}
 .lesson-page .lesson-title {
   margin: 0;
   font-size: 1.3rem;

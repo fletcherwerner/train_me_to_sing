@@ -133,6 +133,35 @@ test.describe('S07 light and dark', () => {
         await expect(page.getByTestId('instruction')).toBeVisible();
         expect(await noSideScroll(page)).toBe(true);
         await page.screenshot({ path: testInfo.outputPath(`lesson-${scheme}-${size.width}.png`) });
+        // The "‹ Lessons" link and the title never overlap.
+        const linkBox = await page.locator('.lesson-header a').boundingBox();
+        const titleBox = await page.locator('.lesson-header h1').boundingBox();
+        expect(linkBox && titleBox).toBeTruthy();
+        expect(linkBox!.x + linkBox!.width <= titleBox!.x || linkBox!.y + linkBox!.height <= titleBox!.y).toBe(true);
+        await context.close();
+      }
+    });
+
+    test(`Results in ${scheme} mode`, async ({ browser }, testInfo) => {
+      for (const size of SIZES) {
+        const context = await browser.newContext({
+          colorScheme: scheme,
+          viewport: { width: size.width, height: size.height },
+          ignoreHTTPSErrors: true,
+          baseURL: testInfo.project.use.baseURL,
+        });
+        const page = await context.newPage();
+        await seed(page);
+        await page.goto('/#/lesson/s2-03?sim=silent');
+        await button(page, 'Start').click();
+        await button(page, 'Play').click();
+        await expect(button(page, 'Play again')).toBeVisible({ timeout: 40000 });
+        await button(page, 'Next: We do').click();
+        await button(page, 'Next: You do').click();
+        await button(page, 'Start').click();
+        await expect(page.getByTestId('results-verdict')).toHaveText('Not yet', { timeout: 40000 });
+        expect(await noSideScroll(page)).toBe(true);
+        await page.screenshot({ path: testInfo.outputPath(`results-${scheme}-${size.width}.png`), fullPage: true });
         await context.close();
       }
     });
