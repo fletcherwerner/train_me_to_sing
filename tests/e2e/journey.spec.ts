@@ -138,6 +138,11 @@ test.describe('S07 light and dark', () => {
         const titleBox = await page.locator('.lesson-header h1').boundingBox();
         expect(linkBox && titleBox).toBeTruthy();
         expect(linkBox!.x + linkBox!.width <= titleBox!.x || linkBox!.y + linkBox!.height <= titleBox!.y).toBe(true);
+        if (size.width <= 600) {
+          // Phone: link and title in separate columns, so they cannot touch even for a long title.
+          expect(linkBox!.x + linkBox!.width).toBeLessThanOrEqual(titleBox!.x);
+          expect(await page.locator('.lesson-header').evaluate((el) => getComputedStyle(el).gridTemplateColumns.split(' ').length)).toBe(2);
+        }
         await context.close();
       }
     });

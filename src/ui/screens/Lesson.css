@@ -9,8 +9,8 @@
 .lesson-header { min-height: 48px; margin: 0 0 2px; }
 /* Narrow screens: the link on its own line, the title below it, so they never touch. */
 @media (max-width: 600px) {
-  .lesson-header { grid-template-columns: 1fr; gap: 4px; }
-  .lesson-header > span:last-child { display: none; }
+  .page-header.lesson-header { grid-template-columns: auto minmax(0, 1fr); gap: 8px; }
+  .page-header.lesson-header > span:last-child { display: none; }
   .lesson-page .lesson-header .lesson-title { text-align: left; overflow-wrap: anywhere; }
 }
 .lesson-page .lesson-title {
