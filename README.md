@@ -244,6 +244,7 @@ Every epic ends with something you can open and review. "Depends on" means those
 | S06 | [Spike: ignore the piano leaking into the microphone](planning/epics/S06-speaker-bleed.md) | Without headphones, staying silent in We do no longer scores the piano's notes; a notice suggests headphones | S05 |
 | E14 | [Beginner path: new Stage 1, feedback levels, echo yourself](planning/epics/E14-beginner-path.md) | A rebuilt Stage 1 in four units; Learn, Practise and Prove levels; match your own recorded voice | S06 |
 | E15 | [Daily practice: session, spaced mastery, review, onset coaching](planning/epics/E15-daily-practice.md) | A 12-15 minute Today's practice; lessons mastered over two days in two keys; reviews; coaching on sliding into notes | E14 |
+| S07 | [Spike: clearer next step and a lighter look](planning/epics/S07-ui-journey.md) | The highlighted button is always the next step ("Next: We do", "Next lesson"); "Back to lessons" on results; softer cards and status labels | E15 |
 
 ### How each epic file is laid out
 
