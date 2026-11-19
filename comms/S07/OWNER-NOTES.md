@@ -16,3 +16,7 @@
 - Range test specs never show "Lowest note: A2".
 
 Check first whether playback or the run end broke (for example the run-button state or a renamed label the run logic relies on), then fix the specs. Full log of the failing tests: run `npx playwright test tests/e2e/exercise.spec.ts` to reproduce quickly.
+
+## Resume (2026-11-18)
+
+The driver could not resume a coder blocker before `510a2ca`; that is fixed. Redo turn 1 using the notes above.
