@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { BackLink } from '../components/BackLink';
 import { useEffect, useRef, useState } from 'react';
 import { ensureAudioRunning } from '../../audio/audioEngine';
 import { isMicMissing, MIC_MISSING_MSG, SOUND_PAUSED_MSG } from '../audioMessages';
@@ -33,7 +33,6 @@ function statusOf(frame: PitchFrame | null): { kind: 'silent' | 'quiet' | 'noisy
 }
 
 export function MicCheck() {
-  const { search } = useLocation();
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [frame, setFrame] = useState<PitchFrame | null>(null);
@@ -111,9 +110,7 @@ export function MicCheck() {
   return (
     <main className="dev-page mic-check">
       <p>
-        <Link className="nav-link" to={{ pathname: '/', search }}>
-          Home
-        </Link>
+        <BackLink />
       </p>
       <h1>Mic check</h1>
       <p>Tap Start, then sing or hum a steady note. The bar shows how loud we hear you, and each note you hold is caught below.</p>

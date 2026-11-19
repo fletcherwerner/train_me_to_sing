@@ -66,6 +66,22 @@ export function hasAllFiles(epic, turn) {
   return Object.values(FILES).every((f) => fs.existsSync(path.join(turnDir(epic, turn), f)));
 }
 
+/**
+ * After the owner answers a coder's BLOCKED report, the next run must redo that turn, not re-read the same report
+ * and stop again. Renames the unrecorded turn's blocked `coder.md` to `coder-blocked.md` (`-2`, `-3` if taken),
+ * kept so the coder can read what it tried. Returns the new file name, or null when there is nothing to set aside.
+ */
+export function setAsideBlockedCoder(epic) {
+  const dir = turnDir(epic, lastRecordedTurn(epic) + 1);
+  const file = path.join(dir, FILES.coder);
+  if (!fs.existsSync(file)) return null;
+  if (parseCoder(fs.readFileSync(file, 'utf8')).statuses[0] !== 'BLOCKED - NEEDS OWNER') return null;
+  let name = 'coder-blocked.md';
+  for (let n = 2; fs.existsSync(path.join(dir, name)); n++) name = `coder-blocked-${n}.md`;
+  fs.renameSync(file, path.join(dir, name));
+  return name;
+}
+
 /** Highest turn that has all three files and a row in INDEX.md. 0 if none. */
 export function lastRecordedTurn(epic) {
   const indexed = new Set(readIndexRows(epic).map((r) => r.turn));

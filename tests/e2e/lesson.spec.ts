@@ -22,7 +22,7 @@ async function throughSession(page: Page) {
   await expect(page.getByTestId('instruction')).toHaveText('Listen and watch.');
   await expect(page.getByRole('button', { name: 'Next' })).toBeDisabled();
   await page.getByRole('button', { name: 'Play', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Repeat' })).toBeVisible({ timeout: 25000 });
+  await expect(page.getByRole('button', { name: /^(Play|Sing along) again$/ })).toBeVisible({ timeout: 25000 });
   await page.getByRole('button', { name: 'Next' }).click();
   await expect(page.getByTestId('instruction')).toHaveText('Sing along with the piano.');
   await page.getByRole('button', { name: 'Sing along' }).click();

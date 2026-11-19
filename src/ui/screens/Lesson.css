@@ -7,40 +7,52 @@
 }
 /* Home at the left, title centred, one row (E13 B1). Layout comes from .page-header in index.css. */
 .lesson-header { min-height: 48px; margin: 0 0 2px; }
+/* Narrow screens: the link on its own line, the title below it, so they never touch. */
+@media (max-width: 600px) {
+  .page-header.lesson-header { grid-template-columns: auto minmax(0, 1fr); gap: 8px; }
+  .page-header.lesson-header > span:last-child { display: none; }
+  .lesson-page .lesson-header .lesson-title { text-align: left; overflow-wrap: anywhere; }
+}
 .lesson-page .lesson-title {
   margin: 0;
   font-size: 1.3rem;
   line-height: 1.2;
 }
+/* Three-part progress bar: current step filled with the theme colour, finished steps ticked, later steps muted. */
 .lesson-steps {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  gap: 4px;
   list-style: none;
-  margin: 2px 0;
+  margin: 6px 0;
   padding: 0;
-  font-size: 1.05rem;
+  font-size: 0.95rem;
 }
-/* The dot is a separator drawn with equal space on both sides; it is never underlined. */
-.lesson-steps__item + .lesson-steps__item::before {
-  content: '·';
-  display: inline-block;
-  margin: 0 0.6em;
+.lesson-steps__item {
+  flex: 1;
+  padding: 6px 4px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--muted);
 }
-.lesson-steps__item--current .lesson-steps__label {
-  font-weight: 800;
-  text-decoration: underline;
-  text-underline-offset: 4px;
+.lesson-steps__item--current {
+  background: var(--theme);
+  border-color: var(--theme);
+  color: var(--on-theme);
+  font-weight: 700;
 }
-.lesson-steps__item:not(.lesson-steps__item--current) {
-  opacity: 0.65;
-}
+.lesson-steps__item--done { color: var(--text); }
+.lesson-steps__item--done .lesson-steps__label::before { content: '✓ '; color: var(--success); font-weight: 700; }
+/* One compact block: level, its help text and the starting note. */
+.lesson-meta { margin: 4px 0; color: var(--muted); font-size: 0.9rem; }
 .lesson-level { margin: 2px 0; font-weight: 700; }
-.lesson-level-help { margin: 2px 0; font-size: 0.95rem; }
-.lesson-start-note { margin: 2px 0; font-size: 1.15rem; font-weight: 700; }
+.lesson-level-help { margin: 2px 0; }
+.lesson-start-note { margin: 2px 0; font-weight: 600; }
+.lesson-meta .lesson-level, .lesson-meta .lesson-start-note { font-size: 0.9rem; }
 .lesson-instruction {
-  margin: 2px 0;
-  font-size: 1.05rem;
+  margin: 6px 0;
+  font-size: 1.25rem;
+  font-weight: 600;
 }
 .lesson-notes {
   font-size: 1.3rem;
@@ -59,6 +71,11 @@
   font-size: 2rem;
   margin: 8px 0 0;
 }
+/* "Passed" is green with a tick; "Not yet" stays in the normal text colour (encouragement, not an error). */
+.lesson-verdict--pass { color: var(--success); }
+.lesson-verdict--pass::before { content: '✓ '; }
+/* The forward button comes first, then the others, with a little more room after it. */
+.lesson-controls .btn--primary, .lesson-actions .btn--primary { order: -1; margin-inline-end: 8px; }
 .lesson-score {
   font-size: 1.3rem;
   font-weight: 700;
@@ -109,6 +126,6 @@
     bottom: 0;
     z-index: 2;
     padding: 6px 0;
-    background: Canvas;
+    background: var(--bg);
   }
 }

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ChangeEvent } from 'react';
+import { BackLink } from '../components/BackLink';
 import { Link, useLocation } from 'react-router-dom';
 import { useAppStore } from '../../storage/store';
 import type { StoredData } from '../../storage/schema';
@@ -66,9 +67,7 @@ export function Settings() {
   return (
     <main className="dev-page">
       <header className="page-header">
-        <Link to={{ pathname: '/', search }} className="nav-link">
-          Home
-        </Link>
+        <BackLink />
         <h1>Settings</h1>
         <span />
       </header>

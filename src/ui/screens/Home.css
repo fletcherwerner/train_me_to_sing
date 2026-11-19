@@ -1,20 +1,30 @@
 .home__header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
 .home__header h1 { margin: 0 0 4px; font-size: 1.6rem; }
 .home__header p { margin: 0; }
-.home__continue { border: 2px solid currentColor; border-radius: 12px; padding: 4px 16px 12px; margin: 16px 0; }
-.home__continue h2 { margin: 8px 0; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.05em; }
+.home__continue { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 4px 16px 14px; margin: 16px 0; }
+.home__continue h2 { margin: 8px 0; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
 .home__continue p { margin: 4px 0; }
 .home__continue-link { margin-top: 8px; }
 .home__stage h2 { margin: 24px 0 4px; font-size: 1.2rem; }
-.home__count { margin: 0 0 8px; opacity: 0.75; }
+.home__count { margin: 0 0 8px; color: var(--muted); }
 .home__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-.home__row { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 56px; padding: 8px 12px; box-sizing: border-box; border: 1px solid currentColor; border-radius: 10px; color: inherit; text-decoration: none; }
+.home__row { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 56px; padding: 8px 14px; box-sizing: border-box; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); color: inherit; text-decoration: none; }
+a.home__row:hover { background: color-mix(in srgb, var(--text) 6%, var(--surface)); }
+a.home__row:active { background: color-mix(in srgb, var(--text) 10%, var(--surface)); }
+a.home__row:focus-visible { outline: 3px solid var(--theme); outline-offset: 2px; }
+/* The recommended next lesson: a 3px bar down the left edge in the theme colour. */
+.home__row--next { border-left: 3px solid var(--theme); }
+.home__next-tag { display: inline-block; margin-left: 8px; padding: 1px 8px; border-radius: 999px; background: var(--theme); color: var(--on-theme); font-size: 0.75rem; font-weight: 700; vertical-align: middle; }
 .home__row-main { display: flex; flex-direction: column; min-width: 0; }
 .home__row-title { font-weight: 600; }
-.home__row-notes { font-size: 0.85rem; opacity: 0.75; }
-.home__status { font-size: 0.95rem; text-align: right; flex-shrink: 0; }
-.home__status--passed { font-weight: 700; }
-.home__row--disabled { opacity: 0.55; border-style: dashed; cursor: not-allowed; flex-wrap: wrap; }
+.home__row-notes { font-size: 0.85rem; color: var(--muted); }
+/* Status is a small pill: an icon, a word, and a colour. The word always stays, so colour is never the only signal. */
+.home__status { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.9rem; text-align: right; flex-shrink: 0; border: 1px solid transparent; }
+.home__status--passed { font-weight: 700; color: var(--success); background: color-mix(in srgb, var(--success) 14%, var(--surface)); border-color: color-mix(in srgb, var(--success) 40%, var(--surface)); }
+.home__status--attempted { color: var(--theme); background: color-mix(in srgb, var(--theme) 12%, var(--surface)); border-color: color-mix(in srgb, var(--theme) 35%, var(--surface)); }
+.home__status--new, .home__status--locked { color: var(--muted); background: transparent; border-color: var(--border); }
+.home__status--locked::before { content: '🔒 '; }
+.home__row--disabled { opacity: 0.7; border-style: dashed; cursor: not-allowed; flex-wrap: wrap; }
 /* The reason always sits on its own line, left-aligned. */
 .home__row--disabled .home__status { flex-basis: 100%; text-align: left; }
 .home__mysongs-item { display: flex; flex-direction: column; gap: 4px; }
@@ -22,17 +32,20 @@
 .home__mysongs-row .home__row { flex: 1; }
 .home__mysongs-row .home__delete { min-height: 0; align-self: stretch; }
 .home__link-row { margin: 24px 0 8px; }
-.home__confirm { padding: 8px 12px; border: 2px solid currentColor; border-radius: 10px; }
-.settings__dialog { border: 2px solid currentColor; border-radius: 10px; padding: 8px 16px 16px; margin: 12px 0; }
+.home__confirm { padding: 8px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
+.settings__dialog { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 8px 16px 16px; margin: 12px 0; }
 .settings__dialog h3 { margin: 8px 0; }
 .settings__dialog-actions { display: flex; gap: 12px; flex-wrap: wrap; }
-.settings__dialog-danger { margin-top: 20px; padding-top: 12px; border-top: 1px solid currentColor; }
+.settings__dialog-danger { margin-top: 20px; padding-top: 12px; border-top: 1px solid var(--border); }
 .settings__dev-links { list-style: none; padding: 0; display: flex; gap: 8px; flex-wrap: wrap; }
 /* Narrow windows: always title first, status below. */
 @media (max-width: 699px) {
   .home__row { flex-direction: column; align-items: flex-start; gap: 4px; }
   .home__status { text-align: left; }
+  .home__header .home__links { flex-direction: column; align-items: flex-end; gap: 4px; }
 }
-.home__links { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+/* Wide windows: Settings and Mic check sit side by side. */
+.home__links { display: flex; flex-direction: row; align-items: center; gap: 8px; flex-shrink: 0; }
+.home__links .nav-link { min-height: 48px; font-size: 0.95rem; padding: 0 14px; color: var(--muted); }
 .home__setup-alt { margin-top: 12px !important; }
 .home__unit { margin: 14px 0 2px; font-size: 1.05rem; }

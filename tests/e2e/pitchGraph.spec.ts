@@ -36,7 +36,7 @@ for (const size of [
     expect(await page.getByTestId('graph-target').count()).toBeGreaterThan(0);
     await expect(page.getByRole('button', { name: 'Stop' })).toBeVisible();
     expect(await page.getByTestId('graph-sung').getAttribute('d')).toBe('');
-    await expect(page.getByRole('button', { name: 'Repeat' })).toBeVisible({ timeout: 25000 });
+    await expect(page.getByRole('button', { name: /^(Play|Sing along) again$/ })).toBeVisible({ timeout: 25000 });
     await page.getByRole('button', { name: 'Next' }).click();
     await page.getByRole('button', { name: 'Sing along' }).click();
     await expect(page.getByTestId('practice-line')).toContainText('Practice run:', { timeout: 25000 });

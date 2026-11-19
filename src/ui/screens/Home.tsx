@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react';
 import { todayString } from '../../storage/today';
 import { usesMastery } from '../../content/mastery';
 import { isDue } from '../../core/progress/review';
+import { nextLesson } from '../../core/progress/next';
+import { ProgressBar } from '../components/ProgressBar';
 import { describePlan, planToday } from '../../core/session/practicePlan';
 import { Link, useLocation } from 'react-router-dom';
 import { useAppStore } from '../../storage/store';
@@ -70,6 +72,14 @@ export function Home() {
   const titleOf = (id: string) => all.find((l) => l.lesson.id === id)?.lesson.title ?? id;
   const pitchPart = plan.find((p) => p.kind === 'pitch');
   const stages = [...new Set(lessons.map((l) => l.lesson.stage))];
+  // The same rule as "Next lesson" on the results screen (UR-20).
+  const recommendedId = range
+    ? (nextLesson(
+        lessons.map((l) => l.lesson),
+        progress,
+        range,
+      )?.id ?? null)
+    : null;
 
   const status = (lesson: Lesson) => {
     const p = progress[lesson.id];
@@ -171,6 +181,7 @@ export function Home() {
             <h2>{STAGE_NAMES[stage]}</h2>
             <p className="home__count" data-testid={`stage-${stage}-count`}>
               {passedCount} of {inStage.length} passed
+              <ProgressBar value={passedCount} max={inStage.length} />
             </p>
             {STRICTER_NOTE[stage] ? (
               <p className="home__count" data-testid={`stage-${stage}-note`}>
@@ -190,6 +201,10 @@ export function Home() {
                 </h3>
                 <p className="home__count" data-testid={`unit-${group.unit.id}-count`}>
                   {group.items.filter((l) => progress[l.lesson.id]?.passed).length} of {group.items.length} passed
+                  <ProgressBar
+                    value={group.items.filter((l) => progress[l.lesson.id]?.passed).length}
+                    max={group.items.length}
+                  />
                 </p>
               </>
             ) : null}
@@ -200,7 +215,14 @@ export function Home() {
                 const body = (
                   <>
                     <span className="home__row-main">
-                      <span className="home__row-title">{lesson.title}</span>
+                      <span className="home__row-title">
+                        {lesson.title}
+                        {lesson.id === recommendedId ? (
+                          <span className="home__next-tag" data-testid="next-tag">
+                            Next
+                          </span>
+                        ) : null}
+                      </span>
                       <span className="home__row-notes">
                         {noteCount} {lesson.kind === 'match' ? 'targets' : 'notes'}
                       </span>
@@ -225,7 +247,7 @@ export function Home() {
                   <li key={lesson.id}>
                     {fitResult?.ok ? (
                       <Link
-                        className="home__row"
+                        className={lesson.id === recommendedId ? 'home__row home__row--next' : 'home__row'}
                         data-testid={`lesson-${lesson.id}`}
                         to={{ pathname: `/lesson/${lesson.id}`, search }}
                       >

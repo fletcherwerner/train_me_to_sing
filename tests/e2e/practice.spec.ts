@@ -51,7 +51,7 @@ test.describe('mastery over two days', () => {
     expect(day1.version).toBe(2);
     expect(day1.progress['s1b-01'].proofs).toHaveLength(1);
     expect(day1.progress['s1b-01'].passed).toBe(false);
-    await page.getByRole('link', { name: 'Home' }).first().click();
+    await page.getByRole('link', { name: 'Back to lessons' }).first().click();
     await expect(page.getByTestId('status-s1b-01')).toContainText('Passed once');
 
     // Passing again the same day is not a second day.
@@ -68,7 +68,7 @@ test.describe('mastery over two days', () => {
     const tonics = new Set(day2.progress['s1b-01'].proofs.map((p: { tonicMidi: number }) => p.tonicMidi));
     expect(tonics.size).toBeGreaterThanOrEqual(2);
     expect(day2.progress['s1b-01']).toMatchObject({ passed: true, review: { step: 0, dueOn: '2026-11-22' } });
-    await page.getByRole('link', { name: 'Home' }).first().click();
+    await page.getByRole('link', { name: 'Back to lessons' }).first().click();
     await expect(page.getByTestId('status-s1b-01')).toContainText('Passed');
     await expect(page.getByTestId('status-s1b-01')).not.toContainText('Passed once');
     await expect(page.getByTestId('unit-B-count')).toHaveText('1 of 7 passed');
@@ -143,13 +143,15 @@ for (const size of SIZES) {
       await page.getByTestId('run-button').click();
       await expect(page.getByTestId('match-target')).toContainText('Note 1 of 4');
       await expect(page.getByTestId('results-score')).toContainText('4 of 4', { timeout: 90000 });
+      await expect(page.locator('.btn--primary')).toHaveCount(1);
+      await expect(page.getByTestId('back-to-lessons')).toHaveCount(0);
       await page.getByTestId('practice-next').click();
 
       // 3. New pattern: Sol–mi at Learn.
       await expect(page.getByTestId('practice-part')).toContainText('New pattern: Sol–mi');
       await start(page).click();
       await page.getByRole('button', { name: 'Play', exact: true }).click();
-      await expect(page.getByRole('button', { name: 'Repeat' })).toBeVisible({ timeout: 40000 });
+      await expect(page.getByRole('button', { name: /^(Play|Sing along) again$/ })).toBeVisible({ timeout: 40000 });
       await page.getByRole('button', { name: 'Next' }).click();
       await page.getByRole('button', { name: 'Sing along' }).click();
       await expect(page.getByTestId('practice-line')).toContainText('Practice run:', { timeout: 40000 });
@@ -157,6 +159,13 @@ for (const size of SIZES) {
       await start(page).click();
       await expect(page.getByTestId('results-verdict')).toHaveText('Level passed', { timeout: 40000 });
       await expect(page.getByTestId('practice-stop')).toBeVisible();
+      // S07: inside practice the only primary button is "Next part"; the lesson's own exits are hidden.
+      await expect(page.locator('.btn--primary')).toHaveCount(1);
+      await expect(page.getByTestId('practice-next')).toHaveClass(/btn--primary/);
+      await expect(page.getByTestId('next-lesson')).toHaveCount(0);
+      await expect(page.getByTestId('back-to-lessons')).toHaveCount(0);
+      await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Hear it again' })).toBeVisible();
       await page.getByTestId('practice-next').click();
 
       // 4. Wrap-up.

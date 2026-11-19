@@ -10,11 +10,11 @@
   padding: 8px 12px;
   background: var(--bg, Canvas);
   color: inherit;
-  border-bottom: 2px solid currentColor;
+  border-bottom: 1px solid var(--border);
 }
 .practice-bar__where { font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
 .practice-bar__actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.practice-note { margin: 8px 12px; padding: 8px 12px; border: 2px solid currentColor; border-radius: 10px; }
+.practice-note { margin: 8px 12px; padding: 8px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
 .practice-part { padding: 0 12px 12px; }
 .warmup-piano .piano { max-height: 150px; }
 .practice-footer { margin: 16px 12px; }

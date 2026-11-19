@@ -25,14 +25,14 @@ test('sim=perfect: complete s2-03; home shows Stage 2 1 of 8 passed', async ({ p
   );
   await page.getByRole('button', { name: 'Start', exact: true }).click();
   await page.getByRole('button', { name: 'Play', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Repeat' })).toBeVisible({ timeout: 40000 });
+  await expect(page.getByRole('button', { name: /^(Play|Sing along) again$/ })).toBeVisible({ timeout: 40000 });
   await page.getByRole('button', { name: 'Next' }).click();
   await page.getByRole('button', { name: 'Sing along' }).click();
   await expect(page.getByTestId('practice-line')).toBeVisible({ timeout: 40000 });
   await page.getByRole('button', { name: 'Next' }).click();
   await page.getByRole('button', { name: 'Start', exact: true }).click();
   await expect(page.getByTestId('results-verdict')).toHaveText('Passed', { timeout: 40000 });
-  await page.getByRole('link', { name: 'Home' }).first().click();
+  await page.getByRole('link', { name: 'Back to lessons' }).first().click();
   await expect(page.getByTestId('stage-2-count')).toHaveText('0 of 8 passed');
   await expect(page.getByTestId('status-s2-03')).toContainText('Passed once');
 });
@@ -74,7 +74,7 @@ test('calibration run shows progress, can be stopped, and reaches Save/Retry', a
     );
   });
   await page.goto('/#/settings/calibrate?sim=calibrate:200');
-  await expect(page.getByRole('link', { name: 'Home' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Back to lessons' })).toBeVisible();
   await page.getByTestId('calibrate-start').click();
   await expect(page.getByTestId('calibrate-beat')).toContainText('Count-in');
   await page.getByTestId('calibrate-stop').click();

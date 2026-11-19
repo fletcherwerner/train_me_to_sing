@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { BackLink } from '../components/BackLink';
 import { Link, useLocation } from 'react-router-dom';
 import { useAppStore } from '../../storage/store';
 import { ensureAudioRunning, now, watchAudioClock } from '../../audio/audioEngine';
@@ -161,9 +162,7 @@ export function Calibrate() {
   return (
     <main className="dev-page">
       <p className="nav-row">
-        <Link to={{ pathname: '/', search }} className="nav-link">
-          Home
-        </Link>{' '}
+        <BackLink />{' '}
         <Link to={{ pathname: '/settings', search }} className="nav-link">
           Settings
         </Link>

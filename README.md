@@ -287,7 +287,7 @@ Everything the three agents say to each other is a markdown file under `comms/`.
 1. The coding agent works (turn 1: builds the epic; later turns: responds to the previous turn's reviews) and writes `coder.md`.
 2. Both reviewers review that work and write their reviews.
 
-The epic is approved when both reviews in the same turn say `APPROVED`. After 10 turns without approval, the loop stops and asks the owner. It also stops at once if any agent reports `BLOCKED - NEEDS OWNER`.
+The epic is approved when both reviews in the same turn say `APPROVED`. After 10 turns without approval, the loop stops and asks the owner. It also stops at once if any agent reports `BLOCKED - NEEDS OWNER`. When you answer a coder's blocker and run the epic again, the driver keeps the blocked report as `coder-blocked.md` in the same turn folder and the coder redoes that turn.
 
 ### Verdict line
 

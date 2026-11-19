@@ -26,7 +26,7 @@ import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
 import {
   ROOT, EPIC_RE, FILES, pad, rel, read, git, today, commsDir, turnDir, turnNumbers,
-  lastRecordedTurn, validateCoder, validateReview, validateSummary, approvalGate, openAfterTurn,
+  lastRecordedTurn, setAsideBlockedCoder, validateCoder, validateReview, validateSummary, approvalGate, openAfterTurn,
   parseCoder, repeatedDisputes, isOwnerNotes, readStatus, readEpicTable, setStatusRow, setIndexRow, writeNeedsInput, writeForOwner, writeUiPass, uiReviewNote,
 } from './lib/comms.mjs';
 import { loadProfile, checkReachable, checkModel, flushCache } from './lib/profile.mjs';
@@ -250,6 +250,8 @@ function needsInputResume(epic) {
     throw new Stop(`${epic} is waiting for you. Read comms/${epic}/NEEDS-INPUT.md, write your answer in comms/${epic}/OWNER-NOTES.md, then run this command again.`);
   }
   fs.unlinkSync(ni);
+  const setAside = setAsideBlockedCoder(epic);
+  if (setAside) log(`${epic}: the coder's blocked report is kept as ${setAside}; the coder redoes turn ${lastRecordedTurn(epic) + 1}`);
   fs.writeFileSync(path.join(commsDir(epic), '.loop-state.json'), JSON.stringify({ baseTurn: lastRecordedTurn(epic) }));
   log(`${epic}: owner answered; turn limit restarts from turn ${lastRecordedTurn(epic)}`);
 }

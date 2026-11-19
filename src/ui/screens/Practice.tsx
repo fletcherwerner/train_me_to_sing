@@ -116,6 +116,7 @@ function PracticeRun({ range }: { range: { lowMidi: number; highMidi: number } }
             key={idx}
             lesson={round}
             range={range}
+            embedded
             onAttemptComplete={(r) => {
               setLastResult(r);
               setFinishedPart(true);
@@ -133,6 +134,7 @@ function PracticeRun({ range }: { range: { lowMidi: number; highMidi: number } }
             lesson={lesson}
             range={range}
             forceLevel={part.kind === 'review' && lesson.levels ? 'prove' : undefined}
+            embedded
             onAttemptComplete={(r) => {
               setLastResult(r);
               setFinishedPart(true);

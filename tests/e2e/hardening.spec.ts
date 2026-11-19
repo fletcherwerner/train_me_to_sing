@@ -25,7 +25,7 @@ const seed = (page: Page) =>
     );
   });
 
-const btn = (page: Page, name: string) => page.getByRole('button', { name, exact: true });
+const btn = (page: Page, name: string | RegExp) => page.getByRole('button', { name, exact: true });
 
 test.describe('range test recovery', () => {
   test('sound stops during the countdown: message, Try again, then a clean run', async ({ page }) => {
@@ -51,7 +51,7 @@ test.describe('range test recovery', () => {
 
   test('only one primary button and one Home link', async ({ page }) => {
     await page.goto('/#/range?sim=range:45,64');
-    await expect(page.getByRole('link', { name: 'Home' })).toHaveCount(1);
+    await expect(page.getByRole('link', { name: 'Back to lessons' })).toHaveCount(1);
     await expect(page.locator('.btn--primary')).toHaveCount(1);
   });
 });
@@ -60,8 +60,8 @@ test.describe('range test recovery', () => {
 async function toYouDo(page: Page, opts: { waitIdo?: number } = {}) {
   await btn(page, 'Start').click();
   await btn(page, 'Play').click();
-  await expect(btn(page, 'Repeat')).toBeVisible({ timeout: opts.waitIdo ?? 90000 });
-  await btn(page, 'Next').click();
+  await expect(btn(page, /^(Play|Sing along) again$/)).toBeVisible({ timeout: opts.waitIdo ?? 90000 });
+  await btn(page, /^Next: /).click();
 }
 
 test.describe('lesson recovery', () => {
@@ -71,7 +71,7 @@ test.describe('lesson recovery', () => {
     await seed(page);
     await page.goto('/#/lesson/s1b-04?sim=perfect');
     await toYouDo(page);
-    await btn(page, 'Next').click();
+    await btn(page, /^Next: /).click();
     await btn(page, 'Start').click();
     await expect(btn(page, 'Stop')).toBeVisible();
     await page.waitForTimeout(1500);
@@ -81,7 +81,7 @@ test.describe('lesson recovery', () => {
     await expect(btn(page, 'Try again')).toBeVisible();
     const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('tmts.v1')!).progress);
     expect(saved['s1b-04']).toBeUndefined();
-    await page.getByRole('link', { name: 'Home' }).click();
+    await page.getByRole('link', { name: 'Back to lessons' }).click();
     await expect(page.getByTestId('status-s1b-04')).toContainText('Not started');
   });
 
@@ -204,15 +204,15 @@ for (const id of ['s1b-04', 's3-01', 's3-04']) {
     await btn(page, 'Play').click();
     await expect(btn(page, 'Stop')).toBeVisible();
     await checkFits(page, true, false);
-    await expect(btn(page, 'Repeat')).toBeVisible({ timeout: 120000 });
-    await btn(page, 'Next').click();
+    await expect(btn(page, /^(Play|Sing along) again$/)).toBeVisible({ timeout: 120000 });
+    await btn(page, /^Next: /).click();
     await checkFits(page, false, true);
     await btn(page, 'Sing along').click();
     await expect(btn(page, 'Stop')).toBeVisible();
     await page.waitForTimeout(500);
     await checkFits(page, true, true);
     await btn(page, 'Stop').click();
-    await btn(page, 'Next').click();
+    await btn(page, /^Next: /).click();
     await checkFits(page, false, true);
     await btn(page, 'Start').click();
     await expect(btn(page, 'Stop')).toBeVisible();
@@ -231,9 +231,9 @@ test('legend: I do shows only "target"; You do and results show both', async ({ 
   await expect(page.getByTestId('legend-target')).toHaveText('target');
   await expect(page.getByTestId('legend-you')).toHaveCount(0);
   await btn(page, 'Play').click();
-  await expect(btn(page, 'Repeat')).toBeVisible({ timeout: 90000 });
-  await btn(page, 'Next').click();
-  await btn(page, 'Next').click();
+  await expect(btn(page, /^(Play|Sing along) again$/)).toBeVisible({ timeout: 90000 });
+  await btn(page, /^Next: /).click();
+  await btn(page, /^Next: /).click();
   await expect(page.getByTestId('legend-you')).toHaveText('you');
   await btn(page, 'Start').click();
   await expect(page.getByTestId('results-verdict')).toBeVisible({ timeout: 90000 });
@@ -249,9 +249,9 @@ test('results: verdict, score, pass mark and Try again in view at 393x852; one H
   await page.goto('/#/lesson/s3-04?sim=silent');
   await btn(page, 'Start').click();
   await btn(page, 'Play').click();
-  await expect(btn(page, 'Repeat')).toBeVisible({ timeout: 120000 });
-  await btn(page, 'Next').click();
-  await btn(page, 'Next').click();
+  await expect(btn(page, /^(Play|Sing along) again$/)).toBeVisible({ timeout: 120000 });
+  await btn(page, /^Next: /).click();
+  await btn(page, /^Next: /).click();
   await btn(page, 'Start').click();
   await expect(page.getByTestId('results-verdict')).toBeVisible({ timeout: 150000 });
   for (const t of ['results-verdict', 'results-score', 'results-tip', 'results-actions']) {
@@ -260,7 +260,7 @@ test('results: verdict, score, pass mark and Try again in view at 393x852; one H
   await expect(page.getByText('Pass mark')).toBeInViewport();
   await expect(btn(page, 'Try again')).toBeInViewport();
   await expect(btn(page, 'Try again')).toHaveClass(/btn--primary/);
-  await expect(page.getByRole('link', { name: 'Home' })).toHaveCount(1);
+  await expect(page.locator('.lesson-header').getByRole('link', { name: 'Back to lessons' })).toHaveCount(1);
   await expect(page.getByRole('heading', { name: 'Missed notes' })).toBeVisible();
   // Chips are not clipped on results either.
   const clipped = await page.locator('.sequence-chip__name, .sequence-chip__lyric').evaluateAll(
@@ -288,9 +288,9 @@ test('piano sung key is "off" outside the lesson tolerance (flat40 on a t3 lesso
   await page.goto('/#/lesson/s3-01?sim=flat40');
   await btn(page, 'Start').click();
   await btn(page, 'Play').click();
-  await expect(btn(page, 'Repeat')).toBeVisible({ timeout: 120000 });
-  await btn(page, 'Next').click();
-  await btn(page, 'Next').click();
+  await expect(btn(page, /^(Play|Sing along) again$/)).toBeVisible({ timeout: 120000 });
+  await btn(page, /^Next: /).click();
+  await btn(page, /^Next: /).click();
   await btn(page, 'Start').click();
   await expect(btn(page, 'Stop')).toBeVisible();
   // The lead-in is four clicks; wait until a note is sounding.
@@ -355,5 +355,5 @@ test('production build: Settings shows "Open the tuner" but not the other develo
 test('Home keeps ?sim= from the lesson screen', async ({ page }) => {
   await seed(page);
   await page.goto('/#/lesson/s1b-04?sim=perfect');
-  await expect(page.getByRole('link', { name: 'Home' })).toHaveAttribute('href', /sim=perfect/);
+  await expect(page.getByRole('link', { name: 'Back to lessons' })).toHaveAttribute('href', /sim=perfect/);
 });

@@ -1,4 +1,5 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { BackLink } from '../components/BackLink';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ensureAudioRunning, now, watchAudioClock } from '../../audio/audioEngine';
 import {
@@ -228,9 +229,7 @@ export function RangeSetup() {
   // Home is always the first element, top left. Leaving the screen stops everything via the unmount cleanup.
   const homeLink = (
     <p className="range-back">
-      <Link to={{ pathname: '/', search }} className="nav-link">
-        Home
-      </Link>
+      <BackLink />
     </p>
   );
 

@@ -704,3 +704,27 @@ Review script steps with real speakers and a microphone are left for the owner. 
 - `comms/S06/turn-02/screenshots/laptop-perfect-wedo-done.png`
 - `comms/S06/turn-02/screenshots/laptop-perfect-wedo-ready.png`
 - `comms/S06/turn-02/screenshots/laptop-perfect-wedo-running.png`
+
+## S07 — Spike: clearer next step and a lighter look
+
+Approved after turn 3, 2026-11-19. Review: `comms/S07/turn-03/ui-review.md`.
+
+### Not verified by the UI reviewer
+
+- Real microphone, piano sound and headphones.
+- iPhone Safari rendering and tap comfort.
+- Results screens in light and dark; not re-captured this turn.
+
+### Screens reviewed
+
+| Screen / state | Laptop | iPhone | Screenshot files |
+|----------------|--------|--------|------------------|
+| Lesson header (s2-03, range 45–64, sim=perfect) | OK | OK | `screenshots/measure-393.png`, `screenshots/measure-360.png`, `screenshots/measure-1280.png` |
+
+Turn-1 screens were not re-captured. Turn 3 touched only the header CSS.
+
+### Screenshots
+
+- `comms/S07/turn-03/screenshots/measure-1280.png`
+- `comms/S07/turn-03/screenshots/measure-360.png`
+- `comms/S07/turn-03/screenshots/measure-393.png`
