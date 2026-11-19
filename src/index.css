@@ -5,6 +5,17 @@
   --on-theme: #ffffff;
   --danger: #b91c1c;
   --track: #d1d5db;
+  /* S07 tokens. --border is for cards (decorative); --border-strong is for controls (3:1 against --bg). */
+  --bg: #ffffff;
+  --surface: #f6f8fb;
+  --border: #d5dae2;
+  --border-strong: #6b7280;
+  --text: #111827;
+  --muted: #4b5563;
+  --success: #166534;
+  --warn: #92400e;
+  --radius: 12px;
+  --shadow: 0 1px 3px rgba(16, 24, 40, 0.08);
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -12,6 +23,15 @@
     --on-theme: #0b1b30;
     --danger: #f87171;
     --track: #4b5563;
+    --bg: #111418;
+    --surface: #1b2027;
+    --border: #343c47;
+    --border-strong: #8b95a3;
+    --text: #e8ecf1;
+    --muted: #a3adba;
+    --success: #4ade80;
+    --warn: #fbbf24;
+    --shadow: none;
   }
 }
 
@@ -24,9 +44,9 @@
   min-height: 48px;
   min-width: 48px;
   padding: 0 20px;
-  border: 1px solid currentColor;
-  border-radius: 8px;
-  background: transparent;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  background: var(--bg);
   color: inherit;
   font: inherit;
   font-size: 1.05rem;
@@ -34,6 +54,12 @@
   cursor: pointer;
 }
 .btn:disabled { opacity: 0.5; cursor: default; }
+.btn:not(:disabled):hover, .nav-link:hover { background: var(--surface); }
+.btn--primary:not(:disabled):hover { background: var(--theme); filter: brightness(1.12); }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* A thin progress bar next to a count such as "3 of 7 passed". */
+.progress-bar { display: inline-block; vertical-align: middle; width: 96px; height: 6px; margin-left: 10px; border-radius: 3px; background: var(--track); overflow: hidden; }
+.progress-bar__fill { display: block; height: 100%; background: var(--success); }
 .btn--primary { background: var(--theme); color: var(--on-theme); border-color: var(--theme); font-weight: 600; }
 .btn--danger { color: var(--danger); border-color: var(--danger); }
 .nav-link { gap: 6px; }
@@ -43,6 +69,8 @@
 .page-header h1 { margin: 0; font-size: 1.4rem; text-align: center; }
 body {
   margin: 0;
+  background: var(--bg);
+  color: var(--text);
   /* iOS: keep content clear of the notch, home bar and rounded corners. */
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   -webkit-touch-callout: none;

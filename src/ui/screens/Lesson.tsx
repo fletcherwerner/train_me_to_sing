@@ -48,6 +48,7 @@ import { useLiveAttempt } from '../hooks/useLiveAttempt';
 import { useWakeLock } from '../hooks/useWakeLock';
 import { describeReason } from '../describeReason';
 import { describeTolerance } from '../describeTolerance';
+import { BackToLessonsLink, NextLessonLink, useNextLesson } from '../components/ResultsNav';
 import './Lesson.css';
 
 export interface LessonProps {
@@ -107,17 +108,21 @@ export function LessonRun({
   range,
   onAttemptComplete,
   forceLevel,
+  embedded,
 }: {
   lesson: LessonData;
   range: { lowMidi: number; highMidi: number };
   onAttemptComplete?: (result: AttemptResult) => void;
   /** Start at this level instead of the one the student has reached (reviews start at Prove). */
   forceLevel?: Level;
+  /** Shown inside Today's practice: the practice bar owns "what next", so no Next lesson / Back to lessons. */
+  embedded?: boolean;
 }) {
   const { search } = useLocation();
   const latencyMs = useAppStore((s) => s.settings.latencyOffsetMs);
   const calibrated = useAppStore((s) => s.settings.calibratedAt !== undefined);
   const recordAttempt = useAppStore((s) => s.recordAttempt);
+  const nextLesson = useNextLesson(lesson.id, range);
   const [session, dispatch] = useReducer(reduce, undefined, () =>
     createSession(lesson.levels, forceLevel ?? useAppStore.getState().progress[lesson.id]?.level ?? 'learn'),
   );
@@ -537,6 +542,13 @@ export function LessonRun({
     const rex = resultEx ?? ex;
     const nextLevel: Level | null = session.levels && level !== 'prove' ? (level === 'learn' ? 'practise' : 'prove') : null;
     const levelPassed = r.passed && nextLevel !== null;
+    const finalPass = r.passed && !levelPassed;
+    const comeBackTomorrow =
+      mastery && finalPass && !useAppStore.getState().progress[lesson.id]?.passed;
+    // The primary is the most likely next step. Inside Today's practice the practice bar owns it.
+    const nextPrimary = !embedded && finalPass && nextLesson !== null;
+    const backPrimary = !embedded && finalPass && nextLesson === null;
+    const tryPrimary = !r.passed;
     return (
       <main className="dev-page lesson-page" data-testid="results">
         {header}
@@ -545,7 +557,7 @@ export function LessonRun({
             Level: {LEVEL_NAMES[level]}
           </p>
         ) : null}
-        <h2 className="lesson-verdict" data-testid="results-verdict">
+        <h2 className={r.passed ? 'lesson-verdict lesson-verdict--pass' : 'lesson-verdict'} data-testid="results-verdict">
           {r.passed ? (levelPassed ? 'Level passed' : 'Passed') : 'Not yet'}
         </h2>
         {session.levels && r.passed ? (
@@ -562,6 +574,9 @@ export function LessonRun({
                 : 'Passed once — come back tomorrow in a new key.'}
           </p>
         ) : null}
+        {comeBackTomorrow ? (
+          <p data-testid="results-come-back">Come back tomorrow to finish this one.</p>
+        ) : null}
         <p className="lesson-score" data-testid="results-score">
           {hits} of {r.notes.length} notes ({Math.round(r.score * 100)}%)
         </p>
@@ -571,12 +586,14 @@ export function LessonRun({
         </p>
         <p className="lesson-actions" data-testid="results-actions">
           {levelPassed && nextLevel ? (
-            <button className="btn btn--primary" data-testid="advance-level" onClick={() => advance()}>
+            <button className={embedded ? 'btn' : 'btn btn--primary'} data-testid="advance-level" onClick={() => advance()}>
               Go to {LEVEL_NAMES[nextLevel]}
             </button>
           ) : null}
+          {nextPrimary && nextLesson ? <NextLessonLink lesson={nextLesson} /> : null}
+          {backPrimary ? <BackToLessonsLink primary /> : null}
           <button
-            className={r.passed ? 'btn' : 'btn btn--primary'}
+            className={tryPrimary && !embedded ? 'btn btn--primary' : 'btn'}
             onClick={() => dispatch({ type: 'BACK_TO', step: 'youDo' })}
           >
             Try again
@@ -594,6 +611,7 @@ export function LessonRun({
               Echo yourself
             </button>
           ) : null}
+          {embedded || backPrimary ? null : <BackToLessonsLink />}
         </p>
         {youDoFrames ? (
           <>
@@ -643,22 +661,31 @@ export function LessonRun({
   const ranOnce =
     step === 'iDo' ? session.iDoPlays > 0 : step === 'weDo' ? session.weDoResult !== null : session.youDoResult !== null;
 
+  // The primary is the most likely next step: once a listen or sing-along is done, that is "Next", not a repeat.
+  const forwardPrimary = !soundFailed && !micLost && (step === 'iDo' || step === 'weDo') && ranOnce;
+  const nextIsPrimary = forwardPrimary;
+  const runIsPrimary = !forwardPrimary;
+
   return (
     <main className="dev-page lesson-page">
       {header}
       <ol className="lesson-steps" aria-label="Lesson steps">
-        {STEP_LABELS.map(({ step: s, label }) => (
-          <li
-            key={s}
-            className={s === step ? 'lesson-steps__item lesson-steps__item--current' : 'lesson-steps__item'}
-            aria-current={s === step ? 'step' : undefined}
-          >
-            <span className="lesson-steps__label">{label}</span>
-          </li>
-        ))}
+        {STEP_LABELS.map(({ step: s, label }, i) => {
+          const state = s === step ? 'current' : i < STEP_LABELS.findIndex((x) => x.step === step) ? 'done' : 'later';
+          return (
+            <li
+              key={s}
+              className={`lesson-steps__item lesson-steps__item--${state}`}
+              aria-current={s === step ? 'step' : undefined}
+            >
+              <span className="lesson-steps__label">{label}</span>
+              {state === 'done' ? <span className="visually-hidden"> (done)</span> : null}
+            </li>
+          );
+        })}
       </ol>
       {session.levels ? (
-        <>
+        <div className="lesson-meta">
           <p className="lesson-level" data-testid="level-label">
             Level: {LEVEL_NAMES[level]}
           </p>
@@ -668,7 +695,7 @@ export function LessonRun({
           <p className="lesson-start-note" data-testid="start-note">
             Starting on {startNote === null ? '—' : midiToName(startNote)}
           </p>
-        </>
+        </div>
       ) : null}
       <p className="lesson-instruction" data-testid="instruction">
         {step === 'youDo' && session.levels && level === 'prove'
@@ -782,16 +809,20 @@ export function LessonRun({
                 Reconnect microphone
               </button>
             ) : (
-              <button className="btn btn--primary" onClick={() => void run()} data-testid="run-button">
+              <button
+                className={runIsPrimary ? 'btn btn--primary' : 'btn'}
+                onClick={() => void run()}
+                data-testid="run-button"
+              >
                 {soundFailed
                   ? 'Try again'
                   : step === 'iDo'
                     ? ranOnce
-                      ? 'Repeat'
+                      ? 'Play again'
                       : 'Play'
                     : step === 'weDo'
                       ? ranOnce
-                        ? 'Repeat'
+                        ? 'Sing along again'
                         : 'Sing along'
                       : ranOnce
                         ? 'Try again'
@@ -799,14 +830,18 @@ export function LessonRun({
               </button>
             )}
             {step === 'iDo' ? (
-              <button className="btn" onClick={() => dispatch({ type: 'NEXT' })} disabled={session.iDoPlays < 1}>
-                Next
+              <button
+                className={nextIsPrimary ? 'btn btn--primary' : 'btn'}
+                onClick={() => dispatch({ type: 'NEXT' })}
+                disabled={session.iDoPlays < 1}
+              >
+                Next: We do
               </button>
             ) : null}
             {step === 'weDo' ? (
               <>
-                <button className="btn" onClick={() => dispatch({ type: 'NEXT' })}>
-                  Next
+                <button className={nextIsPrimary ? 'btn btn--primary' : 'btn'} onClick={() => dispatch({ type: 'NEXT' })}>
+                  Next: You do
                 </button>
                 <button className="btn" onClick={() => dispatch({ type: 'BACK_TO', step: 'iDo' })}>
                   Back to I do

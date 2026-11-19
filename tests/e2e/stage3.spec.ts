@@ -22,7 +22,7 @@ test('sim=perfect: Stage 3 listed; We do Line 1 only; complete s3-01', async ({ 
   await page.getByRole('button', { name: 'Start', exact: true }).click();
   await expect(page.getByTestId('now-singing')).toBeVisible();
   await page.getByRole('button', { name: 'Play', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Repeat' })).toBeVisible({ timeout: 40000 });
+  await expect(page.getByRole('button', { name: /^(Play|Sing along) again$/ })).toBeVisible({ timeout: 40000 });
   await page.getByRole('button', { name: 'Next' }).click();
 
   await page.getByTestId('phrase-select').selectOption({ label: 'Line 1' });
@@ -36,7 +36,7 @@ test('sim=perfect: Stage 3 listed; We do Line 1 only; complete s3-01', async ({ 
   await page.getByRole('button', { name: 'Start', exact: true }).click();
   await expect(page.getByTestId('results-verdict')).toHaveText('Passed', { timeout: 60000 });
   await expect(page.getByTestId('results-score')).toContainText('17 of 17');
-  await page.getByRole('link', { name: 'Home' }).first().click();
+  await page.getByRole('link', { name: 'Back to lessons' }).first().click();
   await expect(page.getByTestId('stage-3-count')).toHaveText('0 of 5 passed');
   await expect(page.getByTestId('status-s3-01')).toContainText('Passed once');
 });
@@ -57,7 +57,7 @@ test('sim=silent: results group misses by line', async ({ page }) => {
   await page.goto('/#/lesson/s3-01?sim=silent');
   await page.getByRole('button', { name: 'Start', exact: true }).click();
   await page.getByRole('button', { name: 'Play', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Repeat' })).toBeVisible({ timeout: 40000 });
+  await expect(page.getByRole('button', { name: /^(Play|Sing along) again$/ })).toBeVisible({ timeout: 40000 });
   await page.getByRole('button', { name: 'Next' }).click();
   await page.getByRole('button', { name: 'Next' }).click();
   await page.getByRole('button', { name: 'Start', exact: true }).click();

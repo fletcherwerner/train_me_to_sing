@@ -33,7 +33,7 @@ const litKeys = (page: Page) => page.locator('[class*="piano-key--target"], [cla
 async function learnIDoAndWeDo(page: Page) {
   await startOfRun(page).click(); // intro Start
   await page.getByRole('button', { name: 'Play', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Repeat' })).toBeVisible({ timeout: 25000 });
+  await expect(page.getByRole('button', { name: /^(Play|Sing along) again$/ })).toBeVisible({ timeout: 25000 });
   await page.getByRole('button', { name: 'Next' }).click();
   await page.getByRole('button', { name: 'Sing along' }).click();
   await expect(page.getByTestId('practice-line')).toContainText('Practice run:', { timeout: 25000 });
@@ -59,7 +59,7 @@ for (const size of SIZES) {
       await expect(page.getByTestId('results-verdict')).toHaveText('Passed');
       await expect(page.getByTestId('match-result-0')).toContainText('matched in');
       expect(await noSideScroll(page)).toBe(true);
-      await page.getByRole('link', { name: 'Home' }).first().click();
+      await page.getByRole('link', { name: 'Back to lessons' }).first().click();
       await expect(page.getByTestId('status-s1a-02')).toContainText('Passed');
     });
 
@@ -168,7 +168,7 @@ test.describe('s1b-04 feedback levels', () => {
       await expect(page.getByTestId('results-verdict')).toHaveText('Passed', { timeout: 40000 });
       await expect(page.getByTestId('results-level')).toContainText('without any live help');
 
-      await page.getByRole('link', { name: 'Home' }).first().click();
+      await page.getByRole('link', { name: 'Back to lessons' }).first().click();
       await expect(page.getByTestId('status-s1b-04')).toContainText('Passed once');
       await expect(page.getByTestId('status-s1b-04')).toContainText('come back tomorrow in a new key');
       await expect(page.getByTestId('unit-B-count')).toHaveText('0 of 7 passed');
@@ -212,7 +212,7 @@ test.describe('s1b-04 feedback levels', () => {
     await expect(page.getByTestId('results-verdict')).toHaveText('Not yet', { timeout: 40000 });
     await expect(page.getByTestId('level-label')).toHaveText('Level: Prove');
     await expect(page.getByTestId('advance-level')).toHaveCount(0);
-    await page.getByRole('link', { name: 'Home' }).first().click();
+    await page.getByRole('link', { name: 'Back to lessons' }).first().click();
     await expect(page.getByTestId('status-s1b-04')).toContainText('Prove');
     await expect(page.getByTestId('status-s1b-04')).not.toContainText('Passed');
   });
@@ -228,7 +228,7 @@ test.describe('echo yourself', () => {
       await page.goto('/#/lesson/s1b-04?sim=perfect');
       await startOfRun(page).click();
       await page.getByRole('button', { name: 'Play', exact: true }).click();
-      await expect(page.getByRole('button', { name: 'Repeat' })).toBeVisible({ timeout: 25000 });
+      await expect(page.getByRole('button', { name: /^(Play|Sing along) again$/ })).toBeVisible({ timeout: 25000 });
       await page.getByRole('button', { name: 'Next' }).click();
       await expect(page.getByTestId('echo-button')).toHaveCount(0);
       await page.getByRole('button', { name: 'Sing along' }).click();
@@ -250,7 +250,7 @@ test.describe('echo yourself', () => {
     await page.goto('/#/lesson/s1b-04?sim=flat40');
     await startOfRun(page).click();
     await page.getByRole('button', { name: 'Play', exact: true }).click();
-    await expect(page.getByRole('button', { name: 'Repeat' })).toBeVisible({ timeout: 25000 });
+    await expect(page.getByRole('button', { name: /^(Play|Sing along) again$/ })).toBeVisible({ timeout: 25000 });
     await page.getByRole('button', { name: 'Next' }).click();
     await page.getByRole('button', { name: 'Sing along' }).click();
     await expect(page.getByTestId('practice-line')).toContainText('Practice run:', { timeout: 25000 });
@@ -271,7 +271,7 @@ test.describe('echo yourself', () => {
     await page.goto('/#/lesson/s1c-01?sim=perfect');
     await startOfRun(page).click();
     await page.getByRole('button', { name: 'Play', exact: true }).click();
-    await expect(page.getByRole('button', { name: 'Repeat' })).toBeVisible({ timeout: 25000 });
+    await expect(page.getByRole('button', { name: /^(Play|Sing along) again$/ })).toBeVisible({ timeout: 25000 });
     await page.getByRole('button', { name: 'Next' }).click();
     await page.getByRole('button', { name: 'Sing along' }).click();
     await expect(page.getByTestId('practice-line')).toContainText('Practice run:', { timeout: 25000 });

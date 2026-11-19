@@ -23,7 +23,7 @@ test.setTimeout(120_000);
 async function doLesson(page: Page) {
   await page.getByRole('button', { name: 'Start', exact: true }).click();
   await page.getByRole('button', { name: 'Play', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Repeat' })).toBeVisible({ timeout: 25000 });
+  await expect(page.getByRole('button', { name: /^(Play|Sing along) again$/ })).toBeVisible({ timeout: 25000 });
   await page.getByRole('button', { name: 'Next' }).click();
   await page.getByRole('button', { name: 'Sing along' }).click();
   await expect(page.getByTestId('practice-line')).toBeVisible({ timeout: 25000 });
@@ -40,7 +40,7 @@ test('home lists lessons; perfect run shows passed 100% and persists', async ({ 
   await page.getByTestId('lesson-s2-01').click();
   await doLesson(page);
   await expect(page.getByTestId('results-verdict')).toHaveText('Passed');
-  await page.getByRole('link', { name: 'Home' }).first().click();
+  await page.getByRole('link', { name: 'Back to lessons' }).first().click();
   await expect(page.getByTestId('status-s2-01')).toContainText('Passed once');
   await expect(page.getByTestId('status-s2-01')).toContainText('100%');
   await expect(page.getByTestId('stage-2-count')).toHaveText('0 of 8 passed');
@@ -53,7 +53,7 @@ test('silent run shows Best 0%', async ({ page }) => {
   await page.goto('/#/?sim=silent');
   await page.getByTestId('lesson-s2-01').click();
   await doLesson(page);
-  await page.getByRole('link', { name: 'Home' }).first().click();
+  await page.getByRole('link', { name: 'Back to lessons' }).first().click();
   await expect(page.getByTestId('status-s2-01')).toContainText('Best 0%');
 });
 

@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState, type ChangeEvent } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { BackLink } from '../components/BackLink';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAppStore } from '../../storage/store';
 import { midiToName } from '../../core/music/notes';
 import { fit } from '../../core/exercise/fit';
@@ -123,9 +124,7 @@ export function ImportMidi() {
   return (
     <main className="dev-page import-midi">
       <p>
-        <Link to={{ pathname: '/', search }} className="nav-link">
-          Home
-        </Link>
+        <BackLink />
       </p>
       <h1>Import a MIDI file</h1>
       <p>Choose a .mid file, pick the track with the melody, and add it as a lesson.</p>

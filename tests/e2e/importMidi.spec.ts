@@ -33,13 +33,13 @@ test('sim=perfect: import the fixture, pass it, delete it with its progress', as
   await row.click();
   await page.getByRole('button', { name: 'Start', exact: true }).click();
   await page.getByRole('button', { name: 'Play', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Repeat' })).toBeVisible({ timeout: 40000 });
+  await expect(page.getByRole('button', { name: /^(Play|Sing along) again$/ })).toBeVisible({ timeout: 40000 });
   await page.getByRole('button', { name: 'Next' }).click();
   await page.getByRole('button', { name: 'Sing along' }).click();
   await page.getByRole('button', { name: 'Next' }).click({ timeout: 40000 });
   await page.getByRole('button', { name: 'Start', exact: true }).click();
   await expect(page.getByTestId('results-verdict')).toHaveText('Passed', { timeout: 60000 });
-  await page.getByRole('link', { name: 'Home' }).first().click();
+  await page.getByRole('link', { name: 'Back to lessons' }).first().click();
   await expect(page.getByTestId('my-songs')).toContainText('Passed');
 
   const stored = () => page.evaluate(() => JSON.parse(localStorage.getItem('tmts.v1')!));

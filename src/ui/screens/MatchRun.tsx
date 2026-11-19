@@ -36,6 +36,7 @@ import type { AttemptResult } from '../../core/scoring/types';
 import { PianoKeyboard } from '../components/PianoKeyboard';
 import { GraphLegend, PitchGraph } from '../components/PitchGraph';
 import { LessonHeader } from '../components/LessonHeader';
+import { BackToLessonsLink, NextLessonLink, useNextLesson } from '../components/ResultsNav';
 import { useWakeLock } from '../hooks/useWakeLock';
 import { describeTolerance } from '../describeTolerance';
 import './Lesson.css';
@@ -85,11 +86,15 @@ export function MatchRun({
   lesson,
   range,
   onAttemptComplete,
+  embedded,
 }: {
   lesson: Lesson;
   range: { lowMidi: number; highMidi: number };
   onAttemptComplete?: (result: AttemptResult) => void;
+  /** Shown inside Today's practice: the practice bar owns "what next". */
+  embedded?: boolean;
 }) {
+  const nextLesson = useNextLesson(lesson.id, range);
   const latencyMs = useAppStore((s) => s.settings.latencyOffsetMs);
   const recordAttempt = useAppStore((s) => s.recordAttempt);
   const tol = getTolerance(lesson.toleranceId);
@@ -436,7 +441,9 @@ export function MatchRun({
           </p>
         ) : null}
         <p className="lesson-actions" data-testid="results-actions">
-          <button className={result.passed ? 'btn' : 'btn btn--primary'} onClick={() => void runAll()}>
+          {!embedded && result.passed && nextLesson ? <NextLessonLink lesson={nextLesson} /> : null}
+          {!embedded && result.passed && !nextLesson ? <BackToLessonsLink primary /> : null}
+          <button className={!result.passed && !embedded ? 'btn btn--primary' : 'btn'} onClick={() => void runAll()}>
             Try again
           </button>
           {take ? (
@@ -444,6 +451,7 @@ export function MatchRun({
               Echo yourself
             </button>
           ) : null}
+          {embedded || (result.passed && !nextLesson) ? null : <BackToLessonsLink />}
         </p>
       </main>
     );
