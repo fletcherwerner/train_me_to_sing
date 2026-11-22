@@ -26,5 +26,5 @@ Maintained by the orchestrator. Status is one of: `Not started`, `In progress`, 
 | E14 | Beginner path: new Stage 1, feedback levels, echo yourself | Approved | 2 | APPROVED / APPROVED | 2026-11-18 |
 | E15 | Daily practice: session, spaced mastery, review, onset coaching | Approved | 3 | APPROVED / APPROVED | 2026-11-18 |
 | S07 | Spike: clearer next step and a lighter look | Approved | 3 | APPROVED / APPROVED | 2026-11-19 |
-| S08 | Spike: accuracy percentage and best score per lesson | Needs owner | 0 | — | 2026-11-22 |
+| S08 | Spike: accuracy percentage and best score per lesson | In progress | 0 | — | 2026-11-22 |
 | S09 | Spike: let pitch-finding notes run their full length, then report | Not started | 0 | — | — |
