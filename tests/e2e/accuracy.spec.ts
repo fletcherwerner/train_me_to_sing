@@ -83,7 +83,7 @@ for (const size of SIZES) {
       await page.goto('/#/lesson/s1a-02?sim=perfect');
       await expect(page.getByTestId('best-accuracy')).toHaveText('No best yet');
       await page.getByTestId('run-button').click();
-      await expect(page.getByTestId('results-accuracy')).toContainText('New best!', { timeout: 90000 });
+      await expect(page.getByTestId('results-accuracy')).toContainText('New best!', { timeout: 120000 });
       await expect(page.getByTestId('results-accuracy')).toContainText(/Accuracy: \d+%/);
       await expect(page.getByTestId('note-accuracy-0')).toContainText('%');
       await expect(page.getByTestId('best-accuracy')).toContainText(/Best accuracy: \d+%/);

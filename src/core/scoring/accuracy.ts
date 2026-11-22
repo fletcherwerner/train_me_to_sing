@@ -1,5 +1,4 @@
 import type { ResolvedExercise } from '../exercise/types';
-import type { MatchOutcome } from './matchScoring';
 
 /** Structural frame type so core does not import from audio. PitchFrame satisfies it. */
 export interface AccuracyFrame {
@@ -50,22 +49,15 @@ export function accuracyOf(ex: ResolvedExercise, frames: AccuracyFrame[]): Accur
 }
 
 /**
- * Accuracy for one match target: the frames from the moment the voice starts until the target is matched
- * (the end of the matching hold) or its time runs out. Frame times are seconds from the start of listening.
+ * Accuracy for one match target: the frames from the moment the voice starts to the end of the sing time.
+ * Silence before the first voice is free; silence after it counts against. Times are seconds from the start of listening.
  */
-export function matchAccuracy(
-  frames: AccuracyFrame[],
-  targetMidi: number,
-  outcome: MatchOutcome,
-  holdSec: number,
-  windowSec: number,
-): number {
-  const inWindow = frames.filter((f) => f.tSec >= 0 && f.tSec <= windowSec).sort((a, b) => a.tSec - b.tSec);
-  const first = inWindow.find((f) => f.midi !== null);
+export function matchAccuracy(frames: AccuracyFrame[], targetMidi: number, singSec: number): number {
+  const inTime = frames.filter((f) => f.tSec >= 0 && f.tSec <= singSec).sort((a, b) => a.tSec - b.tSec);
+  const first = inTime.find((f) => f.midi !== null);
   if (!first) return 0;
-  const end = outcome.timeToMatchSec !== null ? outcome.timeToMatchSec + holdSec : windowSec;
   return meanCloseness(
-    inWindow.filter((f) => f.tSec >= first.tSec && f.tSec <= end + 1e-9),
+    inTime.filter((f) => f.tSec >= first.tSec),
     targetMidi,
   );
 }

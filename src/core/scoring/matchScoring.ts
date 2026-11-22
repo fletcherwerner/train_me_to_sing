@@ -1,4 +1,5 @@
 import type { ToleranceProfile } from './types';
+import { meanCloseness } from './accuracy';
 
 /** Structural frame type so core does not import from audio. PitchFrame satisfies it. */
 export interface MatchFrame {
@@ -15,7 +16,8 @@ export interface MatchOutcome {
   reason?: MatchMissReason;
 }
 
-export const MATCH_WINDOW_SEC = 8;
+/** Every target listens for exactly this long, matched or not (a lesson may override with `singSec`). */
+export const MATCH_SING_SEC = 8;
 /** A gap in the pitch this short does not break a hold (the detector drops a frame now and then). */
 export const MATCH_GAP_SEC = 0.15;
 export const SLID_TIP = 'You found it by sliding. Try to start right on the note.';
@@ -32,7 +34,7 @@ export function matchTarget(
   tol: ToleranceProfile,
   holdSec: number,
   landWithinSec: number | null = null,
-  windowSec: number = MATCH_WINDOW_SEC,
+  windowSec: number = MATCH_SING_SEC,
 ): MatchOutcome {
   const tolSemi = tol.cents / 100 + 1e-9;
   const sorted = frames.filter((f) => f.tSec >= 0 && f.tSec <= windowSec).sort((a, b) => a.tSec - b.tSec);
@@ -89,6 +91,51 @@ export function describeMatchMiss(reason: MatchMissReason | undefined): string {
     default:
       return 'Not quite on the note. Listen again and hold steady.';
   }
+}
+
+export interface MatchDescription {
+  /** Seconds to the start of the matching hold; null when not matched. */
+  foundInSec: number | null;
+  /** Share (0..1) of the frames from `foundInSec` to the end that are within tolerance; null when not found. */
+  onAfterFound: number | null;
+  /** Median cents off over the voiced frames (+ sharp, - flat), octave folded; null when silent. */
+  typicalCents: number | null;
+  /** The voice was mostly an octave or more away; `typicalCents` is folded for that. */
+  wrongOctave: boolean;
+  /** Mean closeness from the first voiced frame to the end of the sing time (S08's rule). */
+  accuracy: number;
+}
+
+function median(xs: number[]): number {
+  const s = [...xs].sort((a, b) => a - b);
+  const m = s.length >> 1;
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+
+/** How well one target went, beyond whether it matched. Frame times are seconds from the start of listening. Pure. */
+export function describeMatch(
+  frames: MatchFrame[],
+  targetMidi: number,
+  tol: ToleranceProfile,
+  outcome: MatchOutcome,
+  singSec: number = MATCH_SING_SEC,
+): MatchDescription {
+  const tolSemi = tol.cents / 100 + 1e-9;
+  const inTime = frames.filter((f) => f.tSec >= 0 && f.tSec <= singSec).sort((a, b) => a.tSec - b.tSec);
+  const first = inTime.find((f) => f.midi !== null);
+  if (!first) return { foundInSec: null, onAfterFound: null, typicalCents: null, wrongOctave: false, accuracy: 0 };
+  const voiced = inTime.filter((f) => f.tSec >= first.tSec);
+  const diffs = voiced.filter((f) => f.midi !== null).map((f) => (f.midi as number) - targetMidi);
+  const wrongOctave = Math.round(median(diffs) / 12) !== 0;
+  const typicalCents = median(diffs.map((d) => d - 12 * Math.round(d / 12))) * 100;
+  const foundInSec = outcome.matched ? outcome.timeToMatchSec : null;
+  let onAfterFound: number | null = null;
+  if (foundInSec !== null) {
+    const after = inTime.filter((f) => f.tSec >= foundInSec);
+    const on = after.filter((f) => f.midi !== null && Math.abs(f.midi - targetMidi) <= tolSemi).length;
+    onAfterFound = after.length === 0 ? 0 : on / after.length;
+  }
+  return { foundInSec, onAfterFound, typicalCents, wrongOctave, accuracy: meanCloseness(voiced, targetMidi) };
 }
 
 /** Where a target note goes in the student's range. Pure; `rng` returns [0, 1). */

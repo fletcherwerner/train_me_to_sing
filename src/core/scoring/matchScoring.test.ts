@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { describeMatchMiss, matchTarget, placeTarget, scoreMatch, SLID_TIP, type MatchFrame } from './matchScoring';
+import { describeMatch, describeMatchMiss, matchTarget, placeTarget, scoreMatch, SLID_TIP, type MatchFrame } from './matchScoring';
 import { qualifiesForEcho } from './bestTake';
 import { getTolerance } from './tolerance';
 import type { AttemptResult } from './types';
@@ -70,6 +70,68 @@ describe('matchTarget', () => {
     // Starting right on the note, 0.2 s after the piano stops, is fine.
     const clean = frames(0, 4, (t) => (t < 0.2 ? null : 60));
     expect(matchTarget(clean, 60, t1, 1, 0.4)).toMatchObject({ matched: true });
+  });
+});
+
+describe('describeMatch', () => {
+  const run = (f: MatchFrame[], hold = 1, land: number | null = null) => {
+    const o = matchTarget(f, 60, t1, hold, land);
+    return { o, d: describeMatch(f, 60, t1, o, 8) };
+  };
+
+  it('dead on: found at once, fully on the note, right on, accuracy 1', () => {
+    const { o, d } = run(frames(0, 8, () => 60));
+    expect(o.matched).toBe(true);
+    expect(d.foundInSec).toBeCloseTo(0, 2);
+    expect(d.onAfterFound).toBeCloseTo(1, 2);
+    expect(d.typicalCents).toBeCloseTo(0, 5);
+    expect(d.wrongOctave).toBe(false);
+    expect(d.accuracy).toBeCloseTo(1, 5);
+  });
+
+  it('slightly flat: still matched, typical cents negative', () => {
+    const { o, d } = run(frames(0, 8, () => 59.85));
+    expect(o.matched).toBe(true);
+    expect(d.typicalCents).toBeCloseTo(-15, 3);
+    expect(d.accuracy).toBeCloseTo(85 / 90, 3); // 15 cents off is a little under perfect
+  });
+
+  it('found late: onAfterFound counts the frames from the find to the end', () => {
+    // Silent to 1 s, 70 cents sharp to 3 s, on the note from 3 s; the last 2 s drift off again.
+    const f = frames(0, 8, (t) => (t < 1 ? null : t < 3 ? 60.7 : t < 6 ? 60 : 60.7));
+    const { o, d } = run(f);
+    expect(o.matched).toBe(true);
+    expect(d.foundInSec).toBeCloseTo(3, 1);
+    expect(d.onAfterFound).toBeCloseTo(3 / 5, 1);
+  });
+
+  it('never found: no foundInSec or onAfterFound, but a typical sharpness', () => {
+    const { o, d } = run(frames(0, 8, () => 60.7));
+    expect(o.matched).toBe(false);
+    expect(d.foundInSec).toBeNull();
+    expect(d.onAfterFound).toBeNull();
+    expect(d.typicalCents).toBeCloseTo(70, 3);
+  });
+
+  it('silent: nothing to report and accuracy 0', () => {
+    const { o, d } = run(frames(0, 8, () => null));
+    expect(o.reason).toBe('silent');
+    expect(d).toEqual({ foundInSec: null, onAfterFound: null, typicalCents: null, wrongOctave: false, accuracy: 0 });
+  });
+
+  it('wrong octave: cents are folded to the nearest octave and the octave is flagged', () => {
+    const { o, d } = run(frames(0, 8, () => 48.3)); // 30 cents sharp of the octave below
+    expect(o.reason).toBe('wrong-octave');
+    expect(d.wrongOctave).toBe(true);
+    expect(d.typicalCents).toBeCloseTo(30, 3);
+  });
+
+  it('slid: not matched by the rule, but still described', () => {
+    // Voice starts at 0 on the wrong note, lands on 60 at 2 s; landing within 0.4 s is required.
+    const { o, d } = run(frames(0, 8, (t) => (t < 2 ? 62 : 60)), 1, 0.4);
+    expect(o).toMatchObject({ matched: false, reason: 'slid' });
+    expect(d.foundInSec).toBeNull();
+    expect(d.typicalCents).toBeCloseTo(0, 3);
   });
 });
 
