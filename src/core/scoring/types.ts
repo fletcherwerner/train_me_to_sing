@@ -17,10 +17,14 @@ export interface NoteResult {
   onsetErrorMs: number | null;
   /** The voice slid into this note from at least 70 cents away. A tip, or a miss ('scooped') where the lesson says so. */
   scooped?: boolean;
+  /** How closely the sung pitch followed this note, 0..1 (see accuracy.ts). */
+  accuracy?: number;
 }
 
 export interface AttemptResult {
   notes: NoteResult[];
   score: number; // hits / notes, 0..1
   passed: boolean; // score >= passScore
+  /** Mean of the notes' accuracies, 0..1. Does not affect `passed`. */
+  accuracy?: number;
 }

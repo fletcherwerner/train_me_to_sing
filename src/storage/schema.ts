@@ -33,6 +33,8 @@ const reviewSchema = z.object({
 export const rawProgressEntrySchema = z.object({
   passed: z.boolean(),
   bestScore: z.number(),
+  /** Best accuracy, 0..1. Absent on older data: no best yet. */
+  bestAccuracy: z.number().min(0).max(1).optional(),
   attempts: z.number().int(),
   lastAttemptAt: z.string(),
   /** Highest unlocked feedback level, for lessons with levels. Absent on older data and on other lessons. */
@@ -46,6 +48,7 @@ export const rawProgressEntrySchema = z.object({
 export interface ProgressEntry {
   passed: boolean;
   bestScore: number;
+  bestAccuracy?: number;
   attempts: number;
   lastAttemptAt: string;
   level?: 'learn' | 'practise' | 'prove';

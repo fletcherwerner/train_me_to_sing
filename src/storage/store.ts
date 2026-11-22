@@ -77,6 +77,9 @@ export const useAppStore = create<AppStore>((set, get) => {
           [lessonId]: {
             attempts: (old?.attempts ?? 0) + 1,
             bestScore: Math.max(old?.bestScore ?? 0, result.score),
+            ...(old?.bestAccuracy !== undefined || result.accuracy !== undefined
+              ? { bestAccuracy: Math.max(old?.bestAccuracy ?? 0, result.accuracy ?? 0) }
+              : {}),
             passed,
             lastAttemptAt: new Date().toISOString(),
             ...(unlocked ? { level: unlocked } : {}),

@@ -31,6 +31,7 @@ import { scoopCountsAsMiss, usesMastery } from '../../content/mastery';
 import { proofTonics } from '../../core/progress/mastery';
 import { MatchRun } from './MatchRun';
 import { LessonHeader } from '../components/LessonHeader';
+import { AccuracyResultLine, BestAccuracyLine, storedBestAccuracy } from '../components/BestAccuracy';
 import { midiToName } from '../../core/music/notes';
 import { applyGate, bleedGate, measureBleed } from '../../core/scoring/bleed';
 import { evaluateAttempt } from '../../core/scoring/evaluate';
@@ -148,6 +149,8 @@ export function LessonRun({
   };
   const [tonic, setTonic] = useState<number | null>(() => chooseTonic(session.level));
   const keyed = tonic !== null;
+  /** The stored best accuracy from before the last saved attempt, for "New best! (was …)". */
+  const [prevBest, setPrevBest] = useState<number | undefined>(undefined);
   const [echo, setEcho] = useState<EchoTake | null>(null);
   const echoRef = useRef<EchoTake | null>(null);
   const [echoing, setEchoing] = useState(false);
@@ -426,6 +429,7 @@ export function LessonRun({
     if (thisStep === 'youDo' && !result) setNotice('We could not hear the microphone for that run. Press Try again.');
     if (thisStep === 'youDo' && result) {
       dispatch({ type: 'SHOW_RESULTS' });
+      setPrevBest(storedBestAccuracy(lesson.id));
       recordAttempt(lesson.id, result, lesson.levels ? runLevel : undefined, {
         mastery,
         tonicMidi: runEx.tonicMidi,
@@ -499,13 +503,16 @@ export function LessonRun({
   const resultMatches = shownResult !== null && resultPhrase === activePhraseIdx;
   const strip = shownResult && resultMatches ? shownResult.notes.map((n) => n.hit) : undefined;
   const hasLyrics = ex.notes.some((n) => n.lyric);
-  const header = <LessonHeader title={lesson.title} />;
+  const header = (
+    <LessonHeader title={lesson.title} right={<BestAccuracyLine lessonId={lesson.id} />} />
+  );
 
   if (step === 'intro') {
     return (
       <main className="dev-page lesson-page">
-        {header}
+        <LessonHeader title={lesson.title} />
         <p data-testid="lesson-goal">{lesson.goal}</p>
+        <BestAccuracyLine lessonId={lesson.id} />
         <p data-testid="lesson-tolerance">{describeTolerance(tol)}</p>
         <p>Put on headphones so the piano does not get picked up by the microphone.</p>
         {mastery && singleKey ? (
@@ -578,9 +585,9 @@ export function LessonRun({
           <p data-testid="results-come-back">Come back tomorrow to finish this one.</p>
         ) : null}
         <p className="lesson-score" data-testid="results-score">
-          {hits} of {r.notes.length} notes ({Math.round(r.score * 100)}%)
+          {hits} of {r.notes.length} notes hit · pass mark {Math.round(lesson.passScore * 100)}%
         </p>
-        <p>Pass mark: {Math.round(lesson.passScore * 100)}%</p>
+        {r.accuracy !== undefined ? <AccuracyResultLine accuracy={r.accuracy} prevBest={prevBest} /> : null}
         <p className="lesson-tip" data-testid="results-tip">
           <strong>Tip:</strong> {pickTip(r)}
         </p>
@@ -624,6 +631,7 @@ export function LessonRun({
           notes={rex.notes}
           currentIndex={null}
           results={r.notes.map((n) => n.hit)}
+          accuracies={r.notes.map((n) => n.accuracy)}
           onChipPress={(i) => playPreviewNote(rex.notes[i].midi)}
         />
         {phrases && misses.length > 0 ? (

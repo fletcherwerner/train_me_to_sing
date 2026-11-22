@@ -1,4 +1,5 @@
 import type { ResolvedExercise } from '../exercise/types';
+import { accuracyOf } from './accuracy';
 import { isScooped } from './onsets';
 import type { AttemptResult, MissReason, NoteResult, ToleranceProfile } from './types';
 
@@ -104,7 +105,9 @@ export function evaluateAttempt(
     return { ...base, hit: true, medianCents, heldFraction, onsetErrorMs };
   });
 
+  const acc = accuracyOf(ex, sorted);
+  const withAccuracy = notes.map((n, i) => ({ ...n, accuracy: acc.perNote[i] }));
   const hits = notes.filter((r) => r.hit).length;
   const score = notes.length === 0 ? 0 : hits / notes.length;
-  return { notes, score, passed: score >= passScore };
+  return { notes: withAccuracy, score, passed: score >= passScore, accuracy: acc.overall };
 }

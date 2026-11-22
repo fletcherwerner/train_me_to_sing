@@ -115,4 +115,19 @@ describe('evaluateAttempt', () => {
     expect(r.score).toBeCloseTo(0.8);
     expect(r.passed).toBe(true);
   });
+
+  it('returns overall and per-note accuracy without changing pass/fail', () => {
+    const e = make('0 2 4 5 7');
+    const dead = evaluateAttempt(e, framesFor(e, sing(e, (m) => m)), t1, 0.8);
+    expect(dead.passed).toBe(true);
+    expect(dead.accuracy).toBeCloseTo(1, 2);
+    expect(dead.notes.every((n) => n.accuracy !== undefined && n.accuracy > 0.99)).toBe(true);
+    // 40 cents flat still hits at t1 (50 cents) but is less accurate.
+    const flat = evaluateAttempt(e, framesFor(e, sing(e, (m) => m - 0.4)), t1, 0.8);
+    expect(flat.passed).toBe(true);
+    expect(flat.score).toBe(1);
+    expect(flat.accuracy).toBeCloseTo(60 / 90, 2);
+    const silent = evaluateAttempt(e, framesFor(e, () => null), t1, 0.8);
+    expect(silent.accuracy).toBe(0);
+  });
 });

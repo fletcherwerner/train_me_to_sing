@@ -84,17 +84,22 @@ export function Home() {
   const status = (lesson: Lesson) => {
     const p = progress[lesson.id];
     if (!p || p.attempts === 0) return { kind: 'new', text: 'Not started', icon: '○' };
-    const pct = `${Math.round(p.bestScore * 100)}%`;
+    // Best accuracy, not the notes-hit score. Older data has none: show the status without a percentage.
+    const acc = p.bestAccuracy === undefined ? null : `${Math.round(p.bestAccuracy * 100)}%`;
     if (p.passed) {
       const due = isDue(p.review, today) ? ' · Review due' : '';
-      return { kind: 'passed', text: `Passed · ${pct}${due}`, icon: '✓' };
+      return { kind: 'passed', text: `Passed${acc ? ` · ${acc}` : ''}${due}`, icon: '✓' };
     }
     if (usesMastery(lesson) && p.proofs.length > 0) {
-      return { kind: 'attempted', text: `Passed once · ${pct} — come back tomorrow in a new key`, icon: '◐' };
+      return {
+        kind: 'attempted',
+        text: `Passed once${acc ? ` · ${acc}` : ''} — come back tomorrow in a new key`,
+        icon: '◐',
+      };
     }
     // Lessons with levels show the level reached.
     const levelText = lesson.levels ? `${LEVEL_TEXT[p.level ?? 'learn']} · ` : '';
-    return { kind: 'attempted', text: `${levelText}Best ${pct}`, icon: '◐' };
+    return { kind: 'attempted', text: `${levelText}${acc ? `Best ${acc}` : 'Started'}`, icon: '◐' };
   };
   const stage1Notice = useNotices((s) => s.stage1Rebuilt);
 

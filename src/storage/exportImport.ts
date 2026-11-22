@@ -64,6 +64,9 @@ export function mergeData(local: StoredData, incoming: StoredData): StoredData {
     progress[id] = {
       passed,
       bestScore: Math.max(a.bestScore, b.bestScore),
+      ...(a.bestAccuracy !== undefined || b.bestAccuracy !== undefined
+        ? { bestAccuracy: Math.max(a.bestAccuracy ?? 0, b.bestAccuracy ?? 0) }
+        : {}),
       attempts: a.attempts + b.attempts,
       lastAttemptAt: a.lastAttemptAt >= b.lastAttemptAt ? a.lastAttemptAt : b.lastAttemptAt,
       ...(a.level || b.level ? { level: maxLevel(a.level, b.level) } : {}),

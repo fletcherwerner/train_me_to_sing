@@ -107,11 +107,12 @@ describe('auto-save', () => {
     expect(useProfileStatus.getState().saveError).toBe(true);
     expect(useAppStore.getState().range?.lowMidi).toBe(40); // still kept in the browser
     api.failPuts(false);
-    useAppStore.getState().recordAttempt('s1b-01', { notes: [], score: 1, passed: true });
+    useAppStore.getState().recordAttempt('s1b-01', { notes: [], score: 1, passed: true, accuracy: 0.9 });
     await vi.advanceTimersByTimeAsync(600);
     expect(useProfileStatus.getState().saveError).toBe(false);
     expect(api.files.get('ana')!.data.range?.lowMidi).toBe(40);
     expect(api.files.get('ana')!.data.progress['s1b-01'].passed).toBe(true);
+    expect(api.files.get('ana')!.data.progress['s1b-01'].bestAccuracy).toBe(0.9);
     sync.dispose();
   });
 });

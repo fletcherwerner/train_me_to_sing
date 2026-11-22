@@ -29,6 +29,18 @@ describe('mergeData', () => {
     expect(m.progress.b).toEqual(p(true, 0.9, 5, '2025-04-01'));
   });
 
+  it('takes the higher best accuracy; absent on one side keeps the other; absent on both stays absent', () => {
+    const acc = (x: number | undefined) => ({ ...p(true, 1, 1, 'x'), ...(x === undefined ? {} : { bestAccuracy: x }) });
+    const m = mergeData(
+      base({ progress: { a: acc(0.6), b: acc(undefined), c: acc(0.9), d: acc(undefined) } }),
+      base({ progress: { a: acc(0.8), b: acc(0.5), c: acc(0.7), d: acc(undefined) } }),
+    );
+    expect(m.progress.a.bestAccuracy).toBe(0.8);
+    expect(m.progress.b.bestAccuracy).toBe(0.5);
+    expect(m.progress.c.bestAccuracy).toBe(0.9);
+    expect('bestAccuracy' in m.progress.d).toBe(false);
+  });
+
   it('keeps lesson ids found on only one side, including unknown ids', () => {
     const local = base({ progress: { a: p(true, 1, 1, 'x') } });
     const incoming = base({ progress: { 'future-99': p(true, 0.8, 1, 'y') } });
