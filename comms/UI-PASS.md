@@ -728,3 +728,43 @@ Turn-1 screens were not re-captured. Turn 3 touched only the header CSS.
 - `comms/S07/turn-03/screenshots/measure-1280.png`
 - `comms/S07/turn-03/screenshots/measure-360.png`
 - `comms/S07/turn-03/screenshots/measure-393.png`
+
+## S08 — Spike: accuracy percentage and best score per lesson
+
+Approved after turn 1, 2026-11-22. Review: `comms/S08/turn-01/ui-review.md`.
+
+### Not verified by the UI reviewer
+
+- Dark mode was not captured.
+- Review-script step 5 (export and import on another browser) was not run.
+- Real singing was not tested. I used the simulated singer, so "perfect" gave 99–100%, as the coder noted.
+- Today's practice was not captured.
+
+### Screens reviewed
+
+| Screen / state | Laptop | iPhone | Screenshot files |
+|----------------|--------|--------|------------------|
+| Lesson intro, no best | OK | OK | `screenshots/laptop-intro-nobest.png`, `screenshots/phone-intro-nobest.png` |
+| Lesson intro, with best | OK | OK | `screenshots/laptop-intro-best.png`, `screenshots/phone-intro-best.png` |
+| Results, first attempt (new best) | OK | OK | `screenshots/laptop-results-perfect.png`, `screenshots/phone-results-perfect.png` |
+| Results, lower accuracy (Best: n%) | OK | OK | `screenshots/laptop-results-flat40.png`, `screenshots/phone-results-flat40.png` |
+| Match lesson results | OK | OK | `screenshots/laptop-match-results.png`, `screenshots/phone-match-results.png` |
+| Home statuses (seeded) | OK | OK | `screenshots/phone-home-status.png` (text: "✓ Passed · 91%", "◐ Learn · Best 74%", "◐ Learn · Started") |
+
+### Screenshots
+
+- `comms/S08/turn-01/screenshots/laptop-home.png`
+- `comms/S08/turn-01/screenshots/laptop-intro-best.png`
+- `comms/S08/turn-01/screenshots/laptop-intro-nobest.png`
+- `comms/S08/turn-01/screenshots/laptop-match-intro.png`
+- `comms/S08/turn-01/screenshots/laptop-match-results.png`
+- `comms/S08/turn-01/screenshots/laptop-results-flat40.png`
+- `comms/S08/turn-01/screenshots/laptop-results-perfect.png`
+- `comms/S08/turn-01/screenshots/phone-home-status.png`
+- `comms/S08/turn-01/screenshots/phone-home.png`
+- `comms/S08/turn-01/screenshots/phone-intro-best.png`
+- `comms/S08/turn-01/screenshots/phone-intro-nobest.png`
+- `comms/S08/turn-01/screenshots/phone-match-intro.png`
+- `comms/S08/turn-01/screenshots/phone-match-results.png`
+- `comms/S08/turn-01/screenshots/phone-results-flat40.png`
+- `comms/S08/turn-01/screenshots/phone-results-perfect.png`

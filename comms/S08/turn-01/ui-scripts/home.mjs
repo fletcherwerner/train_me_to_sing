@@ -1,0 +1,12 @@
+import { chromium } from '@playwright/test';
+import { appUrl } from '../../../../harness/lib/app-url.mjs';
+const out = new URL('../screenshots/', import.meta.url).pathname;
+const b=await chromium.launch(); const ctx=await b.newContext({ignoreHTTPSErrors:true,viewport:{width:393,height:852}});
+const p=await ctx.newPage();
+const t='2026-11-20T10:00:00.000Z';
+await p.addInitScript((t)=>{ localStorage.setItem('tmts.v1',JSON.stringify({version:2,range:{lowMidi:45,highMidi:64,assessedAt:'2025-01-01T00:00:00.000Z'},settings:{latencyOffsetMs:0},progress:{'s1b-04':{bestScore:1,bestAccuracy:0.91,passed:true,attempts:2,lastAttemptAt:t,proofs:[]},'s1b-01':{bestScore:0.5,bestAccuracy:0.74,passed:false,attempts:1,lastAttemptAt:t,proofs:[]},'s1b-02':{bestScore:0.5,passed:false,attempts:1,lastAttemptAt:t,proofs:[]}},importedLessons:[]}));},t);
+await p.goto(appUrl()+'/#/'); await p.waitForTimeout(800);
+await p.getByTestId('status-s1b-01').scrollIntoViewIfNeeded();
+await p.screenshot({path:out+'phone-home-status.png'});
+for (const id of ['s1b-04','s1b-01','s1b-02']) console.log(id, await p.getByTestId('status-'+id).textContent());
+await b.close();

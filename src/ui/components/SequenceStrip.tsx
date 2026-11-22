@@ -7,6 +7,8 @@ export interface SequenceStripProps {
   notes: ResolvedNote[];
   currentIndex: number | null;
   results?: (boolean | undefined)[];
+  /** Accuracy per note (0..1), shown with hit/miss in the results view. */
+  accuracies?: (number | undefined)[];
   onChipPress?: (index: number) => void;
   /** Show every chip (results view); the live run caps the strip at three rows. */
   expanded?: boolean;
@@ -16,7 +18,7 @@ const PX_PER_SEC = 40;
 const MIN_W = 28;
 const MIN_W_RESULT = 60; // wide enough for "F#3" and "✗ miss" on a phone
 
-export function SequenceStrip({ notes, currentIndex, results, onChipPress, expanded }: SequenceStripProps) {
+export function SequenceStrip({ notes, currentIndex, results, accuracies, onChipPress, expanded }: SequenceStripProps) {
   const currentRef = useRef<HTMLLIElement | null>(null);
 
   const listRef = useRef<HTMLOListElement | null>(null);
@@ -43,12 +45,22 @@ export function SequenceStrip({ notes, currentIndex, results, onChipPress, expan
         const r = results?.[n.index];
         if (r === true) cls.push('sequence-chip--hit');
         if (r === false) cls.push('sequence-chip--miss');
+        const a = accuracies?.[n.index];
+        const accText = a === undefined ? '' : ` · ${Math.round(a * 100)}%`;
         const inner = (
           <>
             <span className="sequence-chip__name">{midiToName(n.midi)}</span>
             {n.lyric ? <span className="sequence-chip__lyric">{n.lyric}</span> : null}
-            {r === true ? <span className="sequence-chip__mark">✓ hit</span> : null}
-            {r === false ? <span className="sequence-chip__mark">✗ miss</span> : null}
+            {r === true ? (
+              <span className="sequence-chip__mark" data-testid={`note-accuracy-${n.index}`}>
+                ✓ hit{accText}
+              </span>
+            ) : null}
+            {r === false ? (
+              <span className="sequence-chip__mark" data-testid={`note-accuracy-${n.index}`}>
+                ✗ miss{accText}
+              </span>
+            ) : null}
           </>
         );
         return (

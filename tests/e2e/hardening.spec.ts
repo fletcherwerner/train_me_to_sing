@@ -257,7 +257,7 @@ test('results: verdict, score, pass mark and Try again in view at 393x852; one H
   for (const t of ['results-verdict', 'results-score', 'results-tip', 'results-actions']) {
     await expect(page.getByTestId(t)).toBeInViewport();
   }
-  await expect(page.getByText('Pass mark')).toBeInViewport();
+  await expect(page.getByText(/pass mark/)).toBeInViewport();
   await expect(btn(page, 'Try again')).toBeInViewport();
   await expect(btn(page, 'Try again')).toHaveClass(/btn--primary/);
   await expect(page.locator('.lesson-header').getByRole('link', { name: 'Back to lessons' })).toHaveCount(1);

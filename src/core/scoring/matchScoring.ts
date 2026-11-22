@@ -67,13 +67,15 @@ export interface MatchScore {
   total: number;
   score: number; // matched / total, 0..1
   passed: boolean;
+  accuracy: number; // mean of the targets' accuracies, 0..1
 }
 
-export function scoreMatch(outcomes: MatchOutcome[], passScore: number): MatchScore {
+export function scoreMatch(outcomes: MatchOutcome[], passScore: number, accuracies: number[] = []): MatchScore {
   const matched = outcomes.filter((o) => o.matched).length;
   const total = outcomes.length;
   const score = total === 0 ? 0 : matched / total;
-  return { matched, total, score, passed: score >= passScore };
+  const accuracy = accuracies.length === 0 ? 0 : accuracies.reduce((a, b) => a + b, 0) / accuracies.length;
+  return { matched, total, score, passed: score >= passScore, accuracy };
 }
 
 export function describeMatchMiss(reason: MatchMissReason | undefined): string {

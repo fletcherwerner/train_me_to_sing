@@ -23,6 +23,7 @@ import type { Lesson } from '../../content/types';
 import { displayRange } from '../../core/exercise/fit';
 import type { ResolvedExercise } from '../../core/exercise/types';
 import { midiToName } from '../../core/music/notes';
+import { matchAccuracy } from '../../core/scoring/accuracy';
 import {
   describeMatchMiss,
   matchTarget,
@@ -33,6 +34,7 @@ import {
 } from '../../core/scoring/matchScoring';
 import { getTolerance } from '../../core/scoring/tolerance';
 import type { AttemptResult } from '../../core/scoring/types';
+import { AccuracyResultLine, BestAccuracyLine, storedBestAccuracy } from '../components/BestAccuracy';
 import { PianoKeyboard } from '../components/PianoKeyboard';
 import { GraphLegend, PitchGraph } from '../components/PitchGraph';
 import { LessonHeader } from '../components/LessonHeader';
@@ -63,8 +65,13 @@ function targetExercise(midi: number): ResolvedExercise {
   };
 }
 
-function toAttemptResult(targets: number[], outcomes: MatchOutcome[], passScore: number): AttemptResult {
-  const s = scoreMatch(outcomes, passScore);
+function toAttemptResult(
+  targets: number[],
+  outcomes: MatchOutcome[],
+  passScore: number,
+  accuracies: number[],
+): AttemptResult {
+  const s = scoreMatch(outcomes, passScore, accuracies);
   return {
     notes: outcomes.map((o, i) => ({
       index: i,
@@ -74,9 +81,11 @@ function toAttemptResult(targets: number[], outcomes: MatchOutcome[], passScore:
       medianCents: null,
       heldFraction: o.matched ? 1 : 0,
       onsetErrorMs: null,
+      accuracy: accuracies[i] ?? 0,
     })),
     score: s.score,
     passed: s.passed,
+    accuracy: s.accuracy,
   };
 }
 
@@ -105,6 +114,9 @@ export function MatchRun({
   const [phase, setPhase] = useState<Phase>('intro');
   const [targets, setTargets] = useState<number[]>([]);
   const [outcomes, setOutcomes] = useState<MatchOutcome[]>([]);
+  const [accuracies, setAccuracies] = useState<number[]>([]);
+  /** The stored best accuracy from before the last saved attempt, for "New best! (was …)". */
+  const [prevBest, setPrevBest] = useState<number | undefined>(undefined);
   const [idx, setIdx] = useState(0);
   const [status, setStatus] = useState('');
   const [singing, setSinging] = useState(false);
@@ -198,7 +210,7 @@ export function MatchRun({
     midi: number,
     myRun: number,
     opts: { buffer?: Take['buffer']; keepTake: boolean },
-  ): Promise<{ outcome: MatchOutcome; take: Take | null }> => {
+  ): Promise<{ outcome: MatchOutcome; take: Take | null; accuracy: number }> => {
     const src = sourceRef.current;
     if (!src) throw new Cancelled();
     setSinging(false);
@@ -269,7 +281,7 @@ export function MatchRun({
       takeRec.discard();
       recRef.current = null;
     }
-    return { outcome, take: kept };
+    return { outcome, take: kept, accuracy: matchAccuracy(rec.frames, midi, outcome, holdSec, MATCH_WINDOW_SEC) };
   };
 
   const begin = async () => {
@@ -308,11 +320,13 @@ export function MatchRun({
     setNotice(null);
     setPhase('running');
     const results: MatchOutcome[] = [];
+    const accs: number[] = [];
     let lastTake: Take | null = null;
     try {
       for (let i = 0; i < placed.length; i++) {
         setIdx(i);
-        const { outcome, take: kept } = await runTarget(placed[i], myRun, { keepTake: true });
+        const { outcome, take: kept, accuracy } = await runTarget(placed[i], myRun, { keepTake: true });
+        accs.push(accuracy);
         results.push(outcome);
         setOutcomes([...results]);
         if (kept) lastTake = kept;
@@ -329,7 +343,9 @@ export function MatchRun({
       if (err instanceof Cancelled) return;
       throw err;
     }
-    const result = toAttemptResult(placed, results, lesson.passScore);
+    const result = toAttemptResult(placed, results, lesson.passScore, accs);
+    setAccuracies(accs);
+    setPrevBest(storedBestAccuracy(lesson.id));
     setTake(lastTake);
     setPhase('results');
     recordAttempt(lesson.id, result);
@@ -368,7 +384,9 @@ export function MatchRun({
     setPhase('results');
   };
 
-  const header = <LessonHeader title={lesson.title} />;
+  const header = (
+    <LessonHeader title={lesson.title} right={<BestAccuracyLine lessonId={lesson.id} />} />
+  );
   const disp = displayRange(range);
   const target = echoRunning && take ? take.midi : (targets[idx] ?? null);
   const graphEx = useMemo(() => (target === null ? null : targetExercise(target)), [target]);
@@ -376,8 +394,9 @@ export function MatchRun({
   if (phase === 'intro') {
     return (
       <main className="dev-page lesson-page" data-testid="match-intro">
-        {header}
+        <LessonHeader title={lesson.title} />
         <p data-testid="lesson-goal">{lesson.goal}</p>
+        <BestAccuracyLine lessonId={lesson.id} />
         <p data-testid="lesson-tolerance">{describeTolerance(tol)}</p>
         <p data-testid="match-how">
           {specs.length} notes. Listen to each one, then sing it and hold it for {holdSec} second{holdSec === 1 ? '' : 's'}.
@@ -407,7 +426,7 @@ export function MatchRun({
   }
 
   if (phase === 'results') {
-    const result = toAttemptResult(targets, outcomes, lesson.passScore);
+    const result = toAttemptResult(targets, outcomes, lesson.passScore, accuracies);
     const matched = outcomes.filter((o) => o.matched).length;
     const firstMiss = outcomes.find((o) => !o.matched);
     return (
@@ -417,9 +436,11 @@ export function MatchRun({
           {result.passed ? 'Passed' : 'Not yet'}
         </h2>
         <p className="lesson-score" data-testid="results-score">
-          {matched} of {outcomes.length} notes matched ({Math.round(result.score * 100)}%)
+          {matched} of {outcomes.length} notes matched · pass mark {Math.round(lesson.passScore * 100)}%
         </p>
-        <p>Pass mark: {Math.round(lesson.passScore * 100)}%</p>
+        {result.accuracy !== undefined && accuracies.length > 0 ? (
+          <AccuracyResultLine accuracy={result.accuracy} prevBest={prevBest} />
+        ) : null}
         <p className="lesson-tip" data-testid="results-tip">
           <strong>Tip:</strong>{' '}
           {firstMiss ? describeMatchMiss(firstMiss.reason) : 'Every note matched. Move on to the next lesson, or try again to match faster.'}
@@ -431,6 +452,9 @@ export function MatchRun({
               {o.matched
                 ? `matched in ${(o.timeToMatchSec ?? 0).toFixed(1)} s`
                 : `not matched. ${describeMatchMiss(o.reason)}`}
+              {accuracies[i] !== undefined ? (
+                <span data-testid={`note-accuracy-${i}`}> · {o.matched ? '✓ hit' : '✗ miss'} · {Math.round(accuracies[i] * 100)}%</span>
+              ) : null}
             </li>
           ))}
         </ol>

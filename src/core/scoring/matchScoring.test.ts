@@ -77,7 +77,8 @@ describe('scoreMatch', () => {
   it('is matched / targets and passes at the pass mark', () => {
     const m = { matched: true, timeToMatchSec: 0 };
     const x = { matched: false, timeToMatchSec: null };
-    expect(scoreMatch([m, m, m, m, x], 0.8)).toEqual({ matched: 4, total: 5, score: 0.8, passed: true });
+    expect(scoreMatch([m, m, m, m, x], 0.8)).toEqual({ matched: 4, total: 5, score: 0.8, passed: true, accuracy: 0 });
+    expect(scoreMatch([m, x], 0.8, [1, 0.5]).accuracy).toBeCloseTo(0.75, 5);
     expect(scoreMatch([m, m, x, x, x, x], 0.8)).toMatchObject({ matched: 2, score: 2 / 6, passed: false });
     expect(scoreMatch([], 0.8)).toMatchObject({ score: 0, passed: false });
   });
