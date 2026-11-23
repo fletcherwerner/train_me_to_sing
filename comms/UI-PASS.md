@@ -476,6 +476,37 @@ Approved after turn 3, 2026-11-18. Review: `comms/E15/turn-03/ui-review.md`.
 - `comms/E15/turn-03/screenshots/laptop-glide-run.png`
 - `comms/E15/turn-03/screenshots/phone-glide-run.png`
 
+## E16 — iPhone app with progress saved as a file
+
+Approved after turn 1, 2026-11-23. Review: `comms/E16/turn-01/ui-review.md`.
+
+### Not verified by the UI reviewer
+
+- Review script steps 1–8: the Xcode build, device install, Files app listing, `backups` folder, quit and reopen, re-install over the top, web Export and app Import, replacing the file with an older backup, and the E12 checks all need an iPhone.
+- The wording "Saved on this iPhone in Files › On My iPhone…" appears in the browser because the dev stand-in uses it; on the device, check that it matches what the Files app shows.
+- Dark mode was not captured.
+
+### Screens reviewed
+
+| Screen / state | Laptop | iPhone | Screenshot files |
+|----------------|--------|--------|------------------|
+| Settings, before first save ("Not saved to the file yet in this session.") | OK | OK | `screenshots/settings-filestore-memory-laptop.png`, `screenshots/settings-filestore-memory-phone.png` |
+| Settings, after a change ("Last saved: 8:29 PM") | OK | OK | `screenshots/saved-laptop.png`, `screenshots/saved-phone.png` |
+| Home, unreadable-file notice with OK button | OK | OK | `screenshots/unreadable-laptop.png`, `screenshots/unreadable-phone.png` |
+
+Seen with `?filestore=memory`, the dev-only stand-in for the native file.
+
+### Screenshots
+
+- `comms/E16/turn-01/screenshots/-filestore-memory-laptop.png`
+- `comms/E16/turn-01/screenshots/-filestore-memory-phone.png`
+- `comms/E16/turn-01/screenshots/saved-laptop.png`
+- `comms/E16/turn-01/screenshots/saved-phone.png`
+- `comms/E16/turn-01/screenshots/settings-filestore-memory-laptop.png`
+- `comms/E16/turn-01/screenshots/settings-filestore-memory-phone.png`
+- `comms/E16/turn-01/screenshots/unreadable-laptop.png`
+- `comms/E16/turn-01/screenshots/unreadable-phone.png`
+
 ## S01 — Spike: local profiles
 
 Approved after turn 1, 2026-11-16. Review: `comms/S01/turn-01/ui-review.md`.
