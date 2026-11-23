@@ -15,6 +15,9 @@ import { GraphLegend, PitchGraph } from '../components/PitchGraph';
 import { useLiveAttempt } from '../hooks/useLiveAttempt';
 import { useWakeLock } from '../hooks/useWakeLock';
 import { getTolerance } from '../../core/scoring/tolerance';
+import { flushPracticeTime, usePracticeTime } from '../hooks/usePracticeTime';
+import { buildRunRecord } from '../../core/insights/record';
+import { todayString } from '../../storage/today';
 
 /**
  * Three warm-up glides. Nothing here is scored or saved: the graph shows the sloped target
@@ -22,6 +25,9 @@ import { getTolerance } from '../../core/scoring/tolerance';
  */
 export function Warmup({ range, onDone }: { range: StudentRange; onDone: () => void }) {
   const latencyMs = useAppStore((s) => s.settings.latencyOffsetMs);
+  const logRun = useAppStore((s) => s.logRun);
+  /** Wall-clock start of the warm-up, for the logged duration only. */
+  const startedAtRef = useRef(Date.now());
   const glides = useMemo(() => warmupGlides(range), [range]);
   const exercises = useMemo(
     () =>
@@ -44,6 +50,7 @@ export function Warmup({ range, onDone }: { range: StudentRange; onDone: () => v
   const ex = exercises[idx];
   const running = phase === 'running';
   useWakeLock(running);
+  usePracticeTime(running);
   const live = useLiveAttempt(source, handle, ex, getTolerance('t1'));
 
   useEffect(
@@ -108,6 +115,19 @@ export function Warmup({ range, onDone }: { range: StudentRange; onDone: () => v
   const last = idx === exercises.length - 1;
   const next = () => {
     if (last) {
+      // A finished warm-up (all glides) is logged: it makes the day active. It has no score or notes.
+      logRun(
+        buildRunRecord({
+          lessonId: 'warmup',
+          kind: 'warmup',
+          date: todayString(),
+          endedAt: new Date().toISOString(),
+          durationSec: (Date.now() - startedAtRef.current) / 1000,
+          inPractice: true,
+          range,
+        }),
+      );
+      flushPracticeTime();
       onDone();
       return;
     }

@@ -12,6 +12,7 @@ import type { AttemptResult } from '../../core/scoring/types';
 import { LessonRun } from './Lesson';
 import { MatchRun } from './MatchRun';
 import { Warmup } from './Warmup';
+import { usePracticeTime } from '../hooks/usePracticeTime';
 import './Practice.css';
 
 type Outcome = 'done' | 'passed' | 'not yet' | 'skipped';
@@ -60,6 +61,8 @@ function PracticeRun({ range }: { range: { lowMidi: number; highMidi: number } }
   const [lastResult, setLastResult] = useState<AttemptResult | null>(null);
   const [stopped, setStopped] = useState(false);
   const [elapsedMs, setElapsedMs] = useState(0);
+  // Practice time for Progress. Runs inside the parts count as running; this screen counts while it is open.
+  usePracticeTime(false);
 
   // Practice time: how long this screen has been open. Not musical timing, so the wall clock is fine.
   useEffect(() => {

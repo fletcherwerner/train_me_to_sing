@@ -138,7 +138,7 @@ export function Settings() {
       {done ? <p role="status">Progress cleared. Your range was kept.</p> : null}
       {confirming ? (
         <div role="alertdialog" aria-modal="true" aria-labelledby="reset-title" className="settings__dialog">
-          <p id="reset-title">Clear all lesson progress? Your range is kept. This cannot be undone.</p>
+          <p id="reset-title">Clear all lesson progress and your practice history (days, time and focus areas)? Your range is kept. This cannot be undone.</p>
           <button
             className="btn btn--danger"
             onClick={() => {

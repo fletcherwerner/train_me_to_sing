@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { migrateProgress, storedDataBaseSchema, type ProgressMap, type StoredData } from './schema';
+import { EMPTY_HISTORY, type History } from '../core/insights/types';
+import { historySchema, migrateProgress, storedDataBaseSchema, type ProgressMap, type StoredData } from './schema';
 
 /**
  * The part of StoredData a profile carries. The latency offset belongs to the device.
@@ -10,14 +11,22 @@ export const profileDataSchema = z
     range: storedDataBaseSchema.shape.range,
     progress: storedDataBaseSchema.shape.progress,
     importedLessons: storedDataBaseSchema.shape.importedLessons,
+    history: historySchema.optional(),
   })
   .transform(
-    (d): ProfileData => ({ range: d.range, progress: migrateProgress(d.progress), importedLessons: d.importedLessons }),
+    (d): ProfileData => ({
+      range: d.range,
+      progress: migrateProgress(d.progress),
+      importedLessons: d.importedLessons,
+      history: d.history ?? EMPTY_HISTORY,
+    }),
   );
 export interface ProfileData {
   range: StoredData['range'];
   progress: ProgressMap;
   importedLessons: unknown[];
+  /** Each profile keeps its own run log. Files written before E17 have none. */
+  history: History;
 }
 
 export const PROFILE_ID_PATTERN = /^[a-z0-9-]{1,40}$/;
@@ -63,8 +72,8 @@ export function cleanName(name: unknown): string | null {
   return nameToId(trimmed) ? trimmed : null;
 }
 
-export function dataFromStored(s: Pick<StoredData, 'range' | 'progress' | 'importedLessons'>): ProfileData {
-  return { range: s.range, progress: s.progress, importedLessons: s.importedLessons };
+export function dataFromStored(s: Pick<StoredData, 'range' | 'progress' | 'importedLessons' | 'history'>): ProfileData {
+  return { range: s.range, progress: s.progress, importedLessons: s.importedLessons, history: s.history ?? EMPTY_HISTORY };
 }
 
-export const FRESH_DATA: ProfileData = { range: null, progress: {}, importedLessons: [] };
+export const FRESH_DATA: ProfileData = { range: null, progress: {}, importedLessons: [], history: EMPTY_HISTORY };

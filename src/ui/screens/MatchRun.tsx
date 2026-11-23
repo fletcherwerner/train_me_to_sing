@@ -42,6 +42,11 @@ import { GraphLegend, PitchGraph } from '../components/PitchGraph';
 import { LessonHeader } from '../components/LessonHeader';
 import { BackToLessonsLink, NextLessonLink, useNextLesson } from '../components/ResultsNav';
 import { useWakeLock } from '../hooks/useWakeLock';
+import { flushPracticeTime, usePracticeTime } from '../hooks/usePracticeTime';
+import { buildRunRecord, matchNoteRecords } from '../../core/insights/record';
+import type { RunRecord } from '../../core/insights/types';
+import { todayString } from '../../storage/today';
+import { RunFocus } from '../components/RunFocus';
 import { describeTolerance } from '../describeTolerance';
 import { describeMatchLine } from '../describeReason';
 import './Lesson.css';
@@ -116,6 +121,9 @@ export function MatchRun({
   const singSec = lesson.singSec ?? MATCH_SING_SEC;
 
   const [phase, setPhase] = useState<Phase>('intro');
+  usePracticeTime(phase === 'running');
+  /** The log entry of the last finished run, for the "Focus next" section. */
+  const [runRecord, setRunRecord] = useState<RunRecord | null>(null);
   const [targets, setTargets] = useState<number[]>([]);
   const [outcomes, setOutcomes] = useState<MatchOutcome[]>([]);
   const [accuracies, setAccuracies] = useState<number[]>([]);
@@ -330,6 +338,7 @@ export function MatchRun({
     setEchoLine(null);
     setNotice(null);
     setPhase('running');
+    const startedAt = Date.now();
     const results: MatchOutcome[] = [];
     const accs: number[] = [];
     const ds: MatchDescription[] = [];
@@ -357,7 +366,20 @@ export function MatchRun({
     setPrevBest(storedBestAccuracy(lesson.id));
     setTake(lastTake);
     setPhase('results');
-    recordAttempt(lesson.id, result);
+    const logged = buildRunRecord({
+      lessonId: lesson.id,
+      kind: 'match',
+      date: todayString(),
+      endedAt: new Date().toISOString(),
+      durationSec: (Date.now() - startedAt) / 1000,
+      inPractice: embedded === true,
+      range,
+      result,
+      notes: matchNoteRecords(placed, results, ds, accs),
+    });
+    setRunRecord(logged);
+    recordAttempt(lesson.id, result, undefined, undefined, logged);
+    flushPracticeTime();
     onAttemptComplete?.(result);
   };
 
@@ -454,6 +476,7 @@ export function MatchRun({
           <strong>Tip:</strong>{' '}
           {firstMiss ? describeMatchMiss(firstMiss.reason) : 'Every note matched. Move on to the next lesson, or try again to match faster.'}
         </p>
+        {runRecord ? <RunFocus run={runRecord} links={!embedded} /> : null}
         <ol className="lesson-misses" data-testid="match-results">
           {outcomes.map((o, i) => (
             <li key={i} data-testid={`match-result-${i}`}>

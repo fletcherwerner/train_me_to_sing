@@ -91,7 +91,7 @@ test.describe('scooping', () => {
     await proveRun(page);
     await expect(page.getByTestId('results-verdict')).toHaveText('Not yet');
     await expect(page.getByTestId('missed-notes')).toContainText('You slid into this note. Try to start right on it.');
-    await expect(page.getByTestId('results-tip')).toContainText('You slid into this note');
+    await expect(page.getByTestId('run-focus-sliding')).toContainText('Sliding into notes');
   });
 
   test('in Unit B it is only a tip and the notes still count', async ({ page }) => {
@@ -100,7 +100,8 @@ test.describe('scooping', () => {
     await proveRun(page);
     await expect(page.getByTestId('results-verdict')).toHaveText('Passed');
     await expect(page.getByTestId('results-score')).toContainText('2 of 2');
-    await expect(page.getByTestId('results-tip')).toContainText('You slid into this note');
+    // Two notes are too few to name a pattern, so "Focus next" shows the run's best point.
+    await expect(page.getByTestId('run-focus')).toBeVisible();
   });
 });
 

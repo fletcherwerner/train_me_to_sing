@@ -3,6 +3,9 @@ import { flagStage1Rebuilt } from './notices';
 import { maxLevel } from './level';
 import { midiToName } from '../core/music/notes';
 import { addProof, isMastered } from '../core/progress/mastery';
+import { mergeHistory } from '../core/insights/history';
+import { EMPTY_HISTORY } from '../core/insights/types';
+import { todayString } from './today';
 
 /** The full StoredData as pretty JSON plus `exportedAt`. */
 export function exportData(data: StoredData, now: Date = new Date()): Blob {
@@ -46,6 +49,7 @@ export function summarizeImport(data: StoredData): string {
  * Per lesson: passed if either passed, higher bestScore, summed attempts, later lastAttemptAt.
  * Range and settings: the device's own, unless it has no range (then the incoming range).
  * Imported lessons: union by id (the device's copy wins). latencyOffsetMs is never imported.
+ * History: runs are the union by id; per day, the larger practice time.
  */
 export function mergeData(local: StoredData, incoming: StoredData): StoredData {
   const progress: StoredData['progress'] = { ...local.progress };
@@ -90,6 +94,7 @@ export function mergeData(local: StoredData, incoming: StoredData): StoredData {
     settings: local.settings,
     progress,
     importedLessons,
+    history: mergeHistory(local.history ?? EMPTY_HISTORY, incoming.history ?? EMPTY_HISTORY, todayString()),
   };
 }
 
@@ -101,6 +106,7 @@ export function replaceData(local: StoredData, incoming: StoredData): StoredData
     settings: local.settings,
     progress: incoming.progress,
     importedLessons: incoming.importedLessons,
+    history: incoming.history ?? EMPTY_HISTORY,
   };
 }
 

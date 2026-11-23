@@ -10,6 +10,8 @@ import type { Level } from '../core/session/sessionMachine';
 import { mergeData, replaceData } from './exportImport';
 import type { AttemptResult } from '../core/scoring/types';
 import type { Lesson } from '../content/types';
+import { addSeconds, appendRun } from '../core/insights/history';
+import { EMPTY_HISTORY, type RunRecord } from '../core/insights/types';
 
 /** Extra facts about an attempt, for lessons that are mastered over two days and two keys. */
 export interface AttemptContext {
@@ -25,8 +27,16 @@ interface AppStore extends StoredData {
   /** True when the last write to storage failed. */
   saveFailed: boolean;
   setRange: (range: StoredData['range']) => void;
-  /** `level` is given for lessons with feedback levels: the level the attempt was made at. */
-  recordAttempt: (lessonId: string, result: AttemptResult, level?: Level, ctx?: AttemptContext) => void;
+  /**
+   * `level` is given for lessons with feedback levels: the level the attempt was made at.
+   * `run` is the finished run's log entry; it is written in the same save as the progress.
+   */
+  recordAttempt: (lessonId: string, result: AttemptResult, level?: Level, ctx?: AttemptContext, run?: RunRecord) => void;
+  /** Logs a finished run that has no attempt to record (a warm-up). */
+  logRun: (run: RunRecord) => void;
+  /** Adds practice time to a day. */
+  addPracticeSeconds: (date: string, seconds: number) => void;
+  /** Clears lesson progress and the run history. The range is kept. */
   resetProgress: () => void;
   addImportedLesson: (lesson: Lesson) => void;
   /** Removes an imported lesson and its progress. */
@@ -38,8 +48,8 @@ interface AppStore extends StoredData {
 }
 
 function snapshot(s: AppStore): StoredData {
-  const { version, range, settings, progress, importedLessons } = s;
-  return { version, range, settings, progress, importedLessons };
+  const { version, range, settings, progress, importedLessons, history } = s;
+  return { version, range, settings, progress, importedLessons, history };
 }
 
 export const useAppStore = create<AppStore>((set, get) => {
@@ -53,7 +63,7 @@ export const useAppStore = create<AppStore>((set, get) => {
     ...loadData(),
     saveFailed: false,
     setRange: (range) => commit({ range }),
-    recordAttempt: (lessonId, result, level, ctx) => {
+    recordAttempt: (lessonId, result, level, ctx, run) => {
       const progress = get().progress;
       const old = progress[lessonId];
       const today = todayString();
@@ -89,9 +99,15 @@ export const useAppStore = create<AppStore>((set, get) => {
             review,
           },
         },
+        ...(run ? { history: appendRun(get().history ?? EMPTY_HISTORY, run, run.date) } : {}),
       });
     },
-    resetProgress: () => commit({ progress: {} }),
+    logRun: (run) => commit({ history: appendRun(get().history ?? EMPTY_HISTORY, run, run.date) }),
+    addPracticeSeconds: (date, seconds) => {
+      if (!(seconds > 0)) return;
+      commit({ history: addSeconds(get().history ?? EMPTY_HISTORY, date, seconds) });
+    },
+    resetProgress: () => commit({ progress: {}, history: EMPTY_HISTORY }),
     addImportedLesson: (lesson) => commit({ importedLessons: [...get().importedLessons, lesson] }),
     removeImportedLesson: (id) => {
       const progress = { ...get().progress };

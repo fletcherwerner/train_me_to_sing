@@ -1,6 +1,7 @@
 import type { ResolvedExercise } from '../exercise/types';
 import { accuracyOf } from './accuracy';
 import { isScooped } from './onsets';
+import { spreadOf } from './spread';
 import type { AttemptResult, MissReason, NoteResult, ToleranceProfile } from './types';
 
 /** Structural frame type so core does not import from audio. PitchFrame satisfies it. */
@@ -106,7 +107,14 @@ export function evaluateAttempt(
   });
 
   const acc = accuracyOf(ex, sorted);
-  const withAccuracy = notes.map((n, i) => ({ ...n, accuracy: acc.perNote[i] }));
+  const withAccuracy = notes.map((n, i) => {
+    if (n.medianCents === null) return { ...n, accuracy: acc.perNote[i] };
+    const { startSec, durationSec } = ex.notes[i];
+    const cents = sorted
+      .filter((f) => f.midi !== null && f.tSec >= startSec && f.tSec < startSec + durationSec)
+      .map((f) => ((f.midi as number) - n.targetMidi) * 100);
+    return { ...n, accuracy: acc.perNote[i], spreadCents: spreadOf(cents) };
+  });
   const hits = notes.filter((r) => r.hit).length;
   const score = notes.length === 0 ? 0 : hits / notes.length;
   return { notes: withAccuracy, score, passed: score >= passScore, accuracy: acc.overall };

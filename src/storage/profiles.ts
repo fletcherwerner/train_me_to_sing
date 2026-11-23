@@ -122,7 +122,7 @@ export function createProfileSync(opts: SyncOptions = {}): ProfileSync {
   let last = pick(store.getState());
 
   function pick(s: StoredData) {
-    return { range: s.range, progress: s.progress, importedLessons: s.importedLessons };
+    return { range: s.range, progress: s.progress, importedLessons: s.importedLessons, history: s.history };
   }
 
   const setActive = (id: string | null, name: string | null) => {
@@ -178,7 +178,7 @@ export function createProfileSync(opts: SyncOptions = {}): ProfileSync {
   const unsubscribe = store.subscribe((s) => {
     if (applying) return;
     const now = pick(s);
-    if (now.range === last.range && now.progress === last.progress && now.importedLessons === last.importedLessons) return;
+    if (now.range === last.range && now.progress === last.progress && now.importedLessons === last.importedLessons && now.history === last.history) return;
     last = now;
     if (!activeId) return;
     dirty = true;
