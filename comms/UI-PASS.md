@@ -768,3 +768,44 @@ Approved after turn 1, 2026-11-22. Review: `comms/S08/turn-01/ui-review.md`.
 - `comms/S08/turn-01/screenshots/phone-match-results.png`
 - `comms/S08/turn-01/screenshots/phone-results-flat40.png`
 - `comms/S08/turn-01/screenshots/phone-results-perfect.png`
+
+## S09 — Spike: let pitch-finding notes run their full length, then report
+
+Approved after turn 1, 2026-11-23. Review: `comms/S09/turn-01/ui-review.md`.
+
+### Not verified by the UI reviewer
+
+- Real microphone singing: the feel of staying on the note, and the cents text on real singing (steps 1–3 of the Review script).
+- The countdown against real audio, and the piano playback.
+- A real iPhone.
+- Today's practice Pitch finding was not captured. It uses the same MatchRun component.
+- Dark mode was not captured.
+
+### Screens reviewed
+
+| Screen / state | Laptop | iPhone | Screenshot files |
+|----------------|--------|--------|------------------|
+| Find one note (s1a-02), intro | OK | OK | `screenshots/perfect-laptop-intro.png`, `screenshots/perfect-phone-intro.png` |
+| Singing, matched early, countdown bar | OK | OK | `screenshots/perfect-laptop-singing.png`, `screenshots/perfect-phone-singing.png` |
+| After a note, line under "Listen…" | OK | OK | `screenshots/perfect-laptop-afternote.png`, `screenshots/perfect-phone-afternote.png` |
+| Results, sim=perfect | OK | OK | `screenshots/perfect-laptop-results.png`, `screenshots/perfect-phone-results.png` |
+| Results, sim=flat40 | Issue (UI-S09-T1-01) | Issue (UI-S09-T1-01) | `screenshots/flat40-laptop-results.png`, `screenshots/flat40-phone-results.png` |
+
+### Screenshots
+
+- `comms/S09/turn-01/screenshots/flat40-laptop-afternote.png`
+- `comms/S09/turn-01/screenshots/flat40-laptop-intro.png`
+- `comms/S09/turn-01/screenshots/flat40-laptop-results.png`
+- `comms/S09/turn-01/screenshots/flat40-laptop-singing.png`
+- `comms/S09/turn-01/screenshots/flat40-phone-afternote.png`
+- `comms/S09/turn-01/screenshots/flat40-phone-intro.png`
+- `comms/S09/turn-01/screenshots/flat40-phone-results.png`
+- `comms/S09/turn-01/screenshots/flat40-phone-singing.png`
+- `comms/S09/turn-01/screenshots/perfect-laptop-afternote.png`
+- `comms/S09/turn-01/screenshots/perfect-laptop-intro.png`
+- `comms/S09/turn-01/screenshots/perfect-laptop-results.png`
+- `comms/S09/turn-01/screenshots/perfect-laptop-singing.png`
+- `comms/S09/turn-01/screenshots/perfect-phone-afternote.png`
+- `comms/S09/turn-01/screenshots/perfect-phone-intro.png`
+- `comms/S09/turn-01/screenshots/perfect-phone-results.png`
+- `comms/S09/turn-01/screenshots/perfect-phone-singing.png`
