@@ -28,3 +28,4 @@ Maintained by the orchestrator. Status is one of: `Not started`, `In progress`, 
 | S07 | Spike: clearer next step and a lighter look | Approved | 3 | APPROVED / APPROVED | 2026-11-19 |
 | S08 | Spike: accuracy percentage and best score per lesson | Approved | 1 | APPROVED / APPROVED | 2026-11-22 |
 | S09 | Spike: let pitch-finding notes run their full length, then report | Approved | 1 | APPROVED / APPROVED | 2026-11-23 |
+| E16 | iPhone app with progress saved as a file | Not started | 0 | — | — |

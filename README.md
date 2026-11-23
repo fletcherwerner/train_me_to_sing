@@ -247,6 +247,7 @@ Every epic ends with something you can open and review. "Depends on" means those
 | S07 | [Spike: clearer next step and a lighter look](planning/epics/S07-ui-journey.md) | The highlighted button is always the next step ("Next: We do", "Next lesson"); "Back to lessons" on results; softer cards and status labels | E15 |
 | S08 | [Spike: accuracy percentage and best score per lesson](planning/epics/S08-accuracy-best.md) | A 0-100% accuracy for how closely the sung notes followed the target; the best per lesson shows before you start and updates after a better run | S07 |
 | S09 | [Spike: let pitch-finding notes run their full length, then report](planning/epics/S09-full-length-match.md) | Single-note targets no longer stop the moment you match; each runs the full 8 s with a countdown, then says how fast you found it, how steady you held it and how flat or sharp you were | S08 |
+| E16 | [iPhone app with progress saved as a file](planning/epics/E16-iphone-app-files.md) | The iOS app brought up to date; progress saved to progress.json in Files › On My iPhone, read at launch, with 14 days of backups | S09 |
 
 ### How each epic file is laid out
 
