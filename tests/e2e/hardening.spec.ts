@@ -254,7 +254,7 @@ test('results: verdict, score, pass mark and Try again in view at 393x852; one H
   await btn(page, /^Next: /).click();
   await btn(page, 'Start').click();
   await expect(page.getByTestId('results-verdict')).toBeVisible({ timeout: 150000 });
-  for (const t of ['results-verdict', 'results-score', 'results-tip', 'results-actions']) {
+  for (const t of ['results-verdict', 'results-score', 'run-focus', 'results-actions']) {
     await expect(page.getByTestId(t)).toBeInViewport();
   }
   await expect(page.getByText(/pass mark/)).toBeInViewport();

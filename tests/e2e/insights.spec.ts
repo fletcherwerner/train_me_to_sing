@@ -143,7 +143,7 @@ for (const size of SIZES) {
       await page.getByRole('button', { name: 'Start', exact: true }).click();
       await page.getByRole('button', { name: 'Play', exact: true }).click();
       await page.getByRole('button', { name: 'Stop' }).click();
-      await page.getByRole('link', { name: /Lessons/ }).first().click();
+      await page.getByRole('link', { name: 'Back to lessons' }).first().click();
       await expect(page.getByTestId('home-week-ring')).toContainText('0 of 4 days this week');
     });
 
