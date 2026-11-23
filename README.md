@@ -249,6 +249,7 @@ Every epic ends with something you can open and review. "Depends on" means those
 | S09 | [Spike: let pitch-finding notes run their full length, then report](planning/epics/S09-full-length-match.md) | Single-note targets no longer stop the moment you match; each runs the full 8 s with a countdown, then says how fast you found it, how steady you held it and how flat or sharp you were | S08 |
 | E16 | [iPhone app with progress saved as a file](planning/epics/E16-iphone-app-files.md) | The iOS app brought up to date; progress saved to progress.json in Files › On My iPhone, read at launch, with 14 days of backups | S09 |
 | E17 | [Practice insights: activity, weekly goal and a performance dashboard](planning/epics/E17-practice-insights.md) | A log of every run and practice time; a 4-days-a-week circle with last week and a streak; focus areas after each run; 1–2 week patterns and what improved; a Progress screen | E16 |
+| S10 | [Spike: a note guide that shows whether you're above or below the note](planning/epics/S10-note-guide.md) | A simple guide while singing: the target note as a line, your voice as a dot above (too high) or below (too low), with "go up / come down" text; full at Learn and in single-note lessons, a rescue at Practise, none at Prove; replaces the cents meter | E17 |
 
 ### How each epic file is laid out
 
