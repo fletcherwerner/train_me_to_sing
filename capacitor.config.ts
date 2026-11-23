@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  // Placeholder bundle id: the owner replaces it with their own (see docs/ios-build.md).
-  appId: 'com.example.trainmetosing',
+  // Keep equal to PRODUCT_BUNDLE_IDENTIFIER in ios/App/App.xcodeproj/project.pbxproj.
+  appId: 'io.github.fletcherwerner.trainmetosing',
   appName: 'Train Me To Sing',
   webDir: 'dist',
 };

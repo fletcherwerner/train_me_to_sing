@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { dropLegacyProgress, loadData, saveData, type StoredData } from './schema';
 import { flagStage1Rebuilt } from './notices';
 import { maxLevel, unlockedBy } from './level';
+import { getFileSync } from './fileSync';
 import { todayString } from './today';
 import { addProof, isMastered } from '../core/progress/mastery';
 import { afterReview, initialReview, isDue } from '../core/progress/review';
@@ -45,6 +46,7 @@ export const useAppStore = create<AppStore>((set, get) => {
   const commit = (patch: Partial<StoredData>) => {
     const updated: StoredData = { ...snapshot(get()), ...patch };
     const ok = saveData(updated);
+    if (ok) getFileSync()?.queue(updated);
     set({ ...updated, saveFailed: !ok });
   };
   return {

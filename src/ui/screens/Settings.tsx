@@ -4,6 +4,8 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAppStore } from '../../storage/store';
 import type { StoredData } from '../../storage/schema';
 import { parseImport, saveExport, summarizeImport } from '../../storage/exportImport';
+import { getFileStore } from '../../storage/fileStore';
+import { useFileStatus } from '../../storage/fileSync';
 import { midiToName } from '../../core/music/notes';
 import { ProfilesSection } from '../components/ProfilesSection';
 import './Home.css';
@@ -15,6 +17,9 @@ export function Settings() {
   const latencyMs = useAppStore((s) => s.settings.latencyOffsetMs);
   const setLatencyOffset = useAppStore((s) => s.setLatencyOffset);
   const { search } = useLocation();
+  const hasFile = getFileStore() !== null;
+  const lastFileSaveAt = useFileStatus((s) => s.lastFileSaveAt);
+  const fileSaveFailed = useFileStatus((s) => s.fileSaveFailed);
   const [confirming, setConfirming] = useState(false);
   const [done, setDone] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -151,6 +156,19 @@ export function Settings() {
       ) : null}
 
       <h2>Move progress between devices</h2>
+      {hasFile ? (
+        <>
+          <p>Saved on this iPhone in Files › On My iPhone › Train Me To Sing › progress.json</p>
+          <p data-testid="file-save-status" role="status">
+            {fileSaveFailed
+              ? "Couldn't save to the file. Your progress is still kept in the app."
+              : lastFileSaveAt
+                ? `Last saved: ${new Date(lastFileSaveAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`
+                : 'Not saved to the file yet in this session.'}
+          </p>
+          <p>Deleting the app deletes this folder. To keep a copy elsewhere, use Export or copy the file in Files.</p>
+        </>
+      ) : null}
       <p>
         <button type="button" className="btn" onClick={onExport} data-testid="export-button">
           Export progress

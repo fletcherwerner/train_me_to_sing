@@ -17,8 +17,10 @@
     "test:harness": "node --test harness/test"
   },
   "dependencies": {
-    "@capacitor/cli": "^7.6.10",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/cli": "^8.6.2",
     "@capacitor/core": "^8.6.2",
+    "@capacitor/filesystem": "^8.1.5",
     "@capacitor/ios": "^8.6.2",
     "@tonejs/midi": "^2.0.28",
     "pitchy": "^4.1.0",

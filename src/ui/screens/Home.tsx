@@ -12,7 +12,13 @@ import { getAllLessons } from '../../content/registry';
 import { fit } from '../../core/exercise/fit';
 import type { Lesson } from '../../content/types';
 import { useProfileStatus } from '../../storage/profiles';
-import { dismissStage1Notice, STAGE1_NOTICE_TEXT, useNotices } from '../../storage/notices';
+import {
+  dismissFileUnreadableNotice,
+  dismissStage1Notice,
+  FILE_UNREADABLE_TEXT,
+  STAGE1_NOTICE_TEXT,
+  useNotices,
+} from '../../storage/notices';
 import './Home.css';
 
 const LEVEL_TEXT = { learn: 'Learn', practise: 'Practise', prove: 'Prove' } as const;
@@ -102,6 +108,7 @@ export function Home() {
     return { kind: 'attempted', text: `${levelText}${acc ? `Best ${acc}` : 'Started'}`, icon: '◐' };
   };
   const stage1Notice = useNotices((s) => s.stage1Rebuilt);
+  const fileNotice = useNotices((s) => s.fileUnreadable);
 
   return (
     <main className="dev-page home">
@@ -141,6 +148,15 @@ export function Home() {
         <section className="home__continue" data-testid="stage1-notice" role="status">
           <p>{STAGE1_NOTICE_TEXT}</p>
           <button type="button" className="btn" onClick={dismissStage1Notice} data-testid="stage1-notice-dismiss">
+            OK
+          </button>
+        </section>
+      ) : null}
+
+      {fileNotice ? (
+        <section className="home__continue" data-testid="file-unreadable-notice" role="status">
+          <p>{FILE_UNREADABLE_TEXT}</p>
+          <button type="button" className="btn" onClick={dismissFileUnreadableNotice} data-testid="file-unreadable-dismiss">
             OK
           </button>
         </section>
