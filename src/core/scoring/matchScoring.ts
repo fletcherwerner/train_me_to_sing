@@ -1,5 +1,6 @@
 import type { ToleranceProfile } from './types';
 import { meanCloseness } from './accuracy';
+import { spreadOf } from './spread';
 
 /** Structural frame type so core does not import from audio. PitchFrame satisfies it. */
 export interface MatchFrame {
@@ -104,6 +105,8 @@ export interface MatchDescription {
   wrongOctave: boolean;
   /** Mean closeness from the first voiced frame to the end of the sing time (S08's rule). */
   accuracy: number;
+  /** Interquartile range, in cents, of the voiced frames from the first voiced one (octave folded); null when silent. */
+  spreadCents?: number | null;
 }
 
 function median(xs: number[]): number {
@@ -135,7 +138,8 @@ export function describeMatch(
     const on = after.filter((f) => f.midi !== null && Math.abs(f.midi - targetMidi) <= tolSemi).length;
     onAfterFound = after.length === 0 ? 0 : on / after.length;
   }
-  return { foundInSec, onAfterFound, typicalCents, wrongOctave, accuracy: meanCloseness(voiced, targetMidi) };
+  const spreadCents = spreadOf(diffs.map((d) => (d - 12 * Math.round(d / 12)) * 100));
+  return { foundInSec, onAfterFound, typicalCents, wrongOctave, accuracy: meanCloseness(voiced, targetMidi), spreadCents };
 }
 
 /** Where a target note goes in the student's range. Pure; `rng` returns [0, 1). */

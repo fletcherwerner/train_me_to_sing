@@ -1,0 +1,5 @@
+.week-ring__track { stroke: var(--track); }
+.week-ring__fill { stroke: var(--theme); transition: stroke-dasharray 0.3s; }
+.week-ring--met .week-ring__fill { stroke: var(--success); }
+.week-ring__text { fill: var(--text); }
+.week-ring--met .week-ring__text { fill: var(--success); }

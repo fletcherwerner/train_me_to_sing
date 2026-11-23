@@ -37,6 +37,11 @@ import { applyGate, bleedGate, measureBleed } from '../../core/scoring/bleed';
 import { evaluateAttempt } from '../../core/scoring/evaluate';
 import { getTolerance } from '../../core/scoring/tolerance';
 import { pickTip } from '../../core/scoring/tips';
+import { buildRunRecord, melodyNoteRecords } from '../../core/insights/record';
+import type { RunRecord } from '../../core/insights/types';
+import { todayString } from '../../storage/today';
+import { RunFocus } from '../components/RunFocus';
+import { flushPracticeTime, usePracticeTime } from '../hooks/usePracticeTime';
 import type { AttemptResult } from '../../core/scoring/types';
 import { PianoKeyboard } from '../components/PianoKeyboard';
 import { CentsMeter } from '../components/CentsMeter';
@@ -183,7 +188,12 @@ export function LessonRun({
   const exercise = fitted.ok ? fitted.exercise : null;
   const { step, activity } = session;
   const running = activity === 'running';
-  const graded = step === 'weDo' || step === 'youDo';
+  usePracticeTime(running);
+  /** Wall-clock start of the run in progress, for the logged duration only. */
+  const runStartedAtRef = useRef(0);
+  /** The log entry of the last finished You do run, for the "Focus next" section. */
+  const [runRecord, setRunRecord] = useState<RunRecord | null>(null);
+  const graded =step === 'weDo' || step === 'youDo';
   const phrases = lesson.exercise.phrases;
   // null = whole song. Only I do and We do use a phrase; You do and Results use the whole song.
   const [phraseIdx, setPhraseIdx] = useState<number | null>(null);
@@ -355,6 +365,7 @@ export function LessonRun({
     }
     if (thisStep === 'weDo' && !isEcho) setWeDoFrames(null);
     setResultPhrase(activePhraseIdx);
+    runStartedAtRef.current = Date.now();
     dispatch({ type: 'RUN' });
     const audioOk = await ensureAudioRunning();
     if (myRun !== runRef.current) return;
@@ -430,11 +441,28 @@ export function LessonRun({
     if (thisStep === 'youDo' && result) {
       dispatch({ type: 'SHOW_RESULTS' });
       setPrevBest(storedBestAccuracy(lesson.id));
-      recordAttempt(lesson.id, result, lesson.levels ? runLevel : undefined, {
-        mastery,
+      const logged = buildRunRecord({
+        lessonId: lesson.id,
+        kind: 'melody',
+        date: todayString(),
+        endedAt: new Date().toISOString(),
+        durationSec: (Date.now() - runStartedAtRef.current) / 1000,
+        level: lesson.levels ? runLevel : undefined,
+        inPractice: embedded === true,
         tonicMidi: runEx.tonicMidi,
-        singleKey,
+        range,
+        result,
+        notes: melodyNoteRecords(result),
       });
+      setRunRecord(logged);
+      recordAttempt(
+        lesson.id,
+        result,
+        lesson.levels ? runLevel : undefined,
+        { mastery, tonicMidi: runEx.tonicMidi, singleKey },
+        logged,
+      );
+      flushPracticeTime();
       onAttemptComplete?.(result);
       // The next Practise or Prove attempt gets a new key.
       if ((lesson.levels && runLevel !== 'learn') || (mastery && !lesson.levels)) rollTonic(runEx.tonicMidi, runLevel);
@@ -588,9 +616,13 @@ export function LessonRun({
           {hits} of {r.notes.length} notes hit · pass mark {Math.round(lesson.passScore * 100)}%
         </p>
         {r.accuracy !== undefined ? <AccuracyResultLine accuracy={r.accuracy} prevBest={prevBest} /> : null}
-        <p className="lesson-tip" data-testid="results-tip">
-          <strong>Tip:</strong> {pickTip(r)}
-        </p>
+        {runRecord ? <RunFocus run={runRecord} links={!embedded} /> : null}
+        {r.notes.some((n) => n.reason === 'wrong-octave') ? (
+          // Wrong octaves are not a pitch category, so their advice stays.
+          <p className="lesson-tip" data-testid="results-tip">
+            <strong>Tip:</strong> {pickTip(r)}
+          </p>
+        ) : null}
         <p className="lesson-actions" data-testid="results-actions">
           {levelPassed && nextLevel ? (
             <button className={embedded ? 'btn' : 'btn btn--primary'} data-testid="advance-level" onClick={() => advance()}>

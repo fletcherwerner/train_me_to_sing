@@ -22,6 +22,7 @@ function defaults(): StoredData {
     settings: { latencyOffsetMs: 0 },
     progress: {},
     importedLessons: [],
+    history: { runs: [], days: {} },
   };
 }
 

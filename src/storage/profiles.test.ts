@@ -126,7 +126,7 @@ describe('switching profiles', () => {
       name: 'ben',
       createdAt: 'c',
       updatedAt: 'u',
-      data: { range: range(50), progress: { 's1b-02': passed }, importedLessons: [] },
+      data: { range: range(50), progress: { 's1b-02': passed }, importedLessons: [], history: { runs: [], days: {} } },
     });
     const sync = createProfileSync({ fetchFn: api.fetchFn });
     await sync.create('ana', 'fresh');
@@ -186,7 +186,7 @@ describe('start-up', () => {
       name: 'Ana',
       createdAt: 'c',
       updatedAt: 'u',
-      data: { range: range(44), progress: {}, importedLessons: [] },
+      data: { range: range(44), progress: {}, importedLessons: [], history: { runs: [], days: {} } },
     });
     localStorage.setItem(ACTIVE_PROFILE_KEY, 'ana');
     const sync = createProfileSync({ fetchFn: api.fetchFn });

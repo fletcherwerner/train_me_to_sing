@@ -19,6 +19,11 @@ import {
   STAGE1_NOTICE_TEXT,
   useNotices,
 } from '../../storage/notices';
+import { WEEKLY_GOAL_DAYS, weekSummary } from '../../core/insights/activity';
+import { EMPTY_HISTORY } from '../../core/insights/types';
+import { WeekRing } from '../components/WeekRing';
+import '../components/WeekRing.css';
+import './Progress.css';
 import './Home.css';
 
 const LEVEL_TEXT = { learn: 'Learn', practise: 'Practise', prove: 'Prove' } as const;
@@ -51,6 +56,7 @@ function groupsOf(items: Item[]): { key: string; unit: Lesson['unit'] | null; it
 export function Home() {
   const range = useAppStore((s) => s.range);
   const progress = useAppStore((s) => s.progress);
+  const history = useAppStore((s) => s.history) ?? EMPTY_HISTORY;
   const removeImportedLesson = useAppStore((s) => s.removeImportedLesson);
   const importedRaw = useAppStore((s) => s.importedLessons);
   const [confirmId, setConfirmId] = useState<string | null>(null);
@@ -62,6 +68,7 @@ export function Home() {
   const lessons = all.filter((l) => l.lesson.source !== 'imported');
   const mySongs = all.filter((l) => l.lesson.source === 'imported');
   const today = todayString();
+  const weekCount = useMemo(() => weekSummary(history, today).count, [history, today]);
   const plan = useMemo(
     () =>
       range
@@ -141,8 +148,18 @@ export function Home() {
             <span aria-hidden="true">🎤</span>{' '}
             Mic check
           </Link>
+          <Link to={{ pathname: '/progress', search }} className="nav-link" data-testid="home-progress">
+            <span aria-hidden="true">📈</span>{' '}
+            Progress
+          </Link>
         </nav>
       </header>
+      <Link to={{ pathname: '/progress', search }} className="home__week-ring" data-testid="home-week-ring">
+        <WeekRing count={weekCount} size={44} />
+        <span>
+          {weekCount} of {WEEKLY_GOAL_DAYS} days this week
+        </span>
+      </Link>
 
       {stage1Notice ? (
         <section className="home__continue" data-testid="stage1-notice" role="status">

@@ -8,6 +8,7 @@ const base = (over: Partial<StoredData> = {}): StoredData => ({
   settings: { latencyOffsetMs: 0 },
   progress: {},
   importedLessons: [],
+  history: { runs: [], days: {} },
   ...over,
 });
 

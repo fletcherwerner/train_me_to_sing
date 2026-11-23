@@ -10,6 +10,7 @@ const data = (passed = false) => ({
   range: { lowMidi: 45, highMidi: 64, assessedAt: 'x' },
   progress: passed ? { 's1b-01': { passed: true, bestScore: 1, attempts: 1, lastAttemptAt: 'x', proofs: [], review: null } } : {},
   importedLessons: [],
+  history: { runs: [], days: {} },
 });
 
 let dir: string;

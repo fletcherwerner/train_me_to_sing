@@ -19,6 +19,8 @@ export interface NoteResult {
   scooped?: boolean;
   /** How closely the sung pitch followed this note, 0..1 (see accuracy.ts). */
   accuracy?: number;
+  /** Interquartile range, in cents, of the voiced frames within the note. Absent for silent notes. Not used for scoring. */
+  spreadCents?: number;
 }
 
 export interface AttemptResult {

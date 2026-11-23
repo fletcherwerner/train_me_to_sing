@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { flagStage1Rebuilt } from './notices';
 import { isMastered } from '../core/progress/mastery';
 import type { Proof } from '../core/progress/types';
+import { EMPTY_HISTORY, type History } from '../core/insights/types';
 
 /**
  * Zod schema for StoredData (version 2).
@@ -92,6 +93,42 @@ export function dropLegacyProgress<T extends Record<string, unknown>>(progress: 
   return { progress: kept, dropped: true };
 }
 
+const noteRecordSchema = z.object({
+  t: z.number(),
+  c: z.number().nullable(),
+  h: z.number(),
+  s: z.number().optional(),
+  o: z.number().nullable().optional(),
+  r: z.string().optional(),
+  sc: z.boolean().optional(),
+  f: z.number().nullable().optional(),
+  a: z.number().optional(),
+  oct: z.boolean().optional(),
+});
+
+const runRecordSchema = z.object({
+  id: z.string(),
+  lessonId: z.string(),
+  kind: z.enum(['melody', 'match', 'warmup']),
+  date: z.string().regex(DATE),
+  endedAt: z.string(),
+  durationSec: z.number(),
+  level: z.enum(['learn', 'practise', 'prove']).optional(),
+  inPractice: z.boolean(),
+  tonicMidi: z.number().optional(),
+  range: z.object({ lowMidi: z.number(), highMidi: z.number() }).optional(),
+  score: z.number().optional(),
+  accuracy: z.number().optional(),
+  passed: z.boolean().optional(),
+  notes: z.array(noteRecordSchema).optional(),
+});
+
+/** The run log (E17). Absent on older files: it then defaults to empty. */
+export const historySchema = z.object({
+  runs: z.array(runRecordSchema),
+  days: z.record(z.string().regex(DATE), z.object({ seconds: z.number().min(0) })),
+});
+
 /** What a stored file holds, before migration. */
 export const storedDataBaseSchema = z.object({
   version: z.union([z.literal(1), z.literal(2)]),
@@ -108,6 +145,7 @@ export const storedDataBaseSchema = z.object({
   }),
   progress: z.record(z.string(), rawProgressEntrySchema),
   importedLessons: z.array(z.any()),
+  history: historySchema.optional(),
 });
 
 /** Parses version 1 or 2 data and returns version 2. */
@@ -118,6 +156,7 @@ export const storedDataSchema = storedDataBaseSchema.transform(
     settings: d.settings,
     progress: migrateProgress(d.progress),
     importedLessons: d.importedLessons,
+    history: d.history ?? EMPTY_HISTORY,
   }),
 );
 
@@ -127,6 +166,8 @@ export interface StoredData {
   settings: { latencyOffsetMs: number; calibratedAt?: string };
   progress: ProgressMap;
   importedLessons: unknown[];
+  /** Every finished run and the practice time per day (E17). Absent means empty. */
+  history?: History;
 }
 
 const DEFAULTS: StoredData = {
@@ -135,6 +176,7 @@ const DEFAULTS: StoredData = {
   settings: { latencyOffsetMs: 0 },
   progress: {},
   importedLessons: [],
+  history: EMPTY_HISTORY,
 };
 
 const STORAGE_KEY = 'tmts.v1';
