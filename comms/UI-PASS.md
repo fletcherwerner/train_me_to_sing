@@ -507,6 +507,63 @@ Seen with `?filestore=memory`, the dev-only stand-in for the native file.
 - `comms/E16/turn-01/screenshots/unreadable-laptop.png`
 - `comms/E16/turn-01/screenshots/unreadable-phone.png`
 
+## E17 — Practice insights: activity, weekly goal and a performance dashboard
+
+Approved after turn 1, 2026-11-23. Review: `comms/E17/turn-01/ui-review.md`.
+
+### Not verified by the UI reviewer
+
+- A real microphone and speakers.
+- Review-script steps 5 and 6 with real use over days. I covered them with seeded histories and `?today=`.
+- Step 7 (export then import) and step 8 (`progress.json` on the iPhone).
+
+### Screens reviewed
+
+| Screen / state | Laptop | iPhone | Screenshot files |
+|----------------|--------|--------|------------------|
+| Home, empty and goal met | OK | OK (header buttons stack, see 03) | `screenshots/home-empty-*.png`, `home-goal-*.png`, `home-after-perfect-*.png` |
+| Progress, empty | Issue (02) | Issue (02) | `screenshots/progress-empty-*.png` |
+| Progress, 4 weeks of data (patterns, improvements, trend) | OK | OK | `screenshots/progress-four-*.png` |
+| Progress, 4 weeks, dark | OK | OK | `screenshots/progress-four-dark-*.png` |
+| Progress, goal met and streak | OK | OK | `screenshots/progress-goal-*.png` |
+| Progress, 5 days (7-day window) | OK | OK | `screenshots/progress-five-*.png` |
+| Progress after a real run (Today card, Best runs, "New this week") | OK | Issue (01) | `screenshots/progress-after-perfect-*.png` |
+| Results with "Focus next", positive (perfect) and flat40 | OK | OK | `screenshots/results-perfect-*.png`, `results-flat40-*.png` |
+
+The phone flat40 results did capture (`screenshots/results-flat40-phone-full.png`): "Landing flat" with the cents, the tip and the link, and no overflow. `fail-flat40-phone.png` is blank because my script's later navigation ran after I had stopped the server. It is not an app problem.
+
+### Screenshots
+
+- `comms/E17/turn-01/screenshots/fail-flat40-phone.png`
+- `comms/E17/turn-01/screenshots/home-after-flat40-laptop.png`
+- `comms/E17/turn-01/screenshots/home-after-perfect-laptop.png`
+- `comms/E17/turn-01/screenshots/home-after-perfect-phone.png`
+- `comms/E17/turn-01/screenshots/home-empty-laptop.png`
+- `comms/E17/turn-01/screenshots/home-empty-phone.png`
+- `comms/E17/turn-01/screenshots/home-goal-laptop.png`
+- `comms/E17/turn-01/screenshots/home-goal-phone.png`
+- `comms/E17/turn-01/screenshots/progress-after-flat40-laptop.png`
+- `comms/E17/turn-01/screenshots/progress-after-perfect-laptop.png`
+- `comms/E17/turn-01/screenshots/progress-after-perfect-phone.png`
+- `comms/E17/turn-01/screenshots/progress-empty-laptop.png`
+- `comms/E17/turn-01/screenshots/progress-empty-phone.png`
+- `comms/E17/turn-01/screenshots/progress-five-laptop.png`
+- `comms/E17/turn-01/screenshots/progress-five-phone.png`
+- `comms/E17/turn-01/screenshots/progress-four-dark-laptop.png`
+- `comms/E17/turn-01/screenshots/progress-four-dark-phone.png`
+- `comms/E17/turn-01/screenshots/progress-four-laptop.png`
+- `comms/E17/turn-01/screenshots/progress-four-phone.png`
+- `comms/E17/turn-01/screenshots/progress-goal-laptop.png`
+- `comms/E17/turn-01/screenshots/progress-goal-phone.png`
+- `comms/E17/turn-01/screenshots/results-flat40-laptop-full.png`
+- `comms/E17/turn-01/screenshots/results-flat40-laptop.png`
+- `comms/E17/turn-01/screenshots/results-flat40-phone-full.png`
+- `comms/E17/turn-01/screenshots/results-flat40-phone.png`
+- `comms/E17/turn-01/screenshots/results-perfect-laptop-full.png`
+- `comms/E17/turn-01/screenshots/results-perfect-laptop.png`
+- `comms/E17/turn-01/screenshots/results-perfect-phone-full.png`
+- `comms/E17/turn-01/screenshots/results-perfect-phone.png`
+
 ## S01 — Spike: local profiles
 
 Approved after turn 1, 2026-11-16. Review: `comms/S01/turn-01/ui-review.md`.
