@@ -25,9 +25,11 @@ import type { ResolvedExercise } from '../../core/exercise/types';
 import { midiToName } from '../../core/music/notes';
 import { matchAccuracy } from '../../core/scoring/accuracy';
 import {
+  describeMatch,
   describeMatchMiss,
   matchTarget,
-  MATCH_WINDOW_SEC,
+  MATCH_SING_SEC,
+  type MatchDescription,
   placeTarget,
   scoreMatch,
   type MatchOutcome,
@@ -41,6 +43,7 @@ import { LessonHeader } from '../components/LessonHeader';
 import { BackToLessonsLink, NextLessonLink, useNextLesson } from '../components/ResultsNav';
 import { useWakeLock } from '../hooks/useWakeLock';
 import { describeTolerance } from '../describeTolerance';
+import { describeMatchLine } from '../describeReason';
 import './Lesson.css';
 
 const PIANO_SEC = 1.5;
@@ -54,14 +57,14 @@ interface Take {
 class Cancelled extends Error {}
 
 /** One flat target line as an exercise, for the graph. */
-function targetExercise(midi: number): ResolvedExercise {
+function targetExercise(midi: number, sec: number): ResolvedExercise {
   return {
     templateId: 'match',
     tonicMidi: midi,
     tempoBpm: 60,
     beatsPerBar: 4,
-    notes: [{ index: 0, midi, startSec: 0, durationSec: MATCH_WINDOW_SEC }],
-    totalSec: MATCH_WINDOW_SEC,
+    notes: [{ index: 0, midi, startSec: 0, durationSec: sec }],
+    totalSec: sec,
   };
 }
 
@@ -110,11 +113,14 @@ export function MatchRun({
   const specs = useMemo(() => lesson.matchTargets ?? [], [lesson]);
   const holdSec = lesson.holdSec ?? 1;
   const landWithinSec = lesson.landWithinSec ?? null;
+  const singSec = lesson.singSec ?? MATCH_SING_SEC;
 
   const [phase, setPhase] = useState<Phase>('intro');
   const [targets, setTargets] = useState<number[]>([]);
   const [outcomes, setOutcomes] = useState<MatchOutcome[]>([]);
   const [accuracies, setAccuracies] = useState<number[]>([]);
+  const [descs, setDescs] = useState<MatchDescription[]>([]);
+  const [remainingSec, setRemainingSec] = useState(0);
   /** The stored best accuracy from before the last saved attempt, for "New best! (was …)". */
   const [prevBest, setPrevBest] = useState<number | undefined>(undefined);
   const [idx, setIdx] = useState(0);
@@ -203,14 +209,14 @@ export function MatchRun({
   };
 
   /**
-   * One target: the piano (or `buffer`, the student's own voice) plays, then the student has up to 8 s to match it.
-   * Ends as soon as the note is matched (or slid into when landing is required).
+   * One target: the piano (or `buffer`, the student's own voice) plays, then the student sings for the full
+   * `singSec` whether or not the note is matched; the match is judged once at the end.
    */
   const runTarget = async (
     midi: number,
     myRun: number,
     opts: { buffer?: Take['buffer']; keepTake: boolean },
-  ): Promise<{ outcome: MatchOutcome; take: Take | null; accuracy: number }> => {
+  ): Promise<{ outcome: MatchOutcome; take: Take | null; accuracy: number; desc: MatchDescription }> => {
     const src = sourceRef.current;
     if (!src) throw new Cancelled();
     setSinging(false);
@@ -228,30 +234,30 @@ export function MatchRun({
     const stream = src.getStream?.() ?? null;
     const takeRec = opts.keepTake && stream && !isSimulated() ? startTakeRecording(stream) : null;
     recRef.current = takeRec;
-    registerSimExercise(targetExercise(midi), start, false, true);
-    const rec = recordFrames(src, start, start + MATCH_WINDOW_SEC, latencyMs / 1000);
+    registerSimExercise(targetExercise(midi, singSec), start, false, true);
+    const rec = recordFrames(src, start, start + singSec, latencyMs / 1000);
     const unsubSung = src.subscribe((f) => setSungMidi((prev) => (prev === f.midi ? prev : f.midi)));
     setLiveFrames(rec.frames);
     setListenStart(start);
     setSinging(true);
     setStatus('Now sing it and hold the note.');
+    setRemainingSec(singSec);
 
     let outcome: MatchOutcome = { matched: false, timeToMatchSec: null, reason: 'silent' };
     try {
+      let found = false;
       for (;;) {
         await new Promise((r) => setTimeout(r, 40));
         if (myRun !== runIdRef.current) throw new Cancelled();
         const t = now() - start;
-        const o = matchTarget(rec.frames, midi, tol, holdSec, landWithinSec);
-        if (o.matched || o.reason === 'slid') {
-          outcome = o;
-          break;
-        }
-        if (t >= MATCH_WINDOW_SEC) {
-          outcome = o;
-          break;
+        setRemainingSec(Math.max(0, singSec - t));
+        if (t >= singSec) break;
+        if (!found && matchTarget(rec.frames, midi, tol, holdSec, landWithinSec, singSec).matched) {
+          found = true;
+          setStatus('Now sing it and hold the note. ✓ Found it — keep holding');
         }
       }
+      outcome = matchTarget(rec.frames, midi, tol, holdSec, landWithinSec, singSec);
     } finally {
       rec.stop();
       unsubSung();
@@ -263,7 +269,7 @@ export function MatchRun({
     let kept: Take | null = null;
     if (outcome.matched && opts.keepTake && lesson.echo) {
       if (isSimulated()) {
-        const hold = targetExercise(midi);
+        const hold = targetExercise(midi, singSec);
         hold.totalSec = holdSec;
         hold.notes = [{ ...hold.notes[0], durationSec: holdSec }];
         kept = { midi, buffer: synthTake(hold) };
@@ -281,7 +287,12 @@ export function MatchRun({
       takeRec.discard();
       recRef.current = null;
     }
-    return { outcome, take: kept, accuracy: matchAccuracy(rec.frames, midi, outcome, holdSec, MATCH_WINDOW_SEC) };
+    return {
+      outcome,
+      take: kept,
+      accuracy: matchAccuracy(rec.frames, midi, singSec),
+      desc: describeMatch(rec.frames, midi, tol, outcome, singSec),
+    };
   };
 
   const begin = async () => {
@@ -321,22 +332,20 @@ export function MatchRun({
     setPhase('running');
     const results: MatchOutcome[] = [];
     const accs: number[] = [];
+    const ds: MatchDescription[] = [];
+    setDescs([]);
     let lastTake: Take | null = null;
     try {
       for (let i = 0; i < placed.length; i++) {
         setIdx(i);
-        const { outcome, take: kept, accuracy } = await runTarget(placed[i], myRun, { keepTake: true });
+        const { outcome, take: kept, accuracy, desc } = await runTarget(placed[i], myRun, { keepTake: true });
         accs.push(accuracy);
+        ds.push(desc);
         results.push(outcome);
         setOutcomes([...results]);
+        setDescs([...ds]);
         if (kept) lastTake = kept;
-        setStatus(
-          outcome.matched
-            ? `Matched in ${(outcome.timeToMatchSec ?? 0).toFixed(1)} s`
-            : outcome.reason === 'slid'
-              ? 'You slid into it'
-              : 'Not matched',
-        );
+        setStatus(describeMatchLine(outcome, desc));
         await waitUntil(now() + FEEDBACK_SEC, myRun);
       }
     } catch (err) {
@@ -389,7 +398,7 @@ export function MatchRun({
   );
   const disp = displayRange(range);
   const target = echoRunning && take ? take.midi : (targets[idx] ?? null);
-  const graphEx = useMemo(() => (target === null ? null : targetExercise(target)), [target]);
+  const graphEx = useMemo(() => (target === null ? null : targetExercise(target, singSec)), [target, singSec]);
 
   if (phase === 'intro') {
     return (
@@ -400,7 +409,7 @@ export function MatchRun({
         <p data-testid="lesson-tolerance">{describeTolerance(tol)}</p>
         <p data-testid="match-how">
           {specs.length} notes. Listen to each one, then sing it and hold it for {holdSec} second{holdSec === 1 ? '' : 's'}.
-          You have {MATCH_WINDOW_SEC} seconds for each.{' '}
+          Each note runs for {singSec} seconds. Keep holding it until the bar runs out.{' '}
           {landWithinSec === null
             ? 'Sliding up to the note is fine for now.'
             : `Start right on the note: you have ${landWithinSec} seconds from your first sound.`}
@@ -448,12 +457,9 @@ export function MatchRun({
         <ol className="lesson-misses" data-testid="match-results">
           {outcomes.map((o, i) => (
             <li key={i} data-testid={`match-result-${i}`}>
-              Note {i + 1} ({midiToName(targets[i])}):{' '}
-              {o.matched
-                ? `matched in ${(o.timeToMatchSec ?? 0).toFixed(1)} s`
-                : `not matched. ${describeMatchMiss(o.reason)}`}
+              Note {i + 1} ({midiToName(targets[i])}): {describeMatchLine(o, descs[i])}
               {accuracies[i] !== undefined ? (
-                <span data-testid={`note-accuracy-${i}`}> · {o.matched ? '✓ hit' : '✗ miss'} · {Math.round(accuracies[i] * 100)}%</span>
+                <span data-testid={`note-accuracy-${i}`}> · accuracy {Math.round(accuracies[i] * 100)}%</span>
               ) : null}
             </li>
           ))}
@@ -490,6 +496,29 @@ export function MatchRun({
       <p className="lesson-instruction" data-testid="match-status" aria-live="polite">
         {status}
       </p>
+      {outcomes.length > 0 && !echoRunning ? (
+        <ol className="lesson-misses" data-testid="match-lines">
+          {outcomes.map((o, i) => (
+            <li key={i} data-testid={`match-line-${i}`}>
+              Note {i + 1}: {describeMatchLine(o, descs[i])}
+            </li>
+          ))}
+        </ol>
+      ) : null}
+      {singing ? (
+        <div
+          className="match-countdown"
+          data-testid="match-countdown"
+          role="progressbar"
+          aria-label="Time left to sing this note"
+          aria-valuemin={0}
+          aria-valuemax={singSec}
+          aria-valuenow={Math.round(remainingSec * 10) / 10}
+          style={{ height: 6, background: '#ddd', borderRadius: 3, margin: '4px 0 8px' }}
+        >
+          <div style={{ height: '100%', width: `${(remainingSec / singSec) * 100}%`, background: '#2a7', borderRadius: 3 }} />
+        </div>
+      ) : null}
       {graphEx ? (
         <>
           <PitchGraph exercise={graphEx} range={range} startSec={listenStart} frames={liveFrames} showSung />

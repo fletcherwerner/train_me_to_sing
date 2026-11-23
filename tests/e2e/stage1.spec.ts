@@ -55,9 +55,18 @@ for (const size of SIZES) {
       await expect(page.getByTestId('match-target')).toContainText('Note 1 of 6');
       await expect(page.getByTestId('pitch-graph')).toBeVisible();
       expect(await noSideScroll(page)).toBe(true);
-      await expect(page.getByTestId('results-score')).toContainText('6 of 6', { timeout: 60000 });
+      // S09: the target runs its full 8 s even though a perfect singer matches at once.
+      await expect(page.getByTestId('match-countdown')).toBeVisible({ timeout: 10000 });
+      await expect(page.getByTestId('match-countdown')).toHaveAttribute('role', 'progressbar');
+      const sungAt = Date.now();
+      await expect(page.getByTestId('match-status')).toContainText('Listen', { timeout: 15000 });
+      expect(Date.now() - sungAt).toBeGreaterThan(7500); // next "Listen…" only after the full 8 s
+      await expect(page.getByTestId('match-line-0')).toContainText('Found in');
+      await expect(page.getByTestId('results-score')).toContainText('6 of 6', { timeout: 100000 });
       await expect(page.getByTestId('results-verdict')).toHaveText('Passed');
-      await expect(page.getByTestId('match-result-0')).toContainText('matched in');
+      await expect(page.getByTestId('match-result-0')).toContainText('✓ Found in');
+      await expect(page.getByTestId('match-result-0')).toContainText('on the note');
+      await expect(page.getByTestId('results-accuracy')).toContainText(/Accuracy: \d+%/);
       expect(await noSideScroll(page)).toBe(true);
       await page.getByRole('link', { name: 'Back to lessons' }).first().click();
       await expect(page.getByTestId('status-s1a-02')).toContainText('Passed');
@@ -68,9 +77,9 @@ for (const size of SIZES) {
       await seed(page);
       await page.goto('/#/lesson/s1a-02?sim=silent');
       await runButton(page).click();
-      await expect(page.getByTestId('results-score')).toContainText('0 of 6', { timeout: 120000 });
+      await expect(page.getByTestId('results-score')).toContainText('0 of 6', { timeout: 140000 });
       await expect(page.getByTestId('results-verdict')).toHaveText('Not yet');
-      await expect(page.getByTestId('match-result-0')).toContainText('not matched');
+      await expect(page.getByTestId('match-result-0')).toContainText('Not found');
     });
 
     test('Home shows units, levels and the rebuilt notice; no sideways scroll', async ({ page }) => {
@@ -261,7 +270,7 @@ test.describe('echo yourself', () => {
     await seed(page);
     await page.goto('/#/lesson/s1a-01?sim=perfect');
     await runButton(page).click();
-    await expect(page.getByTestId('results-score')).toContainText('5 of 5', { timeout: 60000 });
+    await expect(page.getByTestId('results-score')).toContainText('5 of 5', { timeout: 100000 });
     await page.getByTestId('echo-button').click();
     await expect(page.getByTestId('echo-line')).toContainText('Echo: matched', { timeout: 25000 });
   });
@@ -280,7 +289,7 @@ test.describe('echo yourself', () => {
 });
 
 test.describe('landing right on it', () => {
-  test.setTimeout(100_000);
+  test.setTimeout(160_000);
 
   test('s1a-03 says so when it is told to land right on the note', async ({ page }) => {
     await seed(page);
@@ -288,6 +297,18 @@ test.describe('landing right on it', () => {
     await expect(page.getByTestId('match-how')).toContainText('Start right on the note: you have 0.4 seconds');
     await runButton(page).click();
     // A perfect singer starts right on the note, so every target matches.
-    await expect(page.getByTestId('results-score')).toContainText('6 of 6', { timeout: 60000 });
+    await expect(page.getByTestId('results-score')).toContainText('6 of 6', { timeout: 100000 });
+  });
+});
+
+test.describe('match lessons report how well (S09)', () => {
+  test.setTimeout(160_000);
+
+  test('sim=flat40 says flat with the cents, matched per tolerance', async ({ page }) => {
+    await seed(page);
+    await page.goto('/#/lesson/s1a-02?sim=flat40');
+    await runButton(page).click();
+    await expect(page.getByTestId('results-score')).toContainText('of 6', { timeout: 120000 });
+    await expect(page.getByTestId('match-result-0')).toContainText(/flat \(−40 cents\)/);
   });
 });

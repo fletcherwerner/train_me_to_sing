@@ -83,22 +83,18 @@ describe('accuracyOf', () => {
 
 describe('matchAccuracy', () => {
   const t1 = getTolerance('t1');
-  it('starts at the voice and stops at the end of the matching hold', () => {
-    // Silent to 1 s, 70 cents sharp 1..2 s, then dead on; hold 1 s. Later junk must not count.
-    const f = frames(0, 8, (t) => (t < 1 ? null : t < 2 ? 60.7 : t < 4 ? 60 : 70));
-    const o = matchTarget(f, 60, t1, 1);
-    expect(o.matched).toBe(true);
-    const a = matchAccuracy(f, 60, o, 1, 8);
-    // 1 s at closeness (100-70)/90 = 1/3, then 1 s at 1 -> about 2/3.
-    expect(a).toBeCloseTo(2 / 3, 1);
+  it('starts at the voice and runs to the end of the sing time', () => {
+    // Silent to 1 s (free), 70 cents sharp 1..2 s (1/3), dead on 2..4 s (1), then silent to 8 s (0).
+    const f = frames(0, 8, (t) => (t < 1 ? null : t < 2 ? 60.7 : t < 4 ? 60 : null));
+    expect(matchTarget(f, 60, t1, 1).matched).toBe(true);
+    // 7 s of voiced-or-later frames: (1/3 + 2*1 + 0*4) / 7
+    expect(matchAccuracy(f, 60, 8)).toBeCloseTo((1 / 3 + 2) / 7, 1);
   });
   it('is 0 when the voice never starts', () => {
-    const f = frames(0, 8, () => null);
-    expect(matchAccuracy(f, 60, matchTarget(f, 60, t1, 1), 1, 8)).toBe(0);
+    expect(matchAccuracy(frames(0, 8, () => null), 60, 8)).toBe(0);
   });
-  it('runs to the end of the window when never matched', () => {
-    const f = frames(0, 8, () => 60.55);
-    const o = matchTarget(f, 60, getTolerance('t1'), 100);
-    expect(matchAccuracy(f, 60, o, 100, 8)).toBeCloseTo(0.5, 5);
+  it('counts the stretch after matching too', () => {
+    const f = frames(0, 8, (t) => (t < 4 ? 60 : 60.55));
+    expect(matchAccuracy(f, 60, 8)).toBeCloseTo(0.75, 1);
   });
 });

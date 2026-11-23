@@ -142,7 +142,9 @@ for (const size of SIZES) {
       await expect(page.getByTestId('practice-part')).toContainText('Pitch finding');
       await page.getByTestId('run-button').click();
       await expect(page.getByTestId('match-target')).toContainText('Note 1 of 4');
-      await expect(page.getByTestId('results-score')).toContainText('4 of 4', { timeout: 90000 });
+      await expect(page.getByTestId('match-countdown')).toBeVisible({ timeout: 10000 });
+      await expect(page.getByTestId('results-score')).toContainText('4 of 4', { timeout: 120000 });
+      await expect(page.getByTestId('match-result-3')).toContainText('✓ Found in');
       await expect(page.locator('.btn--primary')).toHaveCount(1);
       await expect(page.getByTestId('back-to-lessons')).toHaveCount(0);
       await page.getByTestId('practice-next').click();

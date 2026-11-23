@@ -37,6 +37,8 @@ export interface Lesson {
   holdSec?: number;
   /** Match lessons: max seconds from first sound to the start of the matching hold; null = no limit. */
   landWithinSec?: number | null;
+  /** Match lessons: seconds each target runs (default MATCH_SING_SEC, 8). */
+  singSec?: number;
 }
 
 export interface LessonSource {
