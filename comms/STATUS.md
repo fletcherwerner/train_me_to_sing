@@ -30,4 +30,4 @@ Maintained by the orchestrator. Status is one of: `Not started`, `In progress`, 
 | S09 | Spike: let pitch-finding notes run their full length, then report | Approved | 1 | APPROVED / APPROVED | 2026-11-23 |
 | E16 | iPhone app with progress saved as a file | Approved | 1 | APPROVED / APPROVED | 2026-11-23 |
 | E17 | Practice insights: activity, weekly goal and a performance dashboard | Approved | 1 | APPROVED / APPROVED | 2026-11-23 |
-| S10 | Spike: a note guide that shows whether you're above or below the note | Not started | 0 | — | — |
+| S10 | Spike: a note guide that shows whether you're above or below the note | In progress | 0 | — | 2026-11-23 |
