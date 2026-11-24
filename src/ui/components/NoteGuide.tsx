@@ -76,7 +76,7 @@ export function NoteGuide({ target, cents, toleranceCents, showDot = true, fadeI
         </span>
         {offset !== null ? (
           // Keyed on the target so a new note starts the dot in place with no easing.
-          <div key={target} className="note-guide__track" style={{ transform: `translateY(calc(var(--guide-h) * ${-offset * 0.42}))` }}>
+          <div key={target} className="note-guide__track" style={{ transform: `translateY(calc((var(--guide-h) / 2 - 16px) * ${-offset}))` }}>
             <span className={`note-guide__dot note-guide__dot--${kind}`} data-testid="note-guide-dot">
               {mark ? (
                 <span className="note-guide__mark" aria-hidden="true">
