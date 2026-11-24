@@ -35,7 +35,7 @@ export function describeReason(r: NoteResult): string {
       return 'Right note, wrong octave';
     case 'wrong-note': {
       const c = Math.round(Math.abs(r.medianCents ?? 0));
-      return (r.medianCents ?? 0) > 0 ? `Sharp by ${c} cents` : `Flat by ${c} cents`;
+      return (r.medianCents ?? 0) > 0 ? `A little high (${c} cents)` : `A little low (${c} cents)`;
     }
     case 'wavered':
       return 'Drifted off the note';

@@ -47,6 +47,8 @@ export interface RunRecord {
   passed?: boolean;
   /** Dropped after 8 weeks (see history.ts). */
   notes?: NoteRecord[];
+  /** Practise: on how many notes the note guide's rescue appeared. Absent on older runs. */
+  guideHelped?: number;
 }
 
 export interface History {

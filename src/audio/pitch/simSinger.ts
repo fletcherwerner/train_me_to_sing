@@ -12,6 +12,8 @@ export const SIM_BEHAVIOURS = [
   'bleed',
   'bleedSing',
   'scoop',
+  'sharp300',
+  'findLate',
 ] as const;
 export type SimBehaviour = (typeof SIM_BEHAVIOURS)[number];
 
@@ -52,6 +54,13 @@ export function simPitchAt(ex: ResolvedExercise, behaviour: SimBehaviour, rel: n
     }
     case 'flat40':
       return note.midi - 0.4;
+    case 'sharp300':
+      return note.midi + 3;
+    case 'findLate': {
+      // Starts two semitones low and glides to the target over 1.5 s.
+      const r = t - note.startSec;
+      return r >= 1.5 ? note.midi : note.midi - 2 + (2 * r) / 1.5;
+    }
     case 'flat70':
       return note.midi - 0.7;
     case 'octaveDown':

@@ -146,7 +146,7 @@ async function checkFits(page: Page, running: boolean, graded: boolean) {
       controls: page.locator('.lesson-controls'),
     };
     if (await page.getByTestId('now-singing').count()) sel.lyrics = page.getByTestId('now-singing');
-    if (graded) sel.meter = page.locator('.cents-meter');
+    if (graded) sel.meter = page.getByTestId('note-guide');
     const boxes: Record<string, Box> = {};
     for (const [k, l] of Object.entries(sel)) {
       const b = await boxOf(l);

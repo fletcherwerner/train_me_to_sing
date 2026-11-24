@@ -22,7 +22,7 @@ import { decodeTake, startTakeRecording, synthTake, type TakeRecording } from '.
 import type { Lesson } from '../../content/types';
 import { displayRange } from '../../core/exercise/fit';
 import type { ResolvedExercise } from '../../core/exercise/types';
-import { midiToName } from '../../core/music/notes';
+import { centsBetween, midiToName } from '../../core/music/notes';
 import { matchAccuracy } from '../../core/scoring/accuracy';
 import {
   describeMatch,
@@ -37,6 +37,7 @@ import {
 import { getTolerance } from '../../core/scoring/tolerance';
 import type { AttemptResult } from '../../core/scoring/types';
 import { AccuracyResultLine, BestAccuracyLine, storedBestAccuracy } from '../components/BestAccuracy';
+import { NoteGuide } from '../components/NoteGuide';
 import { PianoKeyboard } from '../components/PianoKeyboard';
 import { GraphLegend, PitchGraph } from '../components/PitchGraph';
 import { LessonHeader } from '../components/LessonHeader';
@@ -541,6 +542,14 @@ export function MatchRun({
         >
           <div style={{ height: '100%', width: `${(remainingSec / singSec) * 100}%`, background: '#2a7', borderRadius: 3 }} />
         </div>
+      ) : null}
+      {target !== null ? (
+        <NoteGuide
+          target={midiToName(target)}
+          cents={singing && sungMidi !== null ? centsBetween(sungMidi, target) : null}
+          toleranceCents={tol.cents}
+          showDot={singing}
+        />
       ) : null}
       {graphEx ? (
         <>

@@ -897,3 +897,53 @@ Approved after turn 1, 2026-11-23. Review: `comms/S09/turn-01/ui-review.md`.
 - `comms/S09/turn-01/screenshots/perfect-phone-intro.png`
 - `comms/S09/turn-01/screenshots/perfect-phone-results.png`
 - `comms/S09/turn-01/screenshots/perfect-phone-singing.png`
+
+## S10 — Spike: a note guide that shows whether you're above or below the note
+
+Approved after turn 2, 2026-11-24. Review: `comms/S10/turn-02/ui-review.md`.
+
+### Not verified by the UI reviewer
+
+- Singing with a real microphone: review script steps 1–3 and 7, and readability at arm's length on an iPhone.
+- The Practise fade-in and the dot easing (still frames only).
+- Today's practice, Pitch finding, was not opened.
+- `prefers-reduced-motion`.
+
+### Screens reviewed
+
+| Screen / state | Laptop | iPhone | Screenshot files |
+|----------------|--------|--------|------------------|
+| Learn, We do, octave (`octaveDown`) | OK | OK | `screenshots/state-octaveDown-phone.png`, `learn-octaveDown-laptop.png` |
+| Learn, We do, far (`sharp300`) | OK | OK | `screenshots/state-sharp300-phone.png`, `learn-sharp300-laptop.png` |
+| Learn, on it and near | OK | OK | `learn-perfect-*.png`, `learn-flat70-*.png` |
+| Practise results | OK | OK | `practise-results-laptop.png`, `practise-results-phone.png` |
+| Practise rescue, Prove, Find one note | OK | OK | `practise-rescue-*.png`, `prove-*.png`, `match-*-*.png` |
+
+No horizontal scroll was measured at either size. The Stop button is visible at 393×750.
+
+### Screenshots
+
+- `comms/S10/turn-02/screenshots/learn-flat70-laptop.png`
+- `comms/S10/turn-02/screenshots/learn-flat70-phone.png`
+- `comms/S10/turn-02/screenshots/learn-ido-laptop.png`
+- `comms/S10/turn-02/screenshots/learn-ido-phone.png`
+- `comms/S10/turn-02/screenshots/learn-octaveDown-laptop.png`
+- `comms/S10/turn-02/screenshots/learn-octaveDown-phone.png`
+- `comms/S10/turn-02/screenshots/learn-perfect-laptop.png`
+- `comms/S10/turn-02/screenshots/learn-perfect-phone.png`
+- `comms/S10/turn-02/screenshots/learn-sharp300-laptop-dark.png`
+- `comms/S10/turn-02/screenshots/learn-sharp300-laptop.png`
+- `comms/S10/turn-02/screenshots/learn-sharp300-phone-dark.png`
+- `comms/S10/turn-02/screenshots/learn-sharp300-phone.png`
+- `comms/S10/turn-02/screenshots/match-perfect-laptop.png`
+- `comms/S10/turn-02/screenshots/match-perfect-phone.png`
+- `comms/S10/turn-02/screenshots/match-sharp300-laptop.png`
+- `comms/S10/turn-02/screenshots/match-sharp300-phone.png`
+- `comms/S10/turn-02/screenshots/practise-rescue-laptop.png`
+- `comms/S10/turn-02/screenshots/practise-rescue-phone.png`
+- `comms/S10/turn-02/screenshots/practise-results-laptop.png`
+- `comms/S10/turn-02/screenshots/practise-results-phone.png`
+- `comms/S10/turn-02/screenshots/prove-laptop.png`
+- `comms/S10/turn-02/screenshots/prove-phone.png`
+- `comms/S10/turn-02/screenshots/state-octaveDown-phone.png`
+- `comms/S10/turn-02/screenshots/state-sharp300-phone.png`
