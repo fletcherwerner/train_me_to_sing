@@ -1,0 +1,136 @@
+.note-guide {
+  width: 100%;
+  margin: 4px 0;
+}
+
+.note-guide--fade {
+  animation: note-guide-fade 150ms ease-out;
+}
+
+.note-guide {
+  /* About 120 px on a tall window; shrinks on short ones so the Stop button stays on screen. */
+  --guide-h: clamp(56px, 7vh, 120px);
+}
+
+.note-guide__box {
+  position: relative;
+  height: var(--guide-h);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+/* Target line only (I do, or while the piano plays): a short strip, no text, so nothing below it moves off screen. */
+.note-guide--line {
+  --guide-h: 48px;
+}
+
+.note-guide__line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 2px;
+  margin-top: -1px;
+  background: var(--text);
+}
+
+.note-guide__band {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--success);
+  opacity: 0.18;
+}
+
+.note-guide__note {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-120%);
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--text);
+}
+
+.note-guide__track {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+  transition: transform 80ms ease-out;
+}
+
+.note-guide__dot {
+  position: absolute;
+  left: -11px;
+  top: -11px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--theme);
+  border: 2px solid var(--bg);
+  box-sizing: border-box;
+}
+
+.note-guide__dot--on {
+  background: var(--success);
+}
+.note-guide__dot--near {
+  background: var(--theme);
+}
+.note-guide__dot--far,
+.note-guide__dot--octave {
+  background: var(--warn);
+}
+
+.note-guide__mark {
+  position: absolute;
+  left: 26px;
+  top: 1px;
+  font-size: 1rem;
+  line-height: 1;
+  color: var(--text);
+}
+
+.note-guide__text {
+  margin: 2px 0 0;
+  min-height: 1.3em;
+  line-height: 1.3;
+  text-align: center;
+  font-weight: 600;
+  color: var(--text);
+}
+.note-guide__text--on {
+  color: var(--success);
+}
+.note-guide__text--far,
+.note-guide__text--octave {
+  color: var(--warn);
+}
+.note-guide__text--silent {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+@keyframes note-guide-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .note-guide__track {
+    transition: none;
+  }
+  .note-guide--fade {
+    animation: none;
+  }
+}

@@ -63,6 +63,7 @@ export interface RunInput {
   range?: RunRecord['range'];
   result?: AttemptResult;
   notes?: NoteRecord[];
+  guideHelped?: number;
 }
 
 /** Builds the stored record of a finished run. */
@@ -85,5 +86,6 @@ export function buildRunRecord(i: RunInput, id: string = newRunId()): RunRecord 
     rec.passed = i.result.passed;
   }
   if (i.notes) rec.notes = i.notes;
+  if (i.guideHelped) rec.guideHelped = i.guideHelped;
   return rec;
 }

@@ -121,6 +121,7 @@ const runRecordSchema = z.object({
   accuracy: z.number().optional(),
   passed: z.boolean().optional(),
   notes: z.array(noteRecordSchema).optional(),
+  guideHelped: z.number().optional(),
 });
 
 /** The run log (E17). Absent on older files: it then defaults to empty. */

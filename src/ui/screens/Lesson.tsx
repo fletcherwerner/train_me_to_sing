@@ -44,7 +44,8 @@ import { RunFocus } from '../components/RunFocus';
 import { flushPracticeTime, usePracticeTime } from '../hooks/usePracticeTime';
 import type { AttemptResult } from '../../core/scoring/types';
 import { PianoKeyboard } from '../components/PianoKeyboard';
-import { CentsMeter } from '../components/CentsMeter';
+import { NoteGuide } from '../components/NoteGuide';
+import { useGuideRescue } from '../hooks/useGuideRescue';
 import { SequenceStrip } from '../components/SequenceStrip';
 import { NowSinging } from '../components/NowSinging';
 import { GraphLegend, PitchGraph, ResultsGraph } from '../components/PitchGraph';
@@ -97,7 +98,7 @@ export function Lesson({ onAttemptComplete }: LessonProps) {
 
 const LEVEL_NAMES: Record<Level, string> = { learn: 'Learn', practise: 'Practise', prove: 'Prove' };
 const LEVEL_HELP: Record<Level, string> = {
-  learn: 'Full help: the live graph, the piano and the cents meter.',
+  learn: 'Full help: the live graph, the piano and the note guide.',
   practise: 'Less help: the piano shows the targets, but not your voice. The graph comes after.',
   prove: 'No live help. Sing it from memory; your score comes after.',
 };
@@ -219,6 +220,19 @@ export function LessonRun({
     tol,
     step === 'weDo' ? bleedGate(bleedRms) : null,
   );
+
+  // Practise rescue: the guide fades in after a moment off the note (You do only).
+  const rescueActive = running && step === 'youDo' && session.levels !== undefined && level === 'practise';
+  const rescue = useGuideRescue(
+    rescueActive,
+    live.currentNoteIndex,
+    live.cents,
+    tol.cents,
+    live.currentNoteIndex !== null && playEx ? (playEx.notes[live.currentNoteIndex]?.durationSec ?? null) : null,
+  );
+  const rescueRef = useRef(rescue);
+  rescueRef.current = rescue;
+  const [guideHelped, setGuideHelped] = useState(0);
 
   useWakeLock(running);
 
@@ -360,6 +374,7 @@ export function LessonRun({
     setEchoing(isEcho);
     if (isEcho) setEchoResult(null);
     if (thisStep === 'youDo') {
+      rescueRef.current.reset();
       setYouDoFrames(null);
       setResultEx(runEx);
     }
@@ -406,6 +421,7 @@ export function LessonRun({
     }
     await h.done;
     rec?.stop();
+    const helpedNotes = thisStep === 'youDo' && runLevel === 'practise' ? rescueRef.current.helped() : 0;
     if (myRun !== runRef.current) return;
     handleRef.current = null;
     setHandle(null);
@@ -453,8 +469,10 @@ export function LessonRun({
         range,
         result,
         notes: melodyNoteRecords(result),
+        guideHelped: helpedNotes > 0 ? helpedNotes : undefined,
       });
       setRunRecord(logged);
+      setGuideHelped(helpedNotes);
       recordAttempt(
         lesson.id,
         result,
@@ -615,6 +633,11 @@ export function LessonRun({
         <p className="lesson-score" data-testid="results-score">
           {hits} of {r.notes.length} notes hit · pass mark {Math.round(lesson.passScore * 100)}%
         </p>
+        {session.levels && level === 'practise' && guideHelped > 0 ? (
+          <p className="lesson-guide-helped" data-testid="guide-helped">
+            The guide helped on {guideHelped} of {r.notes.length} notes.
+          </p>
+        ) : null}
         {r.accuracy !== undefined ? <AccuracyResultLine accuracy={r.accuracy} prevBest={prevBest} /> : null}
         {runRecord ? <RunFocus run={runRecord} links={!embedded} /> : null}
         {r.notes.some((n) => n.reason === 'wrong-octave') ? (
@@ -775,6 +798,18 @@ export function LessonRun({
         </p>
       ) : null}
       {hasLyrics ? <NowSinging notes={ex.notes} currentIndex={running ? live.currentNoteIndex : null} /> : null}
+      {helpLevel === 'learn' || (helpLevel === 'practise' && rescue.visible) ? (
+        <NoteGuide
+          target={
+            live.targetMidi !== null ? midiToName(live.targetMidi) : startNote !== null ? midiToName(startNote) : '—'
+          }
+          cents={live.cents}
+          toleranceCents={tol.cents}
+          // Idle (before the count-in) it is the compact target strip, so the screen still fits the window.
+          showDot={step !== 'iDo' && running}
+          fadeIn={helpLevel === 'practise'}
+        />
+      ) : null}
       {helpLevel !== 'prove' ? (
         <>
           <PitchGraph
@@ -810,7 +845,6 @@ export function LessonRun({
           {graded && helpLevel === 'learn' ? <> · Sung: {live.sungMidi === null ? '—' : midiToName(live.sungMidi)}</> : null}
         </p>
       ) : null}
-      {step !== 'iDo' && helpLevel === 'learn' ? <CentsMeter cents={live.cents} toleranceCents={tol.cents} /> : null}
       {helpLevel !== 'prove' ? (
         <SequenceStrip
           notes={ex.notes}
