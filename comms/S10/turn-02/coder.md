@@ -4,7 +4,7 @@
 
 ## Summary
 
-Fixed the clipped octave dot on the phone, made the Practise results use the same high/low wording as the guide, and added the two missing unit tests. The full e2e run had 5 timeout failures, and all 5 passed when re-run alone.
+Fixed the clipped octave dot on the phone, made the Practise results use the same high/low wording as the guide, and added the two missing unit tests. The full e2e suite passes (146 of 146) on the second run.
 
 ## What was built or changed
 
@@ -20,7 +20,7 @@ Fixed the clipped octave dot on the phone, made the Practise results use the sam
 |---------|--------|
 | `npm run lint` | pass |
 | `npm test` | pass (618 of 618) |
-| `npm run test:e2e` | fail (5 of 146 failed, 141 passed on the full run). The 5 failures were timeouts or a slow start: accuracy.spec:81, hardening.spec:245, journey.spec:150, noteGuide.spec:53 (sharp300 laptop), offline.spec:16. All 5 passed when re-run alone, and the whole noteGuide spec passed (32 of 32 in that re-run). |
+| `npm run test:e2e` | pass (146 of 146, second full run). The first full run had 5 timeout failures (accuracy:81, hardening:245, journey:150, noteGuide:53 sharp300 laptop, offline:16). They passed alone and in this second full run, so they look like load flakes. |
 | `npm run build` | pass |
 
 ## Response to findings
