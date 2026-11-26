@@ -21,6 +21,19 @@
   overflow: hidden;
 }
 
+/* On the laptop the guide is tall enough (at least 90 px) to show a small miss and a big miss at different heights. */
+@media (min-width: 900px) {
+  .note-guide {
+    --guide-h: clamp(90px, 10vh, 130px);
+    margin: 2px 0;
+  }
+  .note-guide .note-guide__text {
+    margin: 0;
+    min-height: 1.2em;
+    line-height: 1.2;
+  }
+}
+
 /* Target line only (I do, or while the piano plays): a short strip, no text, so nothing below it moves off screen. */
 .note-guide--line {
   --guide-h: 48px;
@@ -62,7 +75,8 @@
   top: 50%;
   width: 0;
   height: 0;
-  transition: transform 80ms ease-out;
+  /* Short enough to follow the voice with no visible lag. */
+  transition: transform 30ms linear;
 }
 
 .note-guide__dot {

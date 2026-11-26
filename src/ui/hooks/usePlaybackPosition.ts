@@ -5,7 +5,7 @@ import type { PlaybackHandle } from '../../audio/exercisePlayer';
 import { now } from '../../audio/audioEngine';
 
 export interface PlaybackPosition {
-  phase: 'startNote' | 'countIn' | 'playing' | 'done';
+  phase: 'call' | 'startNote' | 'countIn' | 'playing' | 'done';
   currentNoteIndex: number | null;
   beatInBar: number;
   countInRemaining: number;
@@ -25,10 +25,17 @@ export function positionAt(
   endSec: number,
   ex: ResolvedExercise,
   hasStartNote = true,
+  /** The whole-pattern call: the piano plays the exercise from `startSec`; the silent beat after it is part of the call. */
+  call?: { startSec: number },
 ): PlaybackPosition {
   const beat = 60 / ex.tempoBpm;
   const countInStart = startSec - LEAD_IN_CLICKS * beat;
   if (t >= endSec) return IDLE;
+  if (call && t < countInStart) {
+    const rel = t - call.startSec;
+    const note = ex.notes.find((n) => rel >= n.startSec && rel < n.startSec + n.durationSec);
+    return { phase: 'call', currentNoteIndex: note ? note.index : null, beatInBar: 0, countInRemaining: 0 };
+  }
   if (t < countInStart) {
     if (!hasStartNote) {
       return {
@@ -75,7 +82,14 @@ export function usePlaybackPosition(
     let stopped = false;
     const tick = () => {
       if (stopped) return;
-      const next = positionAt(now(), handle.startSec, handle.endSec, ex, hasStartNote);
+      const next = positionAt(
+        now(),
+        handle.startSec,
+        handle.endSec,
+        ex,
+        hasStartNote,
+        handle.callStartSec !== null ? { startSec: handle.callStartSec } : undefined,
+      );
       setPos((p) =>
         p.phase === next.phase &&
         p.currentNoteIndex === next.currentNoteIndex &&

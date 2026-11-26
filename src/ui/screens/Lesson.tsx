@@ -9,7 +9,7 @@ import {
   SOUND_PAUSED_MSG,
   SOUND_STOPPED_MSG,
 } from '../audioMessages';
-import { playExercise, playPreviewNote, type PlaybackHandle } from '../../audio/exercisePlayer';
+import { playCallClip, playExercise, playPreviewNote, type ClipHandle, type PlaybackHandle } from '../../audio/exercisePlayer';
 import {
   createPitchSource,
   recordFrames,
@@ -29,6 +29,7 @@ import { qualifiesForEcho } from '../../core/scoring/bestTake';
 import { createSession, LEVELS, reduce, type Level } from '../../core/session/sessionMachine';
 import { scoopCountsAsMiss, usesMastery } from '../../content/mastery';
 import { proofTonics } from '../../core/progress/mastery';
+import { LEARN_PASSES_TO_UNLOCK, learnPassesOf } from '../../storage/level';
 import { MatchRun } from './MatchRun';
 import { LessonHeader } from '../components/LessonHeader';
 import { AccuracyResultLine, BestAccuracyLine, storedBestAccuracy } from '../components/BestAccuracy';
@@ -130,8 +131,10 @@ export function LessonRun({
   const calibrated = useAppStore((s) => s.settings.calibratedAt !== undefined);
   const recordAttempt = useAppStore((s) => s.recordAttempt);
   const nextLesson = useNextLesson(lesson.id, range);
+  // Stage 1 lessons with levels are guided: the whole pattern is played before each solo, and the solo is earned.
+  const guided = lesson.levels && lesson.stage === 1;
   const [session, dispatch] = useReducer(reduce, undefined, () =>
-    createSession(lesson.levels, forceLevel ?? useAppStore.getState().progress[lesson.id]?.level ?? 'learn'),
+    createSession(lesson.levels, forceLevel ?? useAppStore.getState().progress[lesson.id]?.level ?? 'learn', { guided }),
   );
   const level = session.level;
   const randomKey = wantsRandomKey();
@@ -174,6 +177,9 @@ export function LessonRun({
   /** The last run did not complete because sound stopped; the run button then reads "Try again". */
   const [soundFailed, setSoundFailed] = useState(false);
   const [micLost, setMicLost] = useState(false);
+  /** "Hear it again" is playing the call. Not a run. */
+  const [hearing, setHearing] = useState(false);
+  const hearRef = useRef<{ clip: ClipHandle; timer: number } | null>(null);
   const offLostRef = useRef<(() => void) | null>(null);
   const handleRef = useRef<PlaybackHandle | null>(null);
   const sourceRef = useRef<PitchSource | null>(null);
@@ -222,7 +228,8 @@ export function LessonRun({
   );
 
   // Practise rescue: the guide fades in after a moment off the note (You do only).
-  const rescueActive = running && step === 'youDo' && session.levels !== undefined && level === 'practise';
+  const rescueActive =
+    running && step === 'youDo' && session.levels !== undefined && level === 'practise' && live.position.phase !== 'call';
   const rescue = useGuideRescue(
     rescueActive,
     live.currentNoteIndex,
@@ -264,6 +271,10 @@ export function LessonRun({
       offLostRef.current?.();
       runRef.current++;
       handleRef.current?.stop();
+      if (hearRef.current) {
+        window.clearTimeout(hearRef.current.timer);
+        hearRef.current.clip.stop();
+      }
       sourceRef.current?.stop();
       recordingRef.current?.discard(); // takes live in memory only and are dropped on leaving the lesson
       clearSimExercise();
@@ -390,10 +401,13 @@ export function LessonRun({
       setNotice(SOUND_PAUSED_MSG);
       return;
     }
+    // Stage 1 solos hear the whole pattern first; other lessons hear the start note only.
+    const withCall = thisStep === 'youDo' && guided;
     const h = playExercise(runEx, {
       playMelody: thisStep !== 'youDo' && !isEcho,
       metronome: true,
-      playStartNote: thisStep === 'youDo',
+      playStartNote: thisStep === 'youDo' && !guided,
+      playCall: withCall,
       melodyBuffer: echoBuffer,
     });
     handleRef.current = h;
@@ -416,6 +430,8 @@ export function LessonRun({
         h.endSec,
         latencyMs / 1000,
         gate === null ? undefined : (f) => applyGate([f], runEx.notes, gate)[0],
+        // The call is the piano: any frames heard during it are bleed, not the student.
+        h.callEndSec ?? undefined,
       );
       setLiveFrames(rec.frames);
     }
@@ -477,7 +493,7 @@ export function LessonRun({
         lesson.id,
         result,
         lesson.levels ? runLevel : undefined,
-        { mastery, tonicMidi: runEx.tonicMidi, singleKey },
+        { mastery, tonicMidi: runEx.tonicMidi, singleKey, stage: lesson.stage },
         logged,
       );
       flushPracticeTime();
@@ -524,6 +540,27 @@ export function LessonRun({
     dispatch({ type: 'STOP' });
   };
   stopRef.current = stop;
+
+  /** "Hear it again": the piano plays the whole pattern once. It starts no run and is never an attempt. */
+  const hearAgain = async () => {
+    if (running || hearing) return;
+    setNotice(null);
+    if (!(await ensureAudioRunning())) {
+      setSoundFailed(true);
+      setNotice(SOUND_PAUSED_MSG);
+      return;
+    }
+    const clip = playCallClip(fullEx);
+    const timer = window.setTimeout(
+      () => {
+        hearRef.current = null;
+        setHearing(false);
+      },
+      Math.max(0, (clip.endSec - now()) * 1000) + 100,
+    );
+    hearRef.current = { clip, timer };
+    setHearing(true);
+  };
 
   const advance = () => {
     dispatch({ type: 'ADVANCE' });
@@ -594,14 +631,17 @@ export function LessonRun({
     const misses = r.notes.filter((n) => !n.hit);
     const rex = resultEx ?? ex;
     const nextLevel: Level | null = session.levels && level !== 'prove' ? (level === 'learn' ? 'practise' : 'prove') : null;
-    const levelPassed = r.passed && nextLevel !== null;
-    const finalPass = r.passed && !levelPassed;
+    // Guided Learn: Practise needs two Learn passes; until then a pass is counted, not rewarded with a new level.
+    const learnPasses = learnPassesOf(useAppStore.getState().progress[lesson.id]);
+    const countingLearnPass = guided && level === 'learn' && r.passed && learnPasses < LEARN_PASSES_TO_UNLOCK;
+    const levelPassed = r.passed && nextLevel !== null && !countingLearnPass;
+    const finalPass = r.passed && nextLevel === null;
     const comeBackTomorrow =
       mastery && finalPass && !useAppStore.getState().progress[lesson.id]?.passed;
     // The primary is the most likely next step. Inside Today's practice the practice bar owns it.
     const nextPrimary = !embedded && finalPass && nextLesson !== null;
     const backPrimary = !embedded && finalPass && nextLesson === null;
-    const tryPrimary = !r.passed;
+    const tryPrimary = !r.passed || countingLearnPass;
     return (
       <main className="dev-page lesson-page" data-testid="results">
         {header}
@@ -615,7 +655,11 @@ export function LessonRun({
         </h2>
         {session.levels && r.passed ? (
           <p data-testid="results-level">
-            {nextLevel ? `${LEVEL_NAMES[nextLevel]} is unlocked.` : 'You passed this lesson without any live help.'}
+            {countingLearnPass
+              ? `Passed at Learn: ${learnPasses} of ${LEARN_PASSES_TO_UNLOCK}. One more pass unlocks Practise.`
+              : nextLevel
+                ? `${LEVEL_NAMES[nextLevel]} is unlocked.`
+                : 'You passed this lesson without any live help.'}
           </p>
         ) : null}
         {mastery && r.passed && (!session.levels || level === 'prove') ? (
@@ -725,7 +769,14 @@ export function LessonRun({
     step === 'iDo' ? session.iDoPlays > 0 : step === 'weDo' ? session.weDoResult !== null : session.youDoResult !== null;
 
   // The primary is the most likely next step: once a listen or sing-along is done, that is "Next", not a repeat.
-  const forwardPrimary = !soundFailed && !micLost && (step === 'iDo' || step === 'weDo') && ranOnce;
+  // Guided lessons earn the solo: after We do, "Next: You do" is the primary only once every note was hit.
+  const weDoAllHit = session.weDoResult !== null && session.weDoResult.notes.every((n) => n.hit);
+  const gateOpen = !guided || step !== 'weDo' || weDoAllHit;
+  const forwardPrimary = !soundFailed && !micLost && (step === 'iDo' || step === 'weDo') && ranOnce && gateOpen;
+  const showGate = guided && step === 'weDo' && !running && session.weDoResult !== null && !weDoAllHit && resultMatches;
+  // "Listen…" while the piano plays the pattern (a run or "Hear it again"), then "Your turn".
+  const showStatus = guided && step === 'youDo' && (running || hearing);
+  const listening = hearing || (running && (handle === null || live.position.phase === 'call'));
   const nextIsPrimary = forwardPrimary;
   const runIsPrimary = !forwardPrimary;
 
@@ -764,12 +815,19 @@ export function LessonRun({
         {step === 'youDo' && session.levels && level === 'prove'
           ? running
             ? 'Sing it from memory.'
-            : 'Your turn. Start on the lit note, then sing from memory.'
-          : INSTRUCTIONS[step]}
+            : 'Your turn. Listen to the notes, then sing them back from memory.'
+          : step === 'youDo' && guided
+            ? 'Your turn. Listen to the piano play the notes, then sing them back. The piano is silent while you sing.'
+            : INSTRUCTIONS[step]}
       </p>
       {step === 'weDo' && bleedGate(bleedRms) > 0.02 ? (
         <p className="tuner-error" role="alert" data-testid="bleed-notice">
           The microphone can hear the piano. Use headphones, or sing louder than the piano.
+        </p>
+      ) : null}
+      {showStatus ? (
+        <p className="lesson-status" data-testid="run-status" aria-live="polite">
+          {listening ? 'Listen…' : 'Your turn'}
         </p>
       ) : null}
       <BeatIndicator
@@ -806,7 +864,7 @@ export function LessonRun({
           cents={live.cents}
           toleranceCents={tol.cents}
           // Idle (before the count-in) it is the compact target strip, so the screen still fits the window.
-          showDot={step !== 'iDo' && running}
+          showDot={step !== 'iDo' && running && live.position.phase !== 'call'}
           fadeIn={helpLevel === 'practise'}
         />
       ) : null}
@@ -860,6 +918,9 @@ export function LessonRun({
       {weDoLine ? (
         <p data-testid="practice-line">{weDoLine}</p>
       ) : null}
+      {showGate ? (
+        <p data-testid="wedo-gate">Hit every note while singing along, then try it solo.</p>
+      ) : null}
       {step === 'weDo' && echoResult ? (
         <p data-testid="echo-line">
           Echo run: {echoResult.notes.filter((n) => n.hit).length} of {echoResult.notes.length} notes.
@@ -887,6 +948,7 @@ export function LessonRun({
                 className={runIsPrimary ? 'btn btn--primary' : 'btn'}
                 onClick={() => void run()}
                 data-testid="run-button"
+                disabled={hearing}
               >
                 {soundFailed
                   ? 'Try again'
@@ -929,6 +991,11 @@ export function LessonRun({
             ) : null}
             {step === 'youDo' ? (
               <>
+                {guided ? (
+                  <button className="btn" data-testid="hear-again" onClick={() => void hearAgain()} disabled={hearing}>
+                    Hear it again
+                  </button>
+                ) : null}
                 <button className="btn" onClick={() => dispatch({ type: 'SHOW_RESULTS' })} disabled={!session.youDoResult}>
                   See results
                 </button>

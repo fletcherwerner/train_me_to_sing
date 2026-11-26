@@ -11,10 +11,12 @@ export function recordFrames(
   latencyOffsetSec: number,
   /** Applied to each frame (exercise time) before it is stored, for example a gate. */
   transform?: (f: PitchFrame) => PitchFrame,
+  /** Frames before this audio-clock time are dropped (the piano's call before a solo). */
+  notBeforeSec?: number,
 ): { frames: PitchFrame[]; stop(): void } {
   const frames: PitchFrame[] = [];
   const unsub = source.subscribe((f) => {
-    if (f.tSec < startSec - 1 || f.tSec > endSec + 0.5) return;
+    if (f.tSec < startSec - 1 || (notBeforeSec !== undefined && f.tSec < notBeforeSec) || f.tSec > endSec + 0.5) return;
     const g = { ...f, tSec: f.tSec - startSec - latencyOffsetSec };
     frames.push(transform ? transform(g) : g);
   });

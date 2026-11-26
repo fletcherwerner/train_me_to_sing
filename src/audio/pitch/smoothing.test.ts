@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { smoothPitch } from './smoothing';
+import { smoothDisplay, smoothPitch } from './smoothing';
 
 describe('smoothPitch', () => {
   it('returns median of 3+ non-null values', () => {
@@ -20,5 +20,23 @@ describe('smoothPitch', () => {
 
   it('handles all null', () => {
     expect(smoothPitch([null, null, null, null, null])).toBeNull();
+  });
+});
+
+describe('smoothDisplay (the live display uses a 3-frame median)', () => {
+  it('is the median of the last 3 frames', () => {
+    expect(smoothDisplay([50, 50, 50, 60, 60.2, 60.1], 3)).toBeCloseTo(60.1);
+    expect(smoothDisplay([60, 60, 72], 3)).toBe(60); // one outlier is rejected
+  });
+
+  it('follows a step in 2 frames where the 5-frame value needs 3', () => {
+    const raw = [60, 60, 60, 63, 63];
+    expect(smoothDisplay(raw, 3)).toBe(63);
+    expect(smoothPitch(raw)).toBe(60);
+  });
+
+  it('needs 2 of 3 frames voiced', () => {
+    expect(smoothDisplay([null, 60, null], 3)).toBeNull();
+    expect(smoothDisplay([60, null, 60.2], 3)).not.toBeNull();
   });
 });

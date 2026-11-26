@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { act, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NoteGuide } from './NoteGuide';
@@ -38,17 +39,69 @@ describe('NoteGuide', () => {
     expect(screen.getByTestId('note-guide-note').textContent).toBe('E4');
   });
 
-  it('text matches the state, and aria-live text changes only when kind or direction does', () => {
+  it('the visible text changes after 2 frames (about 35 ms), not after a second', () => {
     const { rerender } = render(<NoteGuide target="E4" cents={-35} toleranceCents={20} />);
     const text = screen.getByTestId('note-guide-text');
-    expect(text.getAttribute('aria-live')).toBe('polite');
     expect(text.textContent).toBe('A little low: go up (−35 cents)');
-    rerender(<NoteGuide target="E4" cents={-40} toleranceCents={20} />);
-    act(() => void vi.advanceTimersByTime(2000));
+    rerender(<NoteGuide target="E4" cents={300} toleranceCents={20} />);
+    // Held for less than 2 frames: still the old text.
+    act(() => void vi.advanceTimersByTime(20));
     expect(text.textContent).toBe('A little low: go up (−35 cents)');
-    rerender(<NoteGuide target="E4" cents={-300} toleranceCents={20} />);
-    act(() => void vi.advanceTimersByTime(1100));
-    expect(text.textContent).toBe('About 3 notes too low: go up');
+    act(() => void vi.advanceTimersByTime(25));
+    expect(text.textContent).toBe('About 3 notes too high: come down');
     expect(screen.getByRole('img').getAttribute('aria-label')).toBe(text.textContent);
+  });
+
+  it('a flicker that does not hold for 2 frames never reaches the text', () => {
+    const { rerender } = render(<NoteGuide target="E4" cents={0} toleranceCents={20} />);
+    const text = screen.getByTestId('note-guide-text');
+    rerender(<NoteGuide target="E4" cents={-40} toleranceCents={20} />);
+    act(() => void vi.advanceTimersByTime(15));
+    rerender(<NoteGuide target="E4" cents={0} toleranceCents={20} />);
+    act(() => void vi.advanceTimersByTime(100));
+    expect(text.textContent).toBe('On it');
+  });
+
+  it('the near-case cents number is live and rounds to the nearest 5', () => {
+    const { rerender } = render(<NoteGuide target="E4" cents={-37} toleranceCents={20} />);
+    const text = screen.getByTestId('note-guide-text');
+    expect(text.textContent).toBe('A little low: go up (−35 cents)');
+    rerender(<NoteGuide target="E4" cents={-43} toleranceCents={20} />);
+    expect(text.textContent).toBe('A little low: go up (−45 cents)');
+    rerender(<NoteGuide target="E4" cents={-48} toleranceCents={20} />);
+    expect(text.textContent).toBe('A little low: go up (−50 cents)');
+  });
+
+  it('the hidden live region announces at most once a second, and only when kind or direction changes', () => {
+    const { rerender } = render(<NoteGuide target="E4" cents={-35} toleranceCents={20} />);
+    const text = screen.getByTestId('note-guide-text');
+    const live = screen.getByTestId('note-guide-announce');
+    expect(text.getAttribute('aria-live')).toBeNull();
+    expect(live.getAttribute('aria-live')).toBe('polite');
+    expect(live.textContent).toBe('A little low: go up (−35 cents)');
+    // The number moves; the announcement does not.
+    rerender(<NoteGuide target="E4" cents={-60} toleranceCents={20} />);
+    act(() => void vi.advanceTimersByTime(2000));
+    expect(live.textContent).toBe('A little low: go up (−35 cents)');
+    // A new kind: more than a second since the last announcement, so it is announced as soon as it shows.
+    rerender(<NoteGuide target="E4" cents={-300} toleranceCents={20} />);
+    act(() => void vi.advanceTimersByTime(50));
+    expect(text.textContent).toBe('About 3 notes too low: go up');
+    expect(live.textContent).toBe('About 3 notes too low: go up');
+    // Changing again straight away shows at once, but is announced only when the second is up.
+    rerender(<NoteGuide target="E4" cents={300} toleranceCents={20} />);
+    act(() => void vi.advanceTimersByTime(100));
+    expect(text.textContent).toBe('About 3 notes too high: come down');
+    expect(live.textContent).toBe('About 3 notes too low: go up');
+    act(() => void vi.advanceTimersByTime(1100));
+    expect(live.textContent).toBe('About 3 notes too high: come down');
+  });
+
+  it('the dot eases for at most 30 ms', () => {
+    // jsdom does not load the CSS, so read the rule from the source.
+    const css = readFileSync('src/ui/components/NoteGuide.css', 'utf8');
+    const ms = Number(/note-guide__track \{[^}]*transition: transform (\d+)ms/s.exec(css)?.[1]);
+    expect(ms).toBeLessThanOrEqual(30);
+    expect(css).toMatch(/prefers-reduced-motion[^]*note-guide__track \{\s*transition: none/);
   });
 });

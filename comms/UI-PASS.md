@@ -947,3 +947,47 @@ No horizontal scroll was measured at either size. The Stop button is visible at 
 - `comms/S10/turn-02/screenshots/prove-phone.png`
 - `comms/S10/turn-02/screenshots/state-octaveDown-phone.png`
 - `comms/S10/turn-02/screenshots/state-sharp300-phone.png`
+
+## S11 — Spike: hear the whole pattern, earn the solo, and a faster guide
+
+Approved after turn 1, 2026-11-26. Review: `comms/S11/turn-01/ui-review.md`.
+
+### Not verified by the UI reviewer
+
+- Sound: the piano actually playing sol then mi, the 1-beat silence, and the audible count-in.
+- Sliding your voice: the dot following with no lag, and "go up / come down" flipping with no pause.
+- Seeing a small miss and a big miss at different heights in the laptop guide. The guide is at least 90 px tall on the laptop, but I did not drive it with a real voice.
+- "Hear it again" replaying without starting a run. I saw the button but did not press it.
+- The second Learn pass showing "Practise is unlocked", and a Practise visit starting at We do. I did not run these.
+- Dark mode and the iPhone device itself.
+- My script's "Your turn" capture matched the heading text, so I have no clean screenshot of the "Your turn" status.
+
+### Screens reviewed
+
+| Screen / state | Laptop | iPhone | Screenshot files |
+|----------------|--------|--------|------------------|
+| We do result after a miss (`sim=weDoMiss`), gate line | Issue (buttons below the fold) | OK | `screenshots/laptop-weDoMiss-01-wedo-result.png`, `screenshots/phone-weDoMiss-01-wedo-result.png` |
+| You do idle, with "Hear it again" | OK | OK | `screenshots/laptop-perfect-02-youdo-idle.png`, `screenshots/phone-perfect-02-youdo-idle.png` |
+| You do during the call ("Listen…") | OK | OK | `screenshots/laptop-perfect-03-call.png`, `screenshots/phone-perfect-03-call.png` |
+| Results after the first Learn pass | OK | OK | `screenshots/laptop-perfect-05-results.png`, `screenshots/phone-perfect-05-results.png` |
+
+### Screenshots
+
+- `comms/S11/turn-01/screenshots/laptop-05-results-full.png`
+- `comms/S11/turn-01/screenshots/laptop-perfect-00-intro.png`
+- `comms/S11/turn-01/screenshots/laptop-perfect-01-wedo-result.png`
+- `comms/S11/turn-01/screenshots/laptop-perfect-02-youdo-idle.png`
+- `comms/S11/turn-01/screenshots/laptop-perfect-03-call.png`
+- `comms/S11/turn-01/screenshots/laptop-perfect-04-yourturn.png`
+- `comms/S11/turn-01/screenshots/laptop-perfect-05-results.png`
+- `comms/S11/turn-01/screenshots/laptop-weDoMiss-00-intro.png`
+- `comms/S11/turn-01/screenshots/laptop-weDoMiss-01-wedo-result.png`
+- `comms/S11/turn-01/screenshots/phone-05-results-full.png`
+- `comms/S11/turn-01/screenshots/phone-perfect-00-intro.png`
+- `comms/S11/turn-01/screenshots/phone-perfect-01-wedo-result.png`
+- `comms/S11/turn-01/screenshots/phone-perfect-02-youdo-idle.png`
+- `comms/S11/turn-01/screenshots/phone-perfect-03-call.png`
+- `comms/S11/turn-01/screenshots/phone-perfect-04-yourturn.png`
+- `comms/S11/turn-01/screenshots/phone-perfect-05-results.png`
+- `comms/S11/turn-01/screenshots/phone-weDoMiss-00-intro.png`
+- `comms/S11/turn-01/screenshots/phone-weDoMiss-01-wedo-result.png`

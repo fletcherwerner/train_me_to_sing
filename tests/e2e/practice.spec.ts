@@ -160,7 +160,8 @@ for (const size of SIZES) {
       await expect(page.getByTestId('practice-line')).toContainText('Practice run:', { timeout: 40000 });
       await page.getByRole('button', { name: 'Next' }).click();
       await start(page).click();
-      await expect(page.getByTestId('results-verdict')).toHaveText('Level passed', { timeout: 40000 });
+      // S11: the first Learn pass counts (1 of 2) and does not unlock Practise.
+      await expect(page.getByTestId('results-verdict')).toHaveText('Passed', { timeout: 40000 });
       await expect(page.getByTestId('practice-stop')).toBeVisible();
       // S07: inside practice the only primary button is "Next part"; the lesson's own exits are hidden.
       await expect(page.locator('.btn--primary')).toHaveCount(1);
@@ -182,7 +183,7 @@ for (const size of SIZES) {
 
       const data = await stored(page);
       expect(data.progress['s1a-01'].attempts).toBe(1);
-      expect(data.progress['s1b-01']).toMatchObject({ level: 'practise', attempts: 1 });
+      expect(data.progress['s1b-01']).toMatchObject({ level: 'learn', learnPasses: 1, attempts: 1 });
       expect(Object.keys(data.progress).some((k) => k.startsWith('warmup'))).toBe(false);
     });
 

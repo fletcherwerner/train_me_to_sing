@@ -1,6 +1,8 @@
 export interface PitchFrame {
   tSec: number;
   midi: number | null;
+  /** The live display's value: a shorter median than `midi`, so it reacts faster. Absent on simulated frames; use `midi`. */
+  midiFast?: number | null;
   clarity: number;
   rms: number;
 }

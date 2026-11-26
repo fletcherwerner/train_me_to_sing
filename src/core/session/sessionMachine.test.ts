@@ -115,6 +115,51 @@ describe('sessionMachine', () => {
     });
   });
 
+  describe('guided (Stage 1) flow', () => {
+    const guided = (level: 'learn' | 'practise' | 'prove') => createSession(true, level, { guided: true });
+    const passedAtYouDo = (s: SessionState) =>
+      run({ ...s, step: 'youDo' }, { type: 'RUN' }, { type: 'RUN_ENDED', result: result(1) }, { type: 'SHOW_RESULTS' });
+
+    it('BEGIN at Practise starts at We do; Prove still starts at You do', () => {
+      expect(run(guided('practise'), { type: 'BEGIN' })).toMatchObject({ level: 'practise', step: 'weDo' });
+      expect(run(guided('prove'), { type: 'BEGIN' })).toMatchObject({ level: 'prove', step: 'youDo' });
+      expect(run(guided('learn'), { type: 'BEGIN' }).step).toBe('iDo');
+    });
+
+    it('ADVANCE from Learn lands on We do; from Practise on You do', () => {
+      const practise = run(passedAtYouDo(guided('learn')), { type: 'ADVANCE' });
+      expect(practise).toMatchObject({ level: 'practise', step: 'weDo', youDoResult: null, weDoResult: null });
+      const prove = run(passedAtYouDo(practise), { type: 'ADVANCE' });
+      expect(prove).toMatchObject({ level: 'prove', step: 'youDo' });
+    });
+
+    it('stepping down to Practise also lands on We do', () => {
+      const prove = run(guided('prove'), { type: 'BEGIN' });
+      expect(run(prove, { type: 'STEP_DOWN' })).toMatchObject({ level: 'practise', step: 'weDo' });
+    });
+
+    it('unguided is unchanged', () => {
+      expect(run(createSession(true, 'practise'), { type: 'BEGIN' }).step).toBe('youDo');
+      expect(run(passedAtYouDo(createSession(true, 'learn')), { type: 'ADVANCE' }).step).toBe('youDo');
+      expect(createSession(false, 'learn', { guided: true }).guided).toBe(false);
+    });
+
+    it('NEXT from We do works without a perfect run', () => {
+      const weDo = run(guided('practise'), { type: 'BEGIN' });
+      const missed: AttemptResult = {
+        notes: [
+          { index: 0, targetMidi: 60, hit: true, medianCents: 0, heldFraction: 1, onsetErrorMs: 0 },
+          { index: 1, targetMidi: 64, hit: false, reason: 'silent', medianCents: null, heldFraction: 0, onsetErrorMs: null },
+        ],
+        score: 0.5,
+        passed: false,
+      };
+      const ran = run(weDo, { type: 'RUN' }, { type: 'RUN_ENDED', result: missed });
+      expect(run(ran, { type: 'NEXT' }).step).toBe('youDo');
+      expect(run(weDo, { type: 'NEXT' }).step).toBe('youDo');
+    });
+  });
+
   it('invalid events return the state unchanged', () => {
     expect(reduce(INITIAL_SESSION, { type: 'RUN' })).toBe(INITIAL_SESSION);
     expect(reduce(INITIAL_SESSION, { type: 'SHOW_RESULTS' })).toBe(INITIAL_SESSION);

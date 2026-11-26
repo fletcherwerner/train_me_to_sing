@@ -2,7 +2,7 @@ import { freqToMidi } from '../../core/music/notes';
 import { getAudioContext } from '../audioEngine';
 import { PitchDetector } from 'pitchy';
 import type { PitchFrame, PitchSource } from './PitchSource';
-import { smoothPitch } from './smoothing';
+import { smoothDisplay, smoothPitch } from './smoothing';
 
 export const PITCH_CONFIG = {
   MIN_CLARITY: 0.9,
@@ -10,6 +10,8 @@ export const PITCH_CONFIG = {
   MIN_FREQ: 60,
   MAX_FREQ: 1100,
   SMOOTH_WINDOW: 5,
+  /** The live guide, the "Sung" label and the piano's sung key use this shorter median. Scoring keeps 5. */
+  SMOOTH_WINDOW_DISPLAY: 3,
 } as const;
 
 let detector: ReturnType<typeof PitchDetector.forFloat32Array> | undefined;
@@ -32,10 +34,11 @@ export function createMicPitchSource(): PitchSource {
   // Rolling buffer of last 5 raw midi values for median smoothing
   const rawBuffer: (number | null)[] = [];
 
-  function emit(midi: number | null, clarity: number, rms: number) {
+  function emit(midi: number | null, midiFast: number | null, clarity: number, rms: number) {
     const frame: PitchFrame = {
       tSec: getAudioContext().currentTime,
       midi,
+      midiFast,
       clarity,
       rms,
     };
@@ -99,7 +102,7 @@ export function createMicPitchSource(): PitchSource {
       }
       const smoothed = smoothPitch(rawBuffer);
 
-      emit(smoothed, clarity, rms);
+      emit(smoothed, smoothDisplay(rawBuffer, PITCH_CONFIG.SMOOTH_WINDOW_DISPLAY), clarity, rms);
     }
 
     animFrameId = requestAnimationFrame(tick);

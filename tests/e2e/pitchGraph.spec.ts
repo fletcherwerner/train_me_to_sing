@@ -55,8 +55,8 @@ for (const size of [
     const gBox = await graph.boundingBox();
     const pBox = await page.locator('.piano').boundingBox();
     expect(gBox && pBox && gBox.y + gBox.height <= pBox.y + 1).toBe(true);
-    // E13 B1: the graph shrinks (110 to 160 px) so the whole run fits in the window.
-    expect(gBox!.height).toBeGreaterThanOrEqual(110);
+    // E13 B1: the graph shrinks (100 to 160 px; S11 gave the guide more room on the laptop) so the run fits.
+    expect(gBox!.height).toBeGreaterThanOrEqual(size.width >= 900 ? 100 : 110);
     expect(gBox!.height).toBeLessThanOrEqual(160);
     await expect(page.getByRole('button', { name: 'Stop' })).toBeInViewport();
     expect(await noSideScroll(page)).toBe(true);

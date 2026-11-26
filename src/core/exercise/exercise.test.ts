@@ -128,4 +128,17 @@ describe('buildTimeline', () => {
     expect(tl.leadInClicks[0].tSec).toBe(7);
     expect(tl.startSec).toBe(11);
   });
+  it('plays the whole pattern, a beat of silence, then the lead-in; startSec stays the student beat 0', () => {
+    const e = ex(60, 4); // three one-beat notes: 3 s
+    const tl = buildTimeline(e, { playStartNote: true, playCall: true, metronome: false }, 5);
+    expect(tl.callStartSec).toBe(5);
+    expect(tl.callEndSec).toBe(5 + e.totalSec + 1);
+    expect(tl.startNoteSec).toBeNull();
+    expect(tl.leadInClicks.map((c) => c.tSec)).toEqual([9, 10, 11, 12]);
+    expect(tl.startSec).toBe(13);
+    expect(tl.endSec).toBe(13 + e.totalSec);
+    const none = buildTimeline(e, { playStartNote: false, metronome: false }, 5);
+    expect(none.callStartSec).toBeNull();
+    expect(none.callEndSec).toBeNull();
+  });
 });
