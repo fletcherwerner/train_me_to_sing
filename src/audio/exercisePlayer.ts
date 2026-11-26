@@ -10,12 +10,17 @@ export interface PlaybackOptions {
   playMelody: boolean; // false in "You do"
   metronome: boolean;
   playStartNote: boolean; // play the first note for 1 beat before the lead-in
+  /** Play the whole exercise once, then a beat of silence, before the lead-in. Replaces `playStartNote`. */
+  playCall?: boolean;
   /** Echo yourself: the student's own recording plays at the exercise start, in place of the piano melody. */
   melodyBuffer?: AudioBuffer;
 }
 
 export interface PlaybackHandle {
   startSec: number; // audio-clock time of exercise beat 0
+  /** The whole-pattern call before the lead-in, when `playCall` was set: its start, and the end of its silent beat. */
+  callStartSec: number | null;
+  callEndSec: number | null;
   endSec: number;
   stop(): void;
   done: Promise<void>; // resolves at endSec, or when stopped
@@ -42,6 +47,10 @@ export function playExercise(ex: ResolvedExercise, opts: PlaybackOptions): Playb
   if (tl.startNoteSec !== null && ex.notes.length > 0) {
     player.playNote(ex.notes[0].midi, tl.startNoteSec, beat);
   }
+  if (tl.callStartSec !== null) {
+    const callStart = tl.callStartSec;
+    for (const n of ex.notes) player.playNote(n.midi, callStart + n.startSec, n.durationSec, n.glideToMidi);
+  }
   for (const c of tl.leadInClicks) scheduleClick(c.tSec, c.accent);
   for (const c of tl.exerciseClicks) scheduleClick(c.tSec, c.accent);
   if (opts.playMelody) {
@@ -66,6 +75,8 @@ export function playExercise(ex: ResolvedExercise, opts: PlaybackOptions): Playb
   );
   const handle: PlaybackHandle = {
     startSec: tl.startSec,
+    callStartSec: tl.callStartSec,
+    callEndSec: tl.callEndSec,
     endSec: tl.endSec,
     stop() {
       if (finished) return;
@@ -96,6 +107,16 @@ export function playNoteClip(midi: number, durationSec: number): ClipHandle {
   const t = now() + 0.05;
   player.playNote(midi, t, durationSec);
   return { endSec: t + durationSec, stop: () => player.stopAll() };
+}
+
+/** Plays the whole exercise once, piano only, from now ("Hear it again"). Not a run: nothing is scored. */
+export function playCallClip(ex: ResolvedExercise): ClipHandle {
+  tonePlayer ??= createTonePlayer();
+  const player = tonePlayer;
+  current?.stop();
+  const t = now() + 0.05;
+  for (const n of ex.notes) player.playNote(n.midi, t + n.startSec, n.durationSec, n.glideToMidi);
+  return { endSec: t + ex.totalSec, stop: () => player.stopAll() };
 }
 
 /** Plays a recording (the student's own voice) from now. Stoppable. */

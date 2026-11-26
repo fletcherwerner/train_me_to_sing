@@ -40,6 +40,8 @@ export const rawProgressEntrySchema = z.object({
   lastAttemptAt: z.string(),
   /** Highest unlocked feedback level, for lessons with levels. Absent on older data and on other lessons. */
   level: z.enum(['learn', 'practise', 'prove']).optional(),
+  /** Passes at Learn in Stage 1 lessons; two unlock Practise. Absent on older data (an entry already at Practise keeps it). */
+  learnPasses: z.number().int().min(0).optional(),
   /** Prove passes. Absent in version 1. */
   proofs: z.array(proofSchema).optional(),
   /** Spaced review state, set once mastered. Absent in version 1. */
@@ -53,6 +55,7 @@ export interface ProgressEntry {
   attempts: number;
   lastAttemptAt: string;
   level?: 'learn' | 'practise' | 'prove';
+  learnPasses?: number;
   proofs: Proof[];
   review: { step: number; dueOn: string } | null;
 }

@@ -35,8 +35,8 @@ test('sim=perfect: full lesson passes', async ({ page }) => {
   await seed(page);
   await page.goto('/#/lesson/s1b-04?sim=perfect');
   await throughSession(page);
-  // A pass at Learn passes the level, not the lesson (E14): Practise is unlocked.
-  await expect(page.getByTestId('results-verdict')).toHaveText('Level passed', { timeout: 30000 });
+  // A pass at Learn passes the level, not the lesson (E14); the first of two Learn passes (S11) does not unlock Practise.
+  await expect(page.getByTestId('results-verdict')).toHaveText('Passed', { timeout: 30000 });
   await expect(page.getByTestId('results-score')).toContainText('3 of 3');
 });
 

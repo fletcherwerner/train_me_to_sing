@@ -74,6 +74,9 @@ export function mergeData(local: StoredData, incoming: StoredData): StoredData {
       attempts: a.attempts + b.attempts,
       lastAttemptAt: a.lastAttemptAt >= b.lastAttemptAt ? a.lastAttemptAt : b.lastAttemptAt,
       ...(a.level || b.level ? { level: maxLevel(a.level, b.level) } : {}),
+      ...(a.learnPasses !== undefined || b.learnPasses !== undefined
+        ? { learnPasses: Math.max(a.learnPasses ?? 0, b.learnPasses ?? 0) }
+        : {}),
       proofs,
       review,
     };

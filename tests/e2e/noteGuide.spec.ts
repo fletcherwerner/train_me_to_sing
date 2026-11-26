@@ -36,6 +36,15 @@ async function intoWeDo(page: Page) {
   await page.getByRole('button', { name: 'Sing along' }).click();
 }
 
+/** A Practise visit starts at We do (S11): one sing-along, then You do. Leaves the You do run going. */
+async function practiseYouDo(page: Page) {
+  await start(page).click();
+  await page.getByRole('button', { name: 'Sing along', exact: true }).click();
+  await expect(page.getByTestId('practice-line')).toContainText('Practice run:', { timeout: 25000 });
+  await page.getByRole('button', { name: 'Next: You do' }).click();
+  await start(page).click();
+}
+
 for (const size of SIZES) {
   test.describe(`Note guide (${size.name})`, () => {
     test.setTimeout(150_000);
@@ -82,8 +91,7 @@ for (const size of SIZES) {
     test('Sol–mi at Practise: perfect never shows the guide', async ({ page }) => {
       await seed(page, { 's1b-01': at('practise') });
       await page.goto('/#/lesson/s1b-01?sim=perfect');
-      await start(page).click();
-      await start(page).click();
+      await practiseYouDo(page);
       await expect(page.getByTestId('instruction')).toBeVisible();
       for (let i = 0; i < 30 && (await page.getByTestId('results-verdict').count()) === 0; i++) {
         await expect(guide(page)).toHaveCount(0);
@@ -96,8 +104,7 @@ for (const size of SIZES) {
     test('Sol–mi at Practise: flat70 shows the rescue and the results say so', async ({ page }) => {
       await seed(page, { 's1b-01': at('practise') });
       await page.goto('/#/lesson/s1b-01?sim=flat70');
-      await start(page).click();
-      await start(page).click();
+      await practiseYouDo(page);
       await expect(guide(page)).toBeVisible({ timeout: 20000 });
       await expect(guide(page)).toHaveAttribute('data-direction', 'up');
       await expect(page.getByTestId('results-verdict')).toBeVisible({ timeout: 40000 });
@@ -107,8 +114,7 @@ for (const size of SIZES) {
     test('Sol–mi at Practise: silent never shows the guide', async ({ page }) => {
       await seed(page, { 's1b-01': at('practise') });
       await page.goto('/#/lesson/s1b-01?sim=silent');
-      await start(page).click();
-      await start(page).click();
+      await practiseYouDo(page);
       for (let i = 0; i < 16; i++) {
         await expect(guide(page)).toHaveCount(0);
         await page.waitForTimeout(500);

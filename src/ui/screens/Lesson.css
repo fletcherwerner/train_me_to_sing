@@ -133,3 +133,10 @@
     background: var(--bg);
   }
 }
+
+/* "Listen…" / "Your turn" while a guided You do plays its call. */
+.lesson-status {
+  margin: 2px 0;
+  font-weight: 700;
+  min-height: 1.3em;
+}

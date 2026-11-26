@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { dropLegacyProgress, loadData, saveData, type StoredData } from './schema';
 import { flagStage1Rebuilt } from './notices';
-import { maxLevel, unlockedBy } from './level';
+import { LEARN_PASSES_TO_UNLOCK, learnPassesOf, maxLevel, unlockedBy } from './level';
 import { getFileSync } from './fileSync';
 import { todayString } from './today';
 import { addProof, isMastered } from '../core/progress/mastery';
@@ -21,6 +21,8 @@ export interface AttemptContext {
   tonicMidi?: number;
   /** Only one key fits the student's range, so one key is enough. */
   singleKey?: boolean;
+  /** The lesson's stage. In Stage 1, two Learn passes unlock Practise; elsewhere one does. */
+  stage?: 1 | 2 | 3;
 }
 
 interface AppStore extends StoredData {
@@ -82,7 +84,14 @@ export const useAppStore = create<AppStore>((set, get) => {
         // Lessons with levels: only a pass at Prove passes the lesson; a pass below it unlocks the next level.
         passed = level ? (old?.passed ?? false) || (result.passed && level === 'prove') : (old?.passed ?? false) || result.passed;
       }
-      const unlocked = level ? maxLevel(old?.level, result.passed ? unlockedBy(level) : level) : undefined;
+      // Stage 1: a Learn pass counts toward Practise, and two are needed. Other lessons unlock after one pass.
+      const countsLearn = level === 'learn' && ctx?.stage === 1;
+      const learnPasses = countsLearn && result.passed ? learnPassesOf(old) + 1 : old?.learnPasses;
+      let reached: Level | undefined = level;
+      if (level && result.passed) {
+        reached = countsLearn && (learnPasses ?? 0) < LEARN_PASSES_TO_UNLOCK ? 'learn' : unlockedBy(level);
+      }
+      const unlocked = level && reached ? maxLevel(old?.level, reached) : undefined;
       commit({
         progress: {
           ...progress,
@@ -95,6 +104,7 @@ export const useAppStore = create<AppStore>((set, get) => {
             passed,
             lastAttemptAt: new Date().toISOString(),
             ...(unlocked ? { level: unlocked } : {}),
+            ...(learnPasses !== undefined ? { learnPasses } : {}),
             proofs,
             review,
           },

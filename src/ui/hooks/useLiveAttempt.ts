@@ -40,13 +40,15 @@ export function useLiveAttempt(
     }
     return source.subscribe((f) => {
       const g = gateRef.current;
-      const midi = g !== null && idxRef.current !== null && f.rms < g ? null : f.midi;
+      const raw = f.midiFast !== undefined ? f.midiFast : f.midi;
+      const midi = g !== null && idxRef.current !== null && f.rms < g ? null : raw;
       setSungMidi((prev) => (prev === midi ? prev : midi));
     });
   }, [source, active]);
 
   const targetMidi = exercise && idx !== null ? exercise.notes[idx].midi : null;
-  const shown = active ? sungMidi : null;
+  // While the piano plays the call nobody is expected to sing, so there is no sung pitch to show.
+  const shown = active && position.phase !== 'call' ? sungMidi : null;
   const cents = shown !== null && targetMidi !== null ? centsBetween(shown, targetMidi) : null;
   void tolerance; // the profile is applied by the CentsMeter's zone; kept in the signature per spec
   return { position, currentNoteIndex: idx, sungMidi: shown, cents, targetMidi };

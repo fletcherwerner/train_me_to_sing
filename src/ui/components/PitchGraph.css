@@ -12,6 +12,12 @@
   position: relative;
   box-sizing: border-box;
 }
+/* On the laptop the note guide is taller (S11), and the room comes from the graph; never below 100px. */
+@media (min-width: 900px) {
+  .pitch-graph {
+    height: clamp(100px, 12vh, 160px);
+  }
+}
 .graph-legend {
   display: flex;
   justify-content: center;

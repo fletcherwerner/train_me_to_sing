@@ -14,6 +14,8 @@ export const SIM_BEHAVIOURS = [
   'scoop',
   'sharp300',
   'findLate',
+  'weDoMiss',
+  'step300',
 ] as const;
 export type SimBehaviour = (typeof SIM_BEHAVIOURS)[number];
 
@@ -33,9 +35,18 @@ export function clearSimExercise(): void {
   active = null;
 }
 
-/** Pure: pitch a simulated singer produces at time `rel` (seconds from exercise start). */
-export function simPitchAt(ex: ResolvedExercise, behaviour: SimBehaviour, rel: number): number | null {
+/**
+ * Pure: pitch a simulated singer produces at time `rel` (seconds from the student's beat 0; the piano's call before it
+ * is never sung over). `weDo`: this is a sing-along; `weDoMiss` skips the last note there and is perfect in You do.
+ */
+export function simPitchAt(ex: ResolvedExercise, behaviour: SimBehaviour, rel: number, weDo = false): number | null {
   if (behaviour === 'silent') return null;
+  if (behaviour === 'weDoMiss') {
+    const last = ex.notes[ex.notes.length - 1];
+    const inLast = last !== undefined && rel >= last.startSec && rel < last.startSec + last.durationSec;
+    if (weDo && inLast) return null;
+    behaviour = 'perfect';
+  }
   if (behaviour === 'bleed' || behaviour === 'bleedSing') behaviour = 'perfect';
   const t = behaviour === 'late300' ? rel - 0.3 : rel;
   const note = ex.notes.find((n) => t >= n.startSec && t < n.startSec + n.durationSec);
@@ -52,6 +63,9 @@ export function simPitchAt(ex: ResolvedExercise, behaviour: SimBehaviour, rel: n
       if (rel > note.durationSec - 0.05) return null;
       return rel < 0.12 ? note.midi - 1 + rel / 0.12 : note.midi;
     }
+    case 'step300':
+      // On the note, then a step 300 cents high after 0.9 s (the guide response-time test).
+      return t - note.startSec >= STEP_AT_SEC ? note.midi + 3 : note.midi;
     case 'flat40':
       return note.midi - 0.4;
     case 'sharp300':
@@ -72,12 +86,23 @@ export function simPitchAt(ex: ResolvedExercise, behaviour: SimBehaviour, rel: n
   }
 }
 
+const STEP_AT_SEC = 0.9;
+
 export function simBehaviour(behaviour: SimBehaviour): SynthBehaviour {
   return (tSec) => {
     if (!active) return null;
+    if (behaviour === 'step300' && active.sings) {
+      // Test instrumentation only (not musical timing): when the stepped pitch is first produced, in page time.
+      const rel = tSec - active.startSec;
+      const first = active.ex.notes[0];
+      const w = window as unknown as { __tmtsStepAt?: number };
+      if (first && rel >= first.startSec + STEP_AT_SEC && rel < first.startSec + first.durationSec && w.__tmtsStepAt === undefined) {
+        w.__tmtsStepAt = performance.now();
+      }
+    }
     // bleed: the piano only, so nothing once the melody stops (You do). bleedSing adds a singer in We do and You do.
     if (behaviour === 'bleed' && !active.melodyPlaying) return null;
-    return simPitchAt(active.ex, behaviour, tSec - active.startSec);
+    return simPitchAt(active.ex, behaviour, tSec - active.startSec, active.melodyPlaying && active.sings);
   };
 }
 

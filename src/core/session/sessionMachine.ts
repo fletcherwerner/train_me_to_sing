@@ -9,6 +9,8 @@ export const LEVELS: readonly Level[] = ['learn', 'practise', 'prove'];
 export interface SessionState {
   /** False keeps the single You do flow (Stages 2-3, imported songs). */
   levels: boolean;
+  /** Stage 1 guided flow: a Practise visit starts at We do (one sing-along before the solo). */
+  guided: boolean;
   /** The level being worked at. Always 'learn' when `levels` is false. */
   level: Level;
   step: Step;
@@ -31,12 +33,19 @@ export type SessionEvent =
   /** Back down one level, any time nothing is running. */
   | { type: 'STEP_DOWN' };
 
-export function createSession(levels: boolean, level: Level = 'learn'): SessionState {
-  return { ...INITIAL_SESSION, levels, level: levels ? level : 'learn' };
+export function createSession(levels: boolean, level: Level = 'learn', opts: { guided?: boolean } = {}): SessionState {
+  return { ...INITIAL_SESSION, levels, level: levels ? level : 'learn', guided: levels && opts.guided === true };
+}
+
+/** The step a visit to `level` starts at: Learn at I do, Practise at We do when guided, otherwise You do. */
+function entryStep(state: SessionState, level: Level): Step {
+  if (!state.levels || level === 'learn') return 'iDo';
+  return state.guided && level === 'practise' ? 'weDo' : 'youDo';
 }
 
 export const INITIAL_SESSION: SessionState = {
   levels: false,
+  guided: false,
   level: 'learn',
   step: 'intro',
   activity: 'idle',
@@ -51,8 +60,8 @@ export function reduce(state: SessionState, event: SessionEvent): SessionState {
   switch (event.type) {
     case 'BEGIN':
       if (state.step !== 'intro') return state;
-      // Practise and Prove are You do only; I do and We do stay reachable through Back.
-      return { ...state, step: state.levels && state.level !== 'learn' ? 'youDo' : 'iDo', activity: 'idle' };
+      // Practise and Prove are You do only (guided Practise starts at We do); earlier steps stay reachable through Back.
+      return { ...state, step: entryStep(state, state.level), activity: 'idle' };
     case 'RUN': {
       if (!inRunStep || running) return state;
       // A new run clears that step's previous result so stale chips never show.
@@ -89,7 +98,7 @@ export function reduce(state: SessionState, event: SessionEvent): SessionState {
       const next = LEVELS[LEVELS.indexOf(state.level) + 1];
       if (!state.levels || !next || running || !state.youDoResult?.passed) return state;
       if (state.step !== 'results' && state.step !== 'youDo') return state;
-      return { ...state, level: next, step: 'youDo', activity: 'idle', youDoResult: null, weDoResult: null };
+      return { ...state, level: next, step: entryStep(state, next), activity: 'idle', youDoResult: null, weDoResult: null };
     }
     case 'STEP_DOWN': {
       const prev = LEVELS[LEVELS.indexOf(state.level) - 1];
@@ -97,7 +106,7 @@ export function reduce(state: SessionState, event: SessionEvent): SessionState {
       return {
         ...state,
         level: prev,
-        step: prev === 'learn' ? 'iDo' : 'youDo',
+        step: entryStep(state, prev),
         activity: 'idle',
         youDoResult: null,
         weDoResult: null,

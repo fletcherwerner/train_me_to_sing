@@ -161,7 +161,8 @@ async function checkFits(page: Page, running: boolean, graded: boolean) {
       cw: document.documentElement.clientWidth,
     }));
     expect(doc.sw, `no sideways scroll (${where})`).toBeLessThanOrEqual(doc.cw);
-    expect(boxes.graph.height).toBeGreaterThanOrEqual(109);
+    // S11: on the laptop the graph gives the guide room, down to 100 px (was 109).
+    expect(boxes.graph.height).toBeGreaterThanOrEqual(100);
     expect(boxes.piano.height).toBeGreaterThanOrEqual(79);
     const stripRows = await page.locator('.sequence-chip').evaluateAll((els) => new Set(els.map((e) => Math.round(e.getBoundingClientRect().top))).size);
     expect(stripRows, `strip is one row (${where})`).toBe(1);

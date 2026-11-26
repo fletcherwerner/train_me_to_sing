@@ -137,16 +137,25 @@ test.describe('s1b-04 feedback levels', () => {
       // Learn: You do pass unlocks Practise.
       await page.getByRole('button', { name: 'Next' }).click();
       await startOfRun(page).click();
+      // S11: the first Learn pass counts (1 of 2); the second unlocks Practise.
+      await expect(page.getByTestId('results-verdict')).toHaveText('Passed', { timeout: 40000 });
+      await expect(page.getByTestId('results-level')).toContainText('1 of 2');
+      await page.getByRole('button', { name: 'Try again' }).click();
+      await runButton(page).click();
       await expect(page.getByTestId('results-verdict')).toHaveText('Level passed', { timeout: 40000 });
       await expect(page.getByTestId('results-level')).toContainText('Practise is unlocked');
       await page.getByTestId('advance-level').click();
 
-      // Practise: targets, but no red line and no sung key while singing; the full graph after.
+      // Practise starts at We do (one sing-along), then You do: targets, but no red line and no sung key while singing.
       await expect(page.getByTestId('level-label')).toHaveText('Level: Practise');
+      await expect(page.getByRole('button', { name: 'Sing along', exact: true })).toBeVisible();
+      await page.getByRole('button', { name: 'Sing along', exact: true }).click();
+      await expect(page.getByTestId('practice-line')).toContainText('Practice run:', { timeout: 25000 });
+      await page.getByRole('button', { name: 'Next' }).click();
       await expect(page.getByTestId('instruction')).toContainText('Your turn');
       await expect(page.getByRole('button', { name: 'Back', exact: true })).toBeVisible();
       await startOfRun(page).click();
-      await expect(page.getByTestId('count-in')).toBeVisible();
+      await expect(page.getByTestId('count-in')).toBeVisible({ timeout: 15000 }); // after the piano's call (S11)
       await expect(page.getByTestId('count-in')).toBeHidden({ timeout: 15000 });
       await expect(page.getByRole('button', { name: 'Stop' })).toBeVisible();
       await expect(page.getByTestId('pitch-graph')).toBeVisible();
@@ -166,7 +175,7 @@ test.describe('s1b-04 feedback levels', () => {
       await expect(page.getByTestId('pitch-graph')).toHaveCount(0);
       expect(await litKeys(page)).toBe(1);
       await startOfRun(page).click();
-      await expect(page.getByTestId('count-in')).toBeVisible();
+      await expect(page.getByTestId('count-in')).toBeVisible({ timeout: 15000 });
       await expect(page.getByTestId('count-in')).toBeHidden({ timeout: 15000 });
       await expect(page.getByRole('button', { name: 'Stop' })).toBeVisible();
       await expect(page.getByTestId('pitch-graph')).toHaveCount(0);
@@ -192,6 +201,9 @@ test.describe('s1b-04 feedback levels', () => {
     await expect(page.getByTestId('level-label')).toHaveText('Level: Prove');
     await page.getByTestId('step-down').click();
     await expect(page.getByTestId('level-label')).toHaveText('Level: Practise');
+    // S11: a Practise visit starts at We do; step-down is on You do.
+    await expect(page.getByRole('button', { name: 'Sing along', exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Next: You do' }).click();
     await page.getByTestId('step-down').click();
     await expect(page.getByTestId('level-label')).toHaveText('Level: Learn');
     await expect(page.getByTestId('instruction')).toHaveText('Listen and watch.');
@@ -205,6 +217,7 @@ test.describe('s1b-04 feedback levels', () => {
     await expect(page.getByTestId('level-label')).toHaveText('Level: Practise');
     const first = await page.getByTestId('start-note').innerText();
     expect(first).toMatch(/^Starting on [A-G]#?\d$/);
+    await page.getByRole('button', { name: 'Next: You do' }).click(); // Practise starts at We do (S11)
     await startOfRun(page).click();
     await expect(page.getByTestId('results-verdict')).toBeVisible({ timeout: 40000 });
     await page.getByRole('button', { name: 'Try again' }).click();

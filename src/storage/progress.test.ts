@@ -64,6 +64,53 @@ describe('recordAttempt', () => {
     expect(withBest.progress.a.bestAccuracy).toBe(0.8);
   });
 
+  describe('learnPasses (Stage 1: two Learn passes unlock Practise)', () => {
+    const stage1 = { mastery: true, stage: 1 as const };
+    const entry = (extra: object) => ({
+      passed: false,
+      bestScore: 1,
+      attempts: 1,
+      lastAttemptAt: 'x',
+      proofs: [],
+      review: null,
+      ...extra,
+    });
+
+    it('one Learn pass counts and does not unlock; two do', () => {
+      const { recordAttempt } = useAppStore.getState();
+      recordAttempt('s1b-01', res(1, true), 'learn', stage1);
+      expect(useAppStore.getState().progress['s1b-01']).toMatchObject({ learnPasses: 1, level: 'learn' });
+      recordAttempt('s1b-01', res(0.2, false), 'learn', stage1);
+      expect(useAppStore.getState().progress['s1b-01']).toMatchObject({ learnPasses: 1, level: 'learn' });
+      recordAttempt('s1b-01', res(1, true), 'learn', stage1);
+      expect(useAppStore.getState().progress['s1b-01']).toMatchObject({ learnPasses: 2, level: 'practise' });
+    });
+
+    it('counts Learn passes only, and only in Stage 1', () => {
+      const { recordAttempt } = useAppStore.getState();
+      recordAttempt('s1b-01', res(1, true), 'practise', stage1);
+      expect(useAppStore.getState().progress['s1b-01'].learnPasses).toBeUndefined();
+      recordAttempt('s2-01', res(1, true), 'learn', { mastery: true, stage: 2 });
+      expect(useAppStore.getState().progress['s2-01']).toMatchObject({ level: 'practise' });
+      expect(useAppStore.getState().progress['s2-01'].learnPasses).toBeUndefined();
+    });
+
+    it('an older entry already at Practise keeps it', () => {
+      useAppStore.setState({ progress: { x: entry({ level: 'practise' }) } });
+      useAppStore.getState().recordAttempt('x', res(0.2, false), 'learn', stage1);
+      expect(useAppStore.getState().progress.x.level).toBe('practise');
+      useAppStore.getState().recordAttempt('x', res(1, true), 'learn', stage1);
+      expect(useAppStore.getState().progress.x.level).toBe('practise');
+    });
+
+    it('is written and read back', () => {
+      useAppStore.getState().recordAttempt('s1b-01', res(1, true), 'learn', stage1);
+      const raw = JSON.parse(mockStorage.get('tmts.v1')!);
+      expect(raw.progress['s1b-01'].learnPasses).toBe(1);
+      expect(storedDataSchema.safeParse(raw).success).toBe(true);
+    });
+  });
+
   it('persists and reset clears progress only', () => {
     useAppStore.getState().recordAttempt('a', res(1, true));
     expect(JSON.parse(mockStorage.get('tmts.v1')!).progress.a.passed).toBe(true);
