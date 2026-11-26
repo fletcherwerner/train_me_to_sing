@@ -250,6 +250,7 @@ Every epic ends with something you can open and review. "Depends on" means those
 | E16 | [iPhone app with progress saved as a file](planning/epics/E16-iphone-app-files.md) | The iOS app brought up to date; progress saved to progress.json in Files › On My iPhone, read at launch, with 14 days of backups | S09 |
 | E17 | [Practice insights: activity, weekly goal and a performance dashboard](planning/epics/E17-practice-insights.md) | A log of every run and practice time; a 4-days-a-week circle with last week and a streak; focus areas after each run; 1–2 week patterns and what improved; a Progress screen | E16 |
 | S10 | [Spike: a note guide that shows whether you're above or below the note](planning/epics/S10-note-guide.md) | A simple guide while singing: the target note as a line, your voice as a dot above (too high) or below (too low), with "go up / come down" text; full at Learn and in single-note lessons, a rescue at Practise, none at Prove; replaces the cents meter | E17 |
+| S11 | [Spike: hear the whole pattern, earn the solo, and a faster guide](planning/epics/S11-solo-readiness.md) | Stage 1 You do plays the whole pattern before you sing it back, with "Hear it again"; You do is highlighted only after a clean sing-along; Practise needs two Learn passes and starts with a sing-along; the guide reacts within about 0.1 s | S10 |
 
 ### How each epic file is laid out
 

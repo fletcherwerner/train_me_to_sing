@@ -31,3 +31,4 @@ Maintained by the orchestrator. Status is one of: `Not started`, `In progress`, 
 | E16 | iPhone app with progress saved as a file | Approved | 1 | APPROVED / APPROVED | 2026-11-23 |
 | E17 | Practice insights: activity, weekly goal and a performance dashboard | Approved | 1 | APPROVED / APPROVED | 2026-11-23 |
 | S10 | Spike: a note guide that shows whether you're above or below the note | Approved | 2 | APPROVED / APPROVED | 2026-11-24 |
+| S11 | Spike: hear the whole pattern, earn the solo, and a faster guide | Not started | 0 | — | — |
