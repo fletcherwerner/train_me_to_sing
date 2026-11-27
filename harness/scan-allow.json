@@ -1,0 +1,7 @@
+[
+  {
+    "rule": "*",
+    "path": "harness/test/scan.test.mjs",
+    "reason": "The scanner's own tests: fake keys, emails, numbers and paths that each rule must catch."
+  }
+]

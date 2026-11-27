@@ -14,7 +14,8 @@
     "ios:open": "npx cap open ios",
     "icons": "node scripts/make-icons.mjs",
     "fixtures": "node scripts/make-midi-fixture.mjs",
-    "test:harness": "node --test harness/test"
+    "test:harness": "node --test harness/test",
+    "scan": "node harness/scan.mjs"
   },
   "dependencies": {
     "@capacitor/app": "^8.1.2",

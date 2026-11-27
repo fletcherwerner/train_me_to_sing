@@ -38,6 +38,7 @@ Work only from the previous turn's reviews.
 - Before writing your report, run `npm run lint`, `npm test`, `npm run test:e2e` and `npm run build`. Report the real result of each. Never report a command as passing if you did not run it or it failed.
 - Create or update `docs/epic-notes/<epic>.md` as the architecture file requires.
 - Commit your work on the current branch with the message `<epic> turn <n>: <short summary>`. Do not push, switch branches or merge.
+- Every commit is scanned for personal data and secrets (`README.md`, section 5 "PII and security scan"). A commit with findings is refused. Never commit real emails, phone numbers, home paths, keys or tokens, voice recordings or a student's progress file. In tests use `example.com` addresses and 555-01xx numbers. Run `npm run scan -- --uncommitted` before you commit. A finding you think is wrong goes in your report; don't work around it.
 
 ## Report
 

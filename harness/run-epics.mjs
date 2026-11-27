@@ -30,6 +30,7 @@ import {
   parseCoder, repeatedDisputes, isOwnerNotes, readStatus, readEpicTable, setStatusRow, setIndexRow, writeNeedsInput, writeForOwner, writeUiPass, uiReviewNote,
 } from './lib/comms.mjs';
 import { loadProfile, checkReachable, checkModel, flushCache } from './lib/profile.mjs';
+import { scan, formatFindings, SCAN_HELP } from './lib/scan.mjs';
 
 let TRAILER = 'Co-Authored-By: Claude <noreply@anthropic.com>';
 let PROFILE = null; // set in main() from --local / --profile=<name>
@@ -49,7 +50,8 @@ const fail = (m) => {
 };
 
 class Stop extends Error {} // the loop must stop and ask the owner
-class Fatal extends Error {} // cannot run at all; nothing for the owner to decide inside the loop
+class Fatal extends Error {}
+class ScanStop extends Stop {} // the scan found something; the stop note is committed on its own // cannot run at all; nothing for the owner to decide inside the loop
 
 // ---------- child process handling ----------
 
@@ -165,6 +167,12 @@ async function runValidated(role, epic, turn, validate, extra = '') {
 function commit(message, paths = ['-A']) {
   git(['add', ...paths]);
   if (git(['diff', '--cached', '--quiet']).ok) return; // nothing staged
+  // PII and security scan of exactly what is about to be committed (README.md, section 5).
+  const findings = scan({ staged: true });
+  if (findings.length) {
+    git(['reset', '-q']); // unstage only; the files stay as they are
+    throw new ScanStop(`The PII and security scan blocked the commit "${message}":\n${formatFindings(findings)}\n\n${SCAN_HELP}`);
+  }
   const r = git(['commit', '-q', '-m', TRAILER ? `${message}\n\n${TRAILER}` : message]);
   if (!r.ok) throw new Stop(`git commit failed: ${r.err}`);
 }
@@ -238,7 +246,7 @@ function stopDevServer(before) {
 function stopForOwner(epic, afterTurn, reason, decision) {
   writeNeedsInput(epic, { afterTurn, reason, decision });
   setStatusRow(epic, { status: 'Needs owner' });
-  commit(`${epic}: stopped for owner input`);
+  commitStopNote(epic);
   throw new Stop(`${epic} needs your input: ${reason}\nSee comms/${epic}/NEEDS-INPUT.md`);
 }
 
@@ -254,6 +262,15 @@ function needsInputResume(epic) {
   if (setAside) log(`${epic}: the coder's blocked report is kept as ${setAside}; the coder redoes turn ${lastRecordedTurn(epic) + 1}`);
   fs.writeFileSync(path.join(commsDir(epic), '.loop-state.json'), JSON.stringify({ baseTurn: lastRecordedTurn(epic) }));
   log(`${epic}: owner answered; turn limit restarts from turn ${lastRecordedTurn(epic)}`);
+}
+
+/**
+ * Commits the stop note. After a scan stop only NEEDS-INPUT.md and STATUS.md are committed, so the files the scan
+ * blocked stay uncommitted for the owner to fix. The note holds only redacted findings.
+ */
+function commitStopNote(epic, scanStopped = false) {
+  const own = [path.join('comms', epic, 'NEEDS-INPUT.md'), path.join('comms', 'STATUS.md')];
+  commit(`${epic}: stopped for owner input`, scanStopped ? own : ['-A']);
 }
 
 const baseTurn = (epic) => {
@@ -292,7 +309,7 @@ async function runEpic(epic) {
         decision: `${rest.join('\n')}\n\nThe raw output of each agent run is in .driver-logs/${epic}/ (not committed). Fix the cause or say what to change in comms/${epic}/OWNER-NOTES.md, then run the epic again.`.trim(),
       });
       setStatusRow(epic, { status: 'Needs owner' });
-      commit(`${epic}: stopped for owner input`);
+      commitStopNote(epic, e instanceof ScanStop);
     }
     throw e;
   }
@@ -320,6 +337,7 @@ async function loopEpic(epic) {
     }
     const coder = validateCoder(epic, turn).parsed;
     commit(`${epic} turn ${turn}: coder report`);
+    scanBranch(epic, `turn ${turn}`);
     if (coder.statuses[0] === 'BLOCKED - NEEDS OWNER') {
       stopForOwner(epic, done, 'The coding agent reported a blocker', `See "Blocker" in comms/${epic}/turn-${pad(turn)}/coder.md.`);
     }
@@ -368,7 +386,20 @@ async function loopEpic(epic) {
   }
 }
 
+/** Scans everything the epic branch adds over main, and its commit emails. Stops before any review or merge. */
+function scanBranch(epic, when) {
+  const findings = scan({ range: `main..epic/${epic}` });
+  if (!findings.length) return;
+  stopForOwner(
+    epic,
+    lastRecordedTurn(epic),
+    `The PII and security scan found ${findings.length} problem${findings.length === 1 ? '' : 's'} on epic/${epic} (${when})`,
+    `${formatFindings(findings)}\n\nThese are already committed on epic/${epic}, so a fix in a new commit still leaves them in the branch history, and the merge would carry them to main. Remove them from the branch (for example, rewrite the commits that added them), or, for a false positive, add an entry to harness/scan-allow.json. Then say what you did in OWNER-NOTES.md and run the epic again.\n\n${SCAN_HELP}`,
+  );
+}
+
 async function approve(epic, turn) {
+  scanBranch(epic, 'before merge');
   writeForOwner(epic, turn);
   writeUiPass(epic, turn, readEpicTable().find((r) => r.id === epic)?.title || epic);
   setStatusRow(epic, { status: 'Approved', turns: turn });

@@ -346,12 +346,53 @@ The loop does not rely on the models following instructions. The driver (`harnes
 | On a model that cannot see images, the UI reviewer does not block on what only eyes can judge; that goes to `comms/UI-PASS.md` | The driver adds the instruction to the UI reviewer's prompt (`uiReviewNote` in `harness/lib/comms.mjs`) when the profile sets `TMTS_NO_IMAGES=1`, and writes `UI-PASS.md` at approval (`writeUiPass`) |
 | No epic is left without a valid `SUMMARY.md` | Driver writes it, validates it, and refuses to start the next epic without it |
 | An agent's chained command (`cd <repo>; npm run lint 2>&1 \| tail; npm test`) runs only if every part is one it may run alone. Claude Code refuses such a line in headless runs, and the local model writes them often | Hook (`allowBash` in `harness/lib/rules.mjs`): approves the line when each part matches the allow list in `.claude/settings.json` or a read-only command, none matches the deny list, any `cd` stays in the repository, and every `>` target passes the write rules. Anything else gets the normal permission check |
+| Nothing with personal data or a secret is committed (see "PII and security scan" below) | Hook before every `git commit` in any session; the driver before each of its own commits, after each coder turn, and before the merge |
 
 What cannot be enforced is the quality of a review: a reviewer can still approve too easily. The validator requires evidence (screenshots, a coverage table, answered findings), not good judgment.
 
 The hooks only restrict edits made with the Write and Edit tools and git commands run in the shell. A shell command such as `sed -i` can change a file without the hook seeing it; the driver's check of the working tree after each agent catches that.
 
 To change a rule, change `harness/lib/comms.mjs` or `harness/lib/rules.mjs` and add a test in `harness/test/`, then run `npm run test:harness`.
+
+### PII and security scan
+
+Every commit is scanned for personal data (PII) and secrets before it is made, and each epic branch is scanned again before it is merged. The rules are in `harness/lib/scan.mjs`.
+
+**What it looks at.** Only what is being added: added lines in the diff, the names of new files, and the author and committer email of each commit.
+
+**What it finds:**
+
+| Kind | Rules |
+|------|-------|
+| Secrets | Private keys; AWS, GitHub, Anthropic, OpenAI-style (`sk-…`), Stripe, Slack, Google and npm tokens; JWTs; bearer tokens; `password = "…"`-style assignments with a real-looking value. Files: `.env` (not `.env.example`), key and certificate files (`.pem`, `.p8`, `.p12`, `.mobileprovision`, `id_rsa`, `.litellm-key`), `credentials*.json`, `.npmrc`, `.netrc` |
+| PII | Email addresses, except GitHub noreply, `noreply@anthropic.com`, and `example.com` or `.test` addresses; phone numbers; US social security numbers; card numbers that pass the Luhn check; home folder paths such as `/Users/<name>/`; commit emails other than GitHub noreply; the owner's own terms (see below) |
+| Personal data files | Voice recordings (`.wav`, `.webm`, `.m4a`, `.mp3` and similar); a student's saved or exported progress (`progress.json`, `train-me-to-sing-YYYY-MM-DD.json`, `profiles/`) |
+
+**When it runs:**
+
+1. **Before any `git commit`, in any Claude Code session.** This is done by the hook, `checkBash` in `harness/lib/rules.mjs`. The commit is refused and the redacted findings go back to the agent to fix. If the same line also stages (`git add … && git commit`, or `git commit -a`), everything not yet committed is scanned.
+2. **Before each of the driver's own commits** (`commit()` in `harness/run-epics.mjs`). The files are unstaged and left as they are. Only `NEEDS-INPUT.md` and `STATUS.md` are committed, and the loop stops for you.
+3. **After each coder turn, and again before the merge.** This covers everything `epic/<id>` adds over `main`, and its commit emails. Anything found here is already in the branch history, so the loop stops for you before any review or merge.
+
+**Findings are always redacted.** For example, `j…@g….com` or `sk-a…(51 chars)`, so a secret never reaches a log, a report or `NEEDS-INPUT.md`.
+
+**Run it yourself:**
+
+- `npm run scan`: staged changes.
+- `npm run scan -- --push`: what `git push origin main` would publish. Run it before you push.
+- `npm run scan -- --range main..epic/E17`: one epic branch.
+- `npm run scan -- --all`: every tracked file.
+
+It exits with 3 when it finds something.
+
+**False positives:**
+
+- **PII on a line that must stay**, such as a test fixture: add `scan-allow: <reason>` to that line. This never works for secrets or owner terms.
+- **Anything else:** add an entry to `harness/scan-allow.json`, for example `{ "rule": "email", "path": "src/fixtures/", "match": "…", "reason": "…" }`. Only you edit it, because agents may not write `harness/`.
+
+**Your own terms.** Put words that must never appear in the repository in `.git/info/pii-terms`, one per line. Examples are your personal email, phone number, address and other people's names. The file is inside `.git`, so it is never committed or pushed.
+
+**Found after it was committed on an epic branch.** A new commit doesn't remove the value from history. Rewrite the branch so the commit that added it no longer has it, then say what you did in `OWNER-NOTES.md` and run the epic again.
 
 ---
 
@@ -367,6 +408,7 @@ To change a rule, change `harness/lib/comms.mjs` or `harness/lib/rules.mjs` and 
 | `harness/validate.mjs` | Checks agent files; also usable by you |
 | `harness/lib/comms.mjs` | Parsing, validation, approval gate, status and index files |
 | `harness/lib/rules.mjs`, `harness/hooks/guard.mjs` | Path and command rules applied to agent sessions through a hook in `.claude/settings.json` |
+| `harness/lib/scan.mjs`, `harness/scan.mjs`, `harness/scan-allow.json` | The PII and security scan, its command (`npm run scan`) and the owner's allow list (section 5, "PII and security scan") |
 | `harness/profiles/` | Run profiles such as `local.json`: environment applied to every agent session, and for the local model the `flushUrl` the driver calls after each agent |
 | `harness/local/` | `start-qwen.sh` starts the local model with memory limits and saves its log; `qwen_server.py` is the launcher it runs (limits, working cache byte limit, `POST /flush`); `cache-check.mjs` tests that the server reuses its saved conversations |
 | `planning/harness-local-model-memory.md` | The work order these were built from, with the measured numbers |

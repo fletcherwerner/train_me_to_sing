@@ -3,6 +3,7 @@
 
 import path from 'node:path';
 import { ROOT, pad, approvalGate, git } from './comms.mjs';
+import { scan, formatFindings, SCAN_HELP } from './scan.mjs';
 
 const OWNER_ONLY = ['planning/ui-requirements.md', 'CLAUDE.md', 'README.md', 'harness/', '.claude/'];
 
@@ -120,7 +121,7 @@ export function allowBash(command, { allow = [], deny = [] } = {}, env = process
 }
 
 /** Returns an error message if the shell command is not allowed, else null. */
-export function checkBash(command, env = process.env) {
+export function checkBash(command, env = process.env, scanFn = scan) {
   const cmd = commandSkeleton(command);
   if (/\bgit\s+push\b/.test(cmd)) return 'Blocked: nothing in this project is pushed. Pushing is for the owner.';
 
@@ -145,6 +146,16 @@ export function checkBash(command, env = process.env) {
     if (AGENT_GIT_BLOCKED.test(cmd)) return 'Blocked: agents do not switch, merge, reset or otherwise manage branches. The driver does that.';
     if ((role === 'plan-reviewer' || role === 'ui-reviewer' || role === 'epic-summarizer') && REVIEWER_GIT_BLOCKED.test(cmd)) {
       return 'Blocked: this role writes its file and does not commit. The driver commits.';
+    }
+  }
+
+  // PII and security scan before any commit, in every session. A line that also stages (`git add ... && git commit`,
+  // `git commit -a`) is scanned over everything not yet committed, because the hook runs before the add.
+  if (/\bgit\s+(?:-C\s+\S+\s+)?commit\b/.test(cmd) && !/\s--dry-run\b/.test(cmd)) {
+    const stages = /\bgit\s+(?:-C\s+\S+\s+)?add\b/.test(cmd) || /\bcommit\s+(?:[^|;&]*\s)?(?:-[a-zA-Z]*a[a-zA-Z]*|--all)\b/.test(cmd);
+    const findings = scanFn(stages ? { uncommitted: true } : { staged: true });
+    if (findings.length) {
+      return `Blocked: the PII and security scan found ${findings.length} problem${findings.length === 1 ? '' : 's'} in what this commit would add. Nothing was committed.\n${formatFindings(findings)}\n\n${SCAN_HELP}`;
     }
   }
   return null;
